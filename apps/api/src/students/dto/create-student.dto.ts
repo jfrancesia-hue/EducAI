@@ -1,0 +1,37 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+
+export class CreateStudentDto {
+  @ApiProperty({ example: "tenant_family_demo" })
+  @IsString()
+  tenantId!: string;
+
+  @ApiProperty({ example: "family_demo" })
+  @IsString()
+  familyId!: string;
+
+  @ApiProperty({ example: "Mateo" })
+  @IsString()
+  firstName!: string;
+
+  @ApiProperty({ example: "Demo" })
+  @IsString()
+  lastName!: string;
+
+  @ApiProperty({ example: 6 })
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  grade!: number;
+
+  @ApiProperty({ example: "AR-NOA", required: false })
+  @IsOptional()
+  @IsString()
+  curriculum?: string;
+
+  @ApiProperty({ example: "+5493815550202", required: false })
+  @IsOptional()
+  @IsString()
+  whatsappPhone?: string;
+}
+

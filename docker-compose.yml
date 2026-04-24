@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: educai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: educai
+      POSTGRES_USER: educai
+      POSTGRES_PASSWORD: educai_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - educai_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U educai -d educai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: educai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - educai_redis:/data
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: educai-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  educai_postgres:
+  educai_redis:
+

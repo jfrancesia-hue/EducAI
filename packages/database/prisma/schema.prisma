@@ -1,0 +1,613 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantType {
+  SCHOOL
+  FAMILY
+  MINISTRY
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MINISTRY
+  SCHOOL_ADMIN
+  COORDINATOR
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  FAMILY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  IN_GRACE_PERIOD
+}
+
+model Tenant {
+  id        String     @id @default(cuid())
+  type      TenantType
+  name      String
+  slug      String     @unique
+  country   String     @default("AR")
+  metadata  Json?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  users    User[]
+  roles    Role[]
+  school   School?
+  family   Family?
+
+  @@index([type])
+  @@index([deletedAt])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  email        String   @unique
+  fullName     String
+  role         UserRole
+  locale       String   @default("es-AR")
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  tenant       Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  roleBindings UserRoleAssignment[]
+  parent       Parent?
+  teacher      Teacher?
+  student      Student?
+  auditLogs    AuditLog[]
+  posts        CommunityPost[]
+  comments     CommunityComment[]
+
+  @@index([tenantId])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  tenant      Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  users       UserRoleAssignment[]
+  permissions RolePermission[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  roles       RolePermission[]
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model School {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  name        String
+  country     String   @default("AR")
+  province    String?
+  city        String?
+  taxId       String?
+  logoUrl     String?
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  students    Student[]
+  teachers    Teacher[]
+  classrooms  Classroom[]
+  curricula   Curriculum[]
+  posts       CommunityPost[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+}
+
+model Family {
+  id          String   @id @default(cuid())
+  tenantId    String   @unique
+  name        String
+  country     String   @default("AR")
+  billingData Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  parents     Parent[]
+  students    Student[]
+  reports     ParentReport[]
+  subscription Subscription?
+
+  @@index([tenantId])
+  @@index([deletedAt])
+}
+
+model Parent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String   @unique
+  familyId  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([familyId])
+  @@index([deletedAt])
+}
+
+model Teacher {
+  id           String   @id @default(cuid())
+  tenantId     String
+  userId       String   @unique
+  schoolId     String
+  title        String?
+  subjects     String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  school       School              @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  classrooms   Classroom[]
+  lessonPlans  LessonPlan[]
+  enrollments  TeacherEnrollment[]
+
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([deletedAt])
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String?  @unique
+  familyId    String
+  schoolId    String?
+  firstName   String
+  lastName    String
+  birthDate   DateTime?
+  grade       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  family      Family      @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  school      School?     @relation(fields: [schoolId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  enrollments Enrollment[]
+  profile     StudentProfile?
+
+  @@index([tenantId])
+  @@index([familyId])
+  @@index([schoolId])
+  @@index([deletedAt])
+}
+
+model Classroom {
+  id          String   @id @default(cuid())
+  tenantId    String
+  schoolId    String
+  teacherId   String?
+  name        String
+  grade       Int
+  shift       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  teacher     Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  enrollments Enrollment[]
+
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([teacherId])
+  @@index([deletedAt])
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  name        String
+  code        String
+  area        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  enrollments Enrollment[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  classroomId String
+  subjectId   String?
+  status      String   @default("active")
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  subject     Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([studentId, classroomId, subjectId])
+  @@index([tenantId])
+}
+
+model StudentProfile {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  studentId           String   @unique
+  grade               Int
+  country             String
+  curriculum          String
+  learningStyle       String?
+  strongSubjects      String[]
+  weakSubjects        String[]
+  diagnosticCompleted Boolean  @default(false)
+  diagnosticScore     Json?
+  preferredChannel    String   @default("whatsapp")
+  whatsappPhone       String?  @unique
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+
+  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  conversations       Conversation[]
+  sessions            LearningSession[]
+  achievements        Achievement[]
+
+  @@index([tenantId])
+}
+
+model Conversation {
+  id               String   @id @default(cuid())
+  tenantId         String
+  studentProfileId String
+  subject          String
+  topic            String?
+  status           String   @default("active")
+  startedAt        DateTime @default(now())
+  endedAt          DateTime?
+  summary          String?
+  competencesUsed  String[]
+
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  messages         Message[]
+
+  @@index([tenantId])
+  @@index([studentProfileId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String
+  role           String
+  content        String
+  mediaUrl       String?
+  mediaType      String?
+  tokensUsed     Int?
+  modelUsed      String?
+  safetyStatus   String   @default("safe")
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model LearningSession {
+  id                String   @id @default(cuid())
+  tenantId          String
+  studentProfileId  String
+  subject           String
+  topic             String
+  durationMinutes   Int
+  competencesScored Json
+  completed         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([studentProfileId])
+}
+
+model Achievement {
+  id               String   @id @default(cuid())
+  tenantId         String
+  studentProfileId String
+  type             String
+  name             String
+  description      String
+  earnedAt         DateTime @default(now())
+
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([studentProfileId])
+}
+
+model ParentReport {
+  id          String   @id @default(cuid())
+  tenantId    String
+  familyId    String
+  periodStart DateTime
+  periodEnd   DateTime
+  summary     Json
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  family      Family   @relation(fields: [familyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([familyId])
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  tenantId         String
+  familyId         String             @unique
+  plan             SubscriptionPlan   @default(FREE)
+  status           SubscriptionStatus @default(ACTIVE)
+  provider         String
+  providerSubId    String?
+  currentPeriodEnd DateTime
+  canceledAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  family           Family             @relation(fields: [familyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Curriculum {
+  id        String   @id @default(cuid())
+  tenantId  String
+  schoolId  String
+  name      String
+  grade     Int
+  subject   String
+  version   Int      @default(1)
+  content   Json
+  source    String
+  language  String   @default("es-AR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  school    School          @relation(fields: [schoolId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  gaps      CurriculumGap[]
+  plans     LessonPlan[]
+
+  @@index([tenantId])
+  @@index([schoolId])
+}
+
+model CurriculumGap {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  curriculumId       String
+  category           String
+  severity           String
+  description        String
+  recommendation     String
+  referenceFramework String
+  createdAt          DateTime @default(now())
+
+  curriculum         Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([curriculumId])
+}
+
+model LessonPlan {
+  id              String   @id @default(cuid())
+  tenantId        String
+  teacherId       String
+  curriculumId    String?
+  grade           Int
+  subject         String
+  topic           String
+  durationMinutes Int
+  competences     String[]
+  objectives      Json
+  activities      Json
+  resources       Json
+  assessment      Json
+  adaptations     Json?
+  status          String   @default("draft")
+  generatedByAI   Boolean  @default(false)
+  rating          Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  teacher         Teacher     @relation(fields: [teacherId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  curriculum      Curriculum? @relation(fields: [curriculumId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([teacherId])
+}
+
+model ContentLibraryItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String
+  subjectArea String
+  grade       Int[]
+  content     Json
+  mediaUrl    String?
+  language    String
+  tags        String[]
+  generatedAt DateTime @default(now())
+  verified    Boolean  @default(false)
+  verifiedBy  String?
+
+  @@index([subjectArea])
+}
+
+model TeacherCourse {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  topics            Json
+  duration          Int
+  level             String
+  modules           Json
+  accreditedBy      String?
+  certificatePoints Int      @default(0)
+  verified          Boolean  @default(false)
+
+  enrollments       TeacherEnrollment[]
+}
+
+model TeacherEnrollment {
+  id             String   @id @default(cuid())
+  tenantId       String
+  teacherId      String
+  courseId       String
+  progress       Float    @default(0)
+  completed      Boolean  @default(false)
+  certificateUrl String?
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  teacher        Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  course         TeacherCourse @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([teacherId, courseId])
+  @@index([tenantId])
+}
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  authorId  String
+  schoolId  String?
+  title     String
+  content   String
+  tags      String[]
+  upvotes   Int      @default(0)
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  school    School?    @relation(fields: [schoolId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  comments  CommunityComment[]
+
+  @@index([tenantId])
+  @@index([schoolId])
+}
+
+model CommunityComment {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([postId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([tenantId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+

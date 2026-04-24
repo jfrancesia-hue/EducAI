@@ -1,0 +1,36 @@
+{
+  "name": "educai",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,prisma,yml,yaml}\"",
+    "db:generate": "pnpm --filter @educai/database db:generate",
+    "db:migrate": "pnpm --filter @educai/database db:migrate",
+    "db:seed": "pnpm --filter @educai/database db:seed",
+    "db:reset": "pnpm --filter @educai/database db:reset",
+    "db:studio": "pnpm --filter @educai/database db:studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@educai/config": "workspace:*",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "turbo": "^2.1.3",
+    "typescript": "^5.6.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,css,prisma,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
+
