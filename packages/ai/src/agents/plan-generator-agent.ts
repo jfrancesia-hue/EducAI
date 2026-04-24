@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { LlmClient } from "../llm/types";
-import { DeterministicLlmClient } from "../llm/types";
+import type { LlmClient } from "../llm/types.js";
+import { DeterministicLlmClient } from "../llm/types.js";
 
 export const lessonPlanSchema = z.object({
   overview: z.string(),

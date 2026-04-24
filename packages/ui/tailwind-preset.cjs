@@ -4,7 +4,7 @@
  * Tokens alineados con .stitch/DESIGN.md (2 identidades: ApoyoAI + EducAI).
  */
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: ["class"],
   theme: {
     container: {

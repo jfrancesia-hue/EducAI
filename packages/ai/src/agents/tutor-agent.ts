@@ -1,8 +1,8 @@
 import type { TutorResponse } from "@educai/types";
-import { buildTutorSystemPrompt } from "../prompts/tutor-system";
-import { filterStudentContent } from "../safety/content-filter";
-import type { LlmClient } from "../llm/types";
-import { DeterministicLlmClient } from "../llm/types";
+import { buildTutorSystemPrompt } from "../prompts/tutor-system.js";
+import { filterStudentContent } from "../safety/content-filter.js";
+import type { LlmClient } from "../llm/types.js";
+import { DeterministicLlmClient } from "../llm/types.js";
 
 export interface TutorAgentInput {
   studentName: string;

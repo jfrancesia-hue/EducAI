@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DiagnosticService } from "@educai/ai";
-import { PrismaService } from "../prisma/prisma.service";
-import type { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto";
-import type { CreateStudentDto } from "./dto/create-student.dto";
-import type { UpdateStudentDto } from "./dto/update-student.dto";
+import { PrismaService } from "../prisma/prisma.service.js";
+import type { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
+import type { CreateStudentDto } from "./dto/create-student.dto.js";
+import type { UpdateStudentDto } from "./dto/update-student.dto.js";
 
 @Injectable()
 export class StudentService {

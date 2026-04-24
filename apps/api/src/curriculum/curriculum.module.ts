@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { CurriculumController } from "./curriculum.controller";
-import { CurriculumService } from "./curriculum.service";
+import { CurriculumController } from "./curriculum.controller.js";
+import { CurriculumService } from "./curriculum.service.js";
 
 @Module({
   controllers: [CurriculumController],

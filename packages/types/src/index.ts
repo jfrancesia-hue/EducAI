@@ -32,6 +32,7 @@ export interface TutorResponse {
   safety: {
     status: "safe" | "monitor" | "escalate";
     signals: string[];
+    blocked: boolean;
   };
 }
 

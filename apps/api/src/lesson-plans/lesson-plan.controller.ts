@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { LessonPlanService } from "./lesson-plan.service";
+import { LessonPlanService } from "./lesson-plan.service.js";
 
 @ApiTags("lesson-plans")
 @Controller("lesson-plans")

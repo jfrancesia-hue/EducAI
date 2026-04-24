@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
-import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto";
-import { CreateStudentDto } from "./dto/create-student.dto";
-import { UpdateStudentDto } from "./dto/update-student.dto";
-import { StudentService } from "./student.service";
+import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
+import { CreateStudentDto } from "./dto/create-student.dto.js";
+import { UpdateStudentDto } from "./dto/update-student.dto.js";
+import { StudentService } from "./student.service.js";
 
 @ApiTags("students")
 @Controller("students")
