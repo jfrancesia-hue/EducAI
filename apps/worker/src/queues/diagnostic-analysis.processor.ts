@@ -17,10 +17,9 @@ export interface DiagnosticAnalysisJob {
 export class DiagnosticAnalysisProcessor extends WorkerHost {
   private readonly logger = new Logger(DiagnosticAnalysisProcessor.name);
 
-  async process(job: Job<DiagnosticAnalysisJob>): Promise<void> {
-    this.logger.log(
-      `diagnostic-analysis ${job.id} profile=${job.data.studentProfileId}`,
-    );
+  process(job: Job<DiagnosticAnalysisJob>): Promise<void> {
+    this.logger.log(`diagnostic-analysis ${job.id} profile=${job.data.studentProfileId}`);
     // Implementacion completa en Fase 1.
+    return Promise.resolve();
   }
 }

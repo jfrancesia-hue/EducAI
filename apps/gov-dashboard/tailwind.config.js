@@ -1,7 +1,10 @@
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 const preset = require("@educai/ui/tailwind-preset");
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+const config = {
   presets: [preset],
   content: [
     "./src/**/*.{ts,tsx}",
@@ -9,3 +12,5 @@ module.exports = {
     "../../node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
 };
+
+export default config;

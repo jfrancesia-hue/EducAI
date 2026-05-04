@@ -4,6 +4,23 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
+  {
+    ignores: [
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/coverage/**",
+      "**/eslint.config.mjs",
+      "**/next-env.d.ts",
+      "**/next.config.mjs",
+      "**/postcss.config.js",
+      "**/tailwind.config.js",
+      "**/babel.config.js",
+      "**/metro.config.js",
+      "**/*.config.cjs",
+      "**/tailwind-preset.cjs"
+    ]
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   prettier,
@@ -31,4 +48,3 @@ export default tseslint.config(
     }
   }
 );
-

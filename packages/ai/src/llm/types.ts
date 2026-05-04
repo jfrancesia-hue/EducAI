@@ -22,18 +22,19 @@ export interface LlmClient {
 }
 
 export class DeterministicLlmClient implements LlmClient {
-  async generate(input: LlmGenerateInput): Promise<LlmGenerateOutput> {
-    const lastUserMessage = [...input.messages].reverse().find((message) => message.role === "user");
+  generate(input: LlmGenerateInput): Promise<LlmGenerateOutput> {
+    const lastUserMessage = [...input.messages]
+      .reverse()
+      .find((message) => message.role === "user");
     const content =
       input.responseFormat === "json"
         ? JSON.stringify({ summary: "Analisis generado en modo local", items: [] })
         : `Te acompano paso a paso. Para empezar, contame que intentaste y cual fue el primer punto donde te trabaste. ${lastUserMessage?.content ?? ""}`;
 
-    return {
+    return Promise.resolve({
       content,
       tokensUsed: Math.ceil(content.length / 4),
       modelUsed: input.model,
-    };
+    });
   }
 }
-

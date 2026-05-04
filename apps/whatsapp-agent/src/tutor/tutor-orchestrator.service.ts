@@ -22,10 +22,9 @@ export interface InboundMessage {
 export class TutorOrchestratorService {
   private readonly logger = new Logger(TutorOrchestratorService.name);
 
-  async enqueueInboundMessage(message: InboundMessage): Promise<void> {
-    this.logger.log(
-      `inbound whatsapp ${message.messageSid} from ${message.fromWhatsappPhone}`,
-    );
+  enqueueInboundMessage(message: InboundMessage): Promise<void> {
+    this.logger.log(`inbound whatsapp ${message.messageSid} from ${message.fromWhatsappPhone}`);
     // Implementacion completa en Fase 1.
+    return Promise.resolve();
   }
 }

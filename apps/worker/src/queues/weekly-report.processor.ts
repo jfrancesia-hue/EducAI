@@ -18,8 +18,9 @@ export interface WeeklyReportJob {
 export class WeeklyReportProcessor extends WorkerHost {
   private readonly logger = new Logger(WeeklyReportProcessor.name);
 
-  async process(job: Job<WeeklyReportJob>): Promise<void> {
+  process(job: Job<WeeklyReportJob>): Promise<void> {
     this.logger.log(`weekly-report ${job.id} family=${job.data.familyId}`);
     // Implementacion completa en Fase 1.
+    return Promise.resolve();
   }
 }

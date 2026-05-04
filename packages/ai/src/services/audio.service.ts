@@ -5,15 +5,14 @@ export interface TranscriptionResult {
 }
 
 export class AudioService {
-  async transcribe(audioUrl: string): Promise<TranscriptionResult> {
+  transcribe(audioUrl: string): Promise<TranscriptionResult> {
     if (!audioUrl) {
       throw new Error("audioUrl is required");
     }
 
-    return {
+    return Promise.resolve({
       text: "Transcripcion pendiente de proveedor Whisper",
       language: "es-AR",
-    };
+    });
   }
 }
-

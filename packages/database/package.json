@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -w -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@educai/config": "workspace:*",
+    "@types/node": "^22.7.5",
     "eslint": "^9.12.0",
     "prisma": "^5.21.1",
     "tsx": "^4.19.1",
@@ -32,4 +33,3 @@
     "seed": "tsx prisma/seed.ts"
   }
 }
-

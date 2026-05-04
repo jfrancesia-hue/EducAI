@@ -11,6 +11,7 @@ build/
 out/
 .turbo/
 .expo/
+*.tsbuildinfo
 
 # Environment
 .env
