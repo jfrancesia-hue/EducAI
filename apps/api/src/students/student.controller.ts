@@ -1,12 +1,20 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
-import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
+import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import { UpdateStudentDto } from "./dto/update-student.dto.js";
+import { FamilyScopeGuard } from "./guards/family-scope.guard.js";
 import { StudentService } from "./student.service.js";
 
 @ApiTags("students")
+@ApiHeader({
+  name: "x-family-id",
+  description:
+    "Identificador de la familia solicitante. Provisorio hasta que el módulo de auth lo provea por JWT.",
+  required: true,
+})
 @Controller("students")
+@UseGuards(FamilyScopeGuard)
 export class StudentController {
   constructor(private readonly students: StudentService) {}
 
@@ -46,4 +54,3 @@ export class StudentController {
     return this.students.progress(id);
   }
 }
-
