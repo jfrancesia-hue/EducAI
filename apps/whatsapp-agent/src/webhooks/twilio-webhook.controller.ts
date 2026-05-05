@@ -1,7 +1,8 @@
-import { Body, Controller, HttpCode, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, Post, UseGuards } from "@nestjs/common";
 import { IsOptional, IsString } from "class-validator";
 
 import { TutorOrchestratorService } from "../tutor/tutor-orchestrator.service.js";
+import { TwilioSignatureGuard } from "./twilio-signature.guard.js";
 
 class TwilioInboundDto {
   @IsString()
@@ -24,14 +25,24 @@ class TwilioInboundDto {
   @IsOptional()
   @IsString()
   MediaContentType0?: string;
+
+  @IsOptional()
+  @IsString()
+  NumMedia?: string;
 }
 
 /**
  * Webhook de entrada de Twilio WhatsApp.
- * Fase 1 implementara: validacion de firma, rate limiting por plan,
- * orquestacion OCR/Whisper/Tutor, respuesta async via Messages API.
+ *
+ * Espera body x-www-form-urlencoded — el AppModule configura el bodyParser de
+ * Express para que Twilio funcione (también hay JSON parser para tests/health).
+ *
+ * Twilio espera respuesta < 15s; encolamos asíncrono para no bloquear el TwiML.
+ * En MVP procesamos sincrónico pero devolvemos 204 sin contenido (la respuesta
+ * al alumno se envía vía Messages API, no como TwiML).
  */
 @Controller("webhooks/twilio")
+@UseGuards(TwilioSignatureGuard)
 export class TwilioWebhookController {
   constructor(private readonly orchestrator: TutorOrchestratorService) {}
 

@@ -1,4 +1,18 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
+import {
+  AnthropicLlmClient,
+  AudioService,
+  OcrService,
+  TutorAgent,
+  type TutorAgentResponse,
+} from "@educai/ai";
+import type { Logger } from "pino";
+import { AppLogger } from "../common/logger/app-logger.service.js";
+import { CommandHandlerService, type SlashCommand } from "./command-handler.service.js";
+import { ConversationStoreService } from "./conversation-store.service.js";
+import { RateLimiterService } from "./rate-limiter.service.js";
+import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
+import { TwilioSenderService } from "./twilio-sender.service.js";
 
 export interface InboundMessage {
   messageSid: string;
@@ -9,22 +23,283 @@ export interface InboundMessage {
   mediaType?: string;
 }
 
+export interface OrchestratorOutcome {
+  status: "answered" | "rate_limited" | "not_enrolled" | "error";
+  conversationId?: string;
+  outboundSid?: string;
+  bypassedLlm?: boolean;
+  safetyStatus?: string;
+  reply?: string;
+}
+
+const DEFAULT_SUBJECT = "general";
+
 /**
- * Stub del orquestador del tutor. Fase 1 conectara:
- *  - identificacion de alumno por whatsappPhone
- *  - validacion de suscripcion activa + rate limit por plan
- *  - OCR de imagen (Claude Vision) / Whisper de audio
- *  - TutorAgent socratico (packages/ai)
- *  - persistencia Conversation + Message en DB
- *  - respuesta via Twilio Messages API
+ * Orquesta el flujo completo de un mensaje WhatsApp entrante:
+ *
+ *   1. Identifica al alumno por whatsappPhone
+ *   2. Verifica suscripción activa + rate limit por plan
+ *   3. Si es comando slash → respuesta determinística
+ *   4. Si trae imagen → OCR (Claude Vision)
+ *   5. Si trae audio → Whisper
+ *   6. Llama al TutorAgent con system prompt cacheado
+ *   7. Persiste Conversation + Message inbound y outbound
+ *   8. Envía la respuesta vía Twilio Messages API
+ *
+ * Cualquier error de orquestación se loggea y se manda un mensaje genérico
+ * al alumno para que no se quede sin respuesta.
  */
 @Injectable()
 export class TutorOrchestratorService {
-  private readonly logger = new Logger(TutorOrchestratorService.name);
+  private readonly tutor: TutorAgent;
+  private readonly log: Logger;
 
-  enqueueInboundMessage(message: InboundMessage): Promise<void> {
-    this.logger.log(`inbound whatsapp ${message.messageSid} from ${message.fromWhatsappPhone}`);
-    // Implementacion completa en Fase 1.
-    return Promise.resolve();
+  constructor(
+    private readonly resolver: StudentResolverService,
+    private readonly rateLimiter: RateLimiterService,
+    private readonly commands: CommandHandlerService,
+    private readonly conversation: ConversationStoreService,
+    private readonly sender: TwilioSenderService,
+    private readonly ocr: OcrService,
+    private readonly audio: AudioService,
+    private readonly llm: AnthropicLlmClient,
+    logger: AppLogger,
+  ) {
+    this.tutor = new TutorAgent(this.llm);
+    this.log = logger.child({ component: "TutorOrchestrator" });
+  }
+
+  async enqueueInboundMessage(message: InboundMessage): Promise<OrchestratorOutcome> {
+    try {
+      return await this.handle(message);
+    } catch (error) {
+      this.log.error(
+        {
+          err: error instanceof Error ? error.message : String(error),
+          messageSid: message.messageSid,
+        },
+        "orchestrator.error",
+      );
+
+      await this.safeSendFallback(
+        message.fromWhatsappPhone,
+        "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
+      );
+
+      return { status: "error" };
+    }
+  }
+
+  private async handle(message: InboundMessage): Promise<OrchestratorOutcome> {
+    const student = await this.resolver.resolveByWhatsapp(message.fromWhatsappPhone);
+    await this.rateLimiter.assertCanReceive(student);
+
+    const inboundBody = await this.materializeBody(message);
+    const subject = this.inferSubject(inboundBody);
+
+    const command = this.commands.detect(inboundBody);
+    if (command) {
+      return this.handleCommand(student, message, inboundBody, subject, command);
+    }
+
+    return this.handleConversation(student, message, inboundBody, subject);
+  }
+
+  private async handleCommand(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+    subject: string,
+    command: SlashCommand,
+  ): Promise<OrchestratorOutcome> {
+    const result = this.commands.handle(command, student);
+
+    const stored = await this.conversation.appendInboundMessage({
+      student,
+      subject,
+      body: inboundBody,
+      mediaUrl: message.mediaUrl,
+      mediaType: message.mediaType,
+      twilioMessageSid: message.messageSid,
+      safetyStatus: "safe",
+    });
+
+    await this.conversation.appendOutboundMessage({
+      conversationId: stored.conversationId,
+      tenantId: student.tenantId,
+      body: result.reply,
+      modelUsed: "command-handler",
+      tokensUsed: 0,
+      safetyStatus: "safe",
+    });
+
+    if (result.closeConversation) {
+      await this.conversation.closeConversation(stored.conversationId, "Cerrada por /pausar");
+    }
+
+    const send = await this.sender.send({
+      toWhatsappPhone: student.whatsappPhone,
+      body: result.reply,
+    });
+
+    this.log.info(
+      {
+        studentId: student.studentId,
+        command: result.command,
+        outboundSid: send.messageSid,
+      },
+      "orchestrator.command_handled",
+    );
+
+    return {
+      status: "answered",
+      conversationId: stored.conversationId,
+      outboundSid: send.messageSid,
+      reply: result.reply,
+      safetyStatus: "safe",
+    };
+  }
+
+  private async handleConversation(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+    subject: string,
+  ): Promise<OrchestratorOutcome> {
+    const tutorResponse = await this.tutor.respond({
+      studentName: student.studentName,
+      grade: student.grade,
+      subject,
+      message: inboundBody,
+      learningStyle: student.learningStyle ?? undefined,
+    });
+
+    const stored = await this.conversation.appendInboundMessage({
+      student,
+      subject,
+      body: inboundBody,
+      mediaUrl: message.mediaUrl,
+      mediaType: message.mediaType,
+      twilioMessageSid: message.messageSid,
+      safetyStatus: tutorResponse.safety.status,
+    });
+
+    await this.conversation.appendOutboundMessage({
+      conversationId: stored.conversationId,
+      tenantId: student.tenantId,
+      body: tutorResponse.content,
+      modelUsed: tutorResponse.modelUsed,
+      tokensUsed: tutorResponse.tokensUsed,
+      safetyStatus: tutorResponse.safety.status,
+    });
+
+    const send = await this.sender.send({
+      toWhatsappPhone: student.whatsappPhone,
+      body: tutorResponse.content,
+    });
+
+    this.logTutorResponse(student, tutorResponse, send.messageSid);
+
+    return {
+      status: "answered",
+      conversationId: stored.conversationId,
+      outboundSid: send.messageSid,
+      bypassedLlm: tutorResponse.bypassedLlm,
+      safetyStatus: tutorResponse.safety.status,
+      reply: tutorResponse.content,
+    };
+  }
+
+  private logTutorResponse(
+    student: ResolvedStudent,
+    tutorResponse: TutorAgentResponse,
+    outboundSid: string,
+  ): void {
+    this.log.info(
+      {
+        studentId: student.studentId,
+        outboundSid,
+        bypassedLlm: tutorResponse.bypassedLlm ?? false,
+        safetyStatus: tutorResponse.safety.status,
+        recommendedAction: tutorResponse.recommendedAction,
+        tokensUsed: tutorResponse.tokensUsed,
+        cacheRead: tutorResponse.cache?.cacheReadInputTokens,
+        signals: tutorResponse.safety.signals,
+      },
+      "orchestrator.tutor_responded",
+    );
+
+    if (tutorResponse.safety.status === "escalate") {
+      this.log.warn(
+        {
+          studentId: student.studentId,
+          familyId: student.familyId,
+          signals: tutorResponse.safety.signals,
+          severity: tutorResponse.safety.crisisAlert?.severity,
+        },
+        "orchestrator.crisis_alert",
+      );
+    }
+  }
+
+  private async materializeBody(message: InboundMessage): Promise<string> {
+    if (!message.mediaUrl) {
+      return message.body.trim();
+    }
+
+    if (message.mediaType?.startsWith("image/")) {
+      const ocr = await this.ocr.extractTextFromImage(message.mediaUrl);
+      if (ocr.unreadable) {
+        return "[OCR no pudo leer la imagen — pedile al alumno que reenvíe la foto con mejor luz]";
+      }
+      const caption = message.body.trim();
+      return caption
+        ? `${caption}\n\n[Foto del ejercicio]\n${ocr.text}`
+        : `[Foto del ejercicio]\n${ocr.text}`;
+    }
+
+    if (message.mediaType?.startsWith("audio/")) {
+      const transcription = await this.audio.transcribe(message.mediaUrl);
+      return `[Audio del alumno transcripto]\n${transcription.text}`;
+    }
+
+    return message.body.trim();
+  }
+
+  private inferSubject(body: string): string {
+    const lower = body.toLowerCase();
+    if (
+      /\b(matemática|matematica|fracci|integral|derivad|geometr|álgebra|algebra|sumar|restar|multipl|divid|ecuaci)/i.test(
+        lower,
+      )
+    ) {
+      return "matematica";
+    }
+    if (
+      /\b(lengua|cuento|texto|sintáctico|sintactic|verbo|sujeto|predicado|literatura|poesía|poesia)/i.test(
+        lower,
+      )
+    ) {
+      return "lengua";
+    }
+    if (
+      /\b(ciencia|biolog|física|fisica|química|quimica|célula|celula|átomo|atomo|fotosíntesis|densidad|fuerza)/i.test(
+        lower,
+      )
+    ) {
+      return "ciencias naturales";
+    }
+    return DEFAULT_SUBJECT;
+  }
+
+  private async safeSendFallback(toWhatsappPhone: string, body: string): Promise<void> {
+    try {
+      await this.sender.send({ toWhatsappPhone, body });
+    } catch (error) {
+      this.log.error(
+        { err: error instanceof Error ? error.message : String(error) },
+        "orchestrator.fallback_send_failed",
+      );
+    }
   }
 }
