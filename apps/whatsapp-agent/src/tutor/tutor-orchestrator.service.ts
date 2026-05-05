@@ -10,6 +10,8 @@ import type { Logger } from "pino";
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { CommandHandlerService, type SlashCommand } from "./command-handler.service.js";
 import { ConversationStoreService } from "./conversation-store.service.js";
+import { DiagnosticHandlerService } from "./diagnostic-handler.service.js";
+import { PrismaService } from "../prisma/prisma.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
@@ -24,12 +26,13 @@ export interface InboundMessage {
 }
 
 export interface OrchestratorOutcome {
-  status: "answered" | "rate_limited" | "not_enrolled" | "error";
+  status: "answered" | "rate_limited" | "not_enrolled" | "error" | "diagnostic";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
   safetyStatus?: string;
   reply?: string;
+  diagnosticAction?: string;
 }
 
 const DEFAULT_SUBJECT = "general";
@@ -63,6 +66,8 @@ export class TutorOrchestratorService {
     private readonly ocr: OcrService,
     private readonly audio: AudioService,
     private readonly llm: AnthropicLlmClient,
+    private readonly diagnosticHandler: DiagnosticHandlerService,
+    private readonly prisma: PrismaService,
     logger: AppLogger,
   ) {
     this.tutor = new TutorAgent(this.llm);
@@ -97,12 +102,193 @@ export class TutorOrchestratorService {
     const inboundBody = await this.materializeBody(message);
     const subject = this.inferSubject(inboundBody);
 
+    // Comandos de control siempre tienen prioridad (incluso /pausar durante diagnóstico)
     const command = this.commands.detect(inboundBody);
-    if (command) {
+    if (command && command !== "empezar") {
       return this.handleCommand(student, message, inboundBody, subject, command);
     }
 
+    // /empezar arranca o retoma diagnóstico explícitamente
+    if (command === "empezar") {
+      return this.handleDiagnosticStart(student, message, inboundBody);
+    }
+
+    // Si tiene diagnóstico activo en curso, todas las respuestas van al handler
+    const inDiagnostic = await this.isInDiagnostic(student);
+    if (inDiagnostic) {
+      return this.handleDiagnosticAnswer(student, message, inboundBody);
+    }
+
     return this.handleConversation(student, message, inboundBody, subject);
+  }
+
+  private async isInDiagnostic(student: ResolvedStudent): Promise<boolean> {
+    if (student.diagnosticCompleted) {
+      return false;
+    }
+    const profile = await this.prisma.studentProfile.findUnique({
+      where: { id: student.studentProfileId },
+      select: { diagnosticState: true },
+    });
+    return this.diagnosticHandler.isInProgress(profile?.diagnosticState ?? null);
+  }
+
+  private async handleDiagnosticStart(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+  ): Promise<OrchestratorOutcome> {
+    const action = await this.diagnosticHandler.startOrResume(student);
+
+    if (action.kind === "already_completed") {
+      const reply = this.diagnosticHandler.formatAlreadyCompletedMessage(student.studentName);
+      return this.persistAndSend(
+        student,
+        message,
+        inboundBody,
+        "diagnostic",
+        reply,
+        "already_completed",
+      );
+    }
+
+    if (action.kind === "completed") {
+      const reply = this.diagnosticHandler.formatCompletedMessage(
+        student.studentName,
+        action.report,
+      );
+      return this.persistAndSend(student, message, inboundBody, "diagnostic", reply, "completed");
+    }
+
+    if (action.kind === "start_or_resume") {
+      const reply = this.diagnosticHandler.formatStartMessage(
+        student.studentName,
+        action.question,
+        action.resumed,
+      );
+      return this.persistAndSend(
+        student,
+        message,
+        inboundBody,
+        "diagnostic",
+        reply,
+        action.resumed ? "resumed" : "started",
+      );
+    }
+
+    // No debería ocurrir desde startOrResume, pero TypeScript exige exhaustividad
+    throw new Error(`Unexpected diagnostic action kind from startOrResume: ${action.kind}`);
+  }
+
+  private async handleDiagnosticAnswer(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+  ): Promise<OrchestratorOutcome> {
+    const action = await this.diagnosticHandler.handleAnswer(student, inboundBody);
+    let reply: string;
+    let diagnosticAction: string;
+
+    switch (action.kind) {
+      case "completed":
+        reply = this.diagnosticHandler.formatCompletedMessage(student.studentName, action.report);
+        diagnosticAction = "completed";
+        break;
+      case "next_question": {
+        const profileForCount = await this.prisma.studentProfile.findUnique({
+          where: { id: student.studentProfileId },
+          select: { diagnosticState: true },
+        });
+        const state = profileForCount?.diagnosticState as { answers?: unknown[] } | null;
+        const answered = Array.isArray(state?.answers) ? state.answers.length : 0;
+        reply = this.diagnosticHandler.formatNextMessage(action.question, answered);
+        diagnosticAction = "next_question";
+        break;
+      }
+      case "cant_understand": {
+        const profileForCount = await this.prisma.studentProfile.findUnique({
+          where: { id: student.studentProfileId },
+          select: { diagnosticState: true },
+        });
+        const state = profileForCount?.diagnosticState as { answers?: unknown[] } | null;
+        const answered = Array.isArray(state?.answers) ? state.answers.length : 0;
+        reply = this.diagnosticHandler.formatCantUnderstandMessage(action.lastQuestion, answered);
+        diagnosticAction = "cant_understand";
+        break;
+      }
+      case "start_or_resume":
+        reply = this.diagnosticHandler.formatStartMessage(
+          student.studentName,
+          action.question,
+          action.resumed,
+        );
+        diagnosticAction = "restart";
+        break;
+      case "already_completed":
+        reply = this.diagnosticHandler.formatAlreadyCompletedMessage(student.studentName);
+        diagnosticAction = "already_completed";
+        break;
+    }
+
+    return this.persistAndSend(
+      student,
+      message,
+      inboundBody,
+      "diagnostic",
+      reply,
+      diagnosticAction,
+    );
+  }
+
+  private async persistAndSend(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+    subject: string,
+    reply: string,
+    diagnosticAction: string,
+  ): Promise<OrchestratorOutcome> {
+    const stored = await this.conversation.appendInboundMessage({
+      student,
+      subject,
+      body: inboundBody,
+      mediaUrl: message.mediaUrl,
+      mediaType: message.mediaType,
+      twilioMessageSid: message.messageSid,
+      safetyStatus: "safe",
+    });
+
+    await this.conversation.appendOutboundMessage({
+      conversationId: stored.conversationId,
+      tenantId: student.tenantId,
+      body: reply,
+      modelUsed: "diagnostic-handler",
+      tokensUsed: 0,
+      safetyStatus: "safe",
+    });
+
+    const send = await this.sender.send({
+      toWhatsappPhone: student.whatsappPhone,
+      body: reply,
+    });
+
+    this.log.info(
+      {
+        studentId: student.studentId,
+        diagnosticAction,
+        outboundSid: send.messageSid,
+      },
+      "orchestrator.diagnostic_handled",
+    );
+
+    return {
+      status: "diagnostic",
+      conversationId: stored.conversationId,
+      outboundSid: send.messageSid,
+      reply,
+      safetyStatus: "safe",
+      diagnosticAction,
+    };
   }
 
   private async handleCommand(

@@ -48,15 +48,77 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof StudentService>[1];
+} as unknown as ConstructorParameters<typeof StudentService>[2];
+
+function buildDiagnosticMock() {
+  let stateCounter = 0;
+  return {
+    start: vi.fn((profileId: string, grade: number) => ({
+      studentProfileId: profileId,
+      grade,
+      currentDifficulty: "medium",
+      questions: [],
+      answers: [],
+      completed: false,
+      startedAt: new Date().toISOString(),
+      lastInteractionAt: new Date().toISOString(),
+    })),
+    nextQuestion: vi.fn((state: { questions: unknown[]; studentProfileId: string }) => {
+      stateCounter += 1;
+      const question = {
+        id: `${state.studentProfileId}-${stateCounter}`,
+        subject: "matematica",
+        grade: 5,
+        prompt: "Pregunta de prueba",
+        options: ["A", "B", "C", "D"],
+        expectedCompetence: "comprension",
+        difficulty: "medium",
+      };
+      state.questions.push({ ...question, correctAnswer: "A" });
+      return Promise.resolve(question);
+    }),
+    registerAnswer: vi.fn((state: any, questionId: string) => ({
+      ...state,
+      answers: [
+        ...state.answers,
+        {
+          questionId,
+          answer: "A",
+          correct: true,
+          difficulty: "medium",
+          subject: "matematica",
+          expectedCompetence: "comprension",
+        },
+      ],
+      completed: state.answers.length + 1 >= 15,
+    })),
+    summarize: vi.fn(() =>
+      Promise.resolve({
+        totalQuestions: 15,
+        correct: 10,
+        score: 0.66,
+        bySubject: {} as never,
+        byCompetence: {} as never,
+        effectiveGradeLevel: {} as never,
+        strengths: ["lectura"],
+        opportunities: ["práctica"],
+        recommendations: ["acompañar"],
+        inferredLearningStyle: "visual",
+        narrative: "Buen primer paso",
+      }),
+    ),
+  };
+}
 
 describe("StudentService", () => {
   let prisma: PrismaMock;
+  let diagnostic: ReturnType<typeof buildDiagnosticMock>;
   let service: StudentService;
 
   beforeEach(() => {
     prisma = buildPrismaMock();
-    service = new StudentService(prisma as never, loggerStub);
+    diagnostic = buildDiagnosticMock();
+    service = new StudentService(prisma as never, diagnostic as never, loggerStub);
   });
 
   describe("create", () => {
@@ -150,39 +212,127 @@ describe("StudentService", () => {
       );
     });
 
-    it("devuelve estado y siguiente pregunta cuando hay perfil", async () => {
-      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 6 });
-      prisma.studentProfile.findUnique.mockResolvedValue({ id: "prof_1" });
+    it("inicia diagnóstico nuevo cuando no hay state previo", async () => {
+      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 5 });
+      prisma.studentProfile.findUnique.mockResolvedValue({
+        id: "prof_1",
+        diagnosticState: null,
+      });
 
       const result = await service.startDiagnostic("stu_1");
 
+      expect(result.data.resumed).toBe(false);
       expect(result.data.state.studentProfileId).toBe("prof_1");
       expect(result.data.question).not.toBeNull();
+      expect(diagnostic.start).toHaveBeenCalledWith("prof_1", 5);
+      expect(prisma.studentProfile.update).toHaveBeenCalled();
+    });
+
+    it("retoma diagnóstico cuando hay state previo en DB", async () => {
+      const existingState = {
+        studentProfileId: "prof_1",
+        grade: 5,
+        currentDifficulty: "medium",
+        questions: [{ id: "q1" }, { id: "q2" }],
+        answers: [{ questionId: "q1" }],
+        completed: false,
+        startedAt: "2026-05-05T10:00:00Z",
+        lastInteractionAt: "2026-05-05T10:05:00Z",
+      };
+      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 5 });
+      prisma.studentProfile.findUnique.mockResolvedValue({
+        id: "prof_1",
+        diagnosticState: existingState,
+      });
+
+      const result = await service.startDiagnostic("stu_1");
+
+      expect(result.data.resumed).toBe(true);
+      expect(diagnostic.start).not.toHaveBeenCalled();
+      expect(diagnostic.nextQuestion).toHaveBeenCalled();
     });
   });
 
   describe("answerDiagnostic", () => {
-    it("actualiza el perfil con el resumen del diagnóstico", async () => {
-      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 6 });
-      prisma.studentProfile.findUnique.mockResolvedValue({ id: "prof_1" });
+    it("registra respuesta y devuelve próxima pregunta cuando no completó", async () => {
+      const initialState = {
+        studentProfileId: "prof_1",
+        grade: 5,
+        currentDifficulty: "medium",
+        questions: [{ id: "q1", correctAnswer: "A" }],
+        answers: [],
+        completed: false,
+        startedAt: "2026-05-05T10:00:00Z",
+        lastInteractionAt: "2026-05-05T10:00:00Z",
+      };
+      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 5 });
+      prisma.studentProfile.findUnique.mockResolvedValue({
+        id: "prof_1",
+        diagnosticState: initialState,
+      });
       prisma.studentProfile.update.mockResolvedValue({});
 
       const result = await service.answerDiagnostic("stu_1", {
         questionId: "q1",
-        answer: "B",
-        correct: true,
+        answer: "A",
       });
 
-      expect(prisma.studentProfile.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: "prof_1" },
-          data: expect.objectContaining({
-            diagnosticCompleted: false,
-            diagnosticScore: expect.any(Object),
-          }),
-        }),
-      );
-      expect(result.data.summary.totalQuestions).toBe(1);
+      expect(result.data.summary).toBeNull();
+      expect(result.data.nextQuestion).not.toBeNull();
+      expect(diagnostic.registerAnswer).toHaveBeenCalled();
+    });
+
+    it("genera resumen y borra state cuando completa el diagnóstico", async () => {
+      const stateCompleting = {
+        studentProfileId: "prof_1",
+        grade: 5,
+        currentDifficulty: "medium",
+        questions: Array.from({ length: 15 }, (_, i) => ({ id: `q${i}`, correctAnswer: "A" })),
+        answers: Array.from({ length: 14 }, (_, i) => ({
+          questionId: `q${i}`,
+          answer: "A",
+          correct: true,
+          difficulty: "medium",
+          subject: "matematica",
+          expectedCompetence: "comprension",
+        })),
+        completed: false,
+        startedAt: "2026-05-05T10:00:00Z",
+        lastInteractionAt: "2026-05-05T10:00:00Z",
+      };
+      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 5 });
+      prisma.studentProfile.findUnique.mockResolvedValue({
+        id: "prof_1",
+        diagnosticState: stateCompleting,
+      });
+      prisma.studentProfile.update.mockResolvedValue({});
+
+      const result = await service.answerDiagnostic("stu_1", {
+        questionId: "q14",
+        answer: "A",
+      });
+
+      expect(result.data.summary).not.toBeNull();
+      expect(result.data.nextQuestion).toBeNull();
+      expect(diagnostic.summarize).toHaveBeenCalled();
+
+      const updateCall = prisma.studentProfile.update.mock.calls[0]?.[0] as {
+        data: { diagnosticCompleted: boolean; diagnosticScore: unknown; diagnosticState: unknown };
+      };
+      expect(updateCall.data.diagnosticCompleted).toBe(true);
+      expect(updateCall.data.diagnosticScore).toBeDefined();
+    });
+
+    it("lanza error si no hay state activo", async () => {
+      prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 5 });
+      prisma.studentProfile.findUnique.mockResolvedValue({
+        id: "prof_1",
+        diagnosticState: null,
+      });
+
+      await expect(
+        service.answerDiagnostic("stu_1", { questionId: "q1", answer: "A" }),
+      ).rejects.toBeInstanceOf(StudentProfileNotFoundError);
     });
   });
 

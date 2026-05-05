@@ -1,17 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsString } from "class-validator";
+import { IsIn, IsString } from "class-validator";
 
 export class DiagnosticAnswerDto {
-  @ApiProperty()
+  @ApiProperty({ example: "prof_1-3" })
   @IsString()
   questionId!: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "A",
+    description: "Letra elegida por el alumno (A, B, C o D)",
+    enum: ["A", "B", "C", "D"],
+  })
   @IsString()
+  @IsIn(["A", "B", "C", "D"])
   answer!: string;
-
-  @ApiProperty()
-  @IsBoolean()
-  correct!: boolean;
 }
-

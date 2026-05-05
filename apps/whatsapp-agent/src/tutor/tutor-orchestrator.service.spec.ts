@@ -37,21 +37,34 @@ interface Mocks {
   ocr: { extractTextFromImage: ReturnType<typeof vi.fn> };
   audio: { transcribe: ReturnType<typeof vi.fn> };
   llm: { generate: ReturnType<typeof vi.fn> };
+  diagnosticHandler: {
+    isInProgress: ReturnType<typeof vi.fn>;
+    startOrResume: ReturnType<typeof vi.fn>;
+    handleAnswer: ReturnType<typeof vi.fn>;
+    formatStartMessage: ReturnType<typeof vi.fn>;
+    formatNextMessage: ReturnType<typeof vi.fn>;
+    formatCantUnderstandMessage: ReturnType<typeof vi.fn>;
+    formatCompletedMessage: ReturnType<typeof vi.fn>;
+    formatAlreadyCompletedMessage: ReturnType<typeof vi.fn>;
+  };
+  prisma: {
+    studentProfile: {
+      findUnique: ReturnType<typeof vi.fn>;
+    };
+  };
 }
 
 function buildMocks(): Mocks {
   return {
     resolver: { resolveByWhatsapp: vi.fn().mockResolvedValue(STUDENT) },
     rateLimiter: {
-      assertCanReceive: vi
-        .fn()
-        .mockResolvedValue({
-          allowed: true,
-          plan: "PREMIUM",
-          dailyLimit: null,
-          used: 0,
-          remaining: null,
-        }),
+      assertCanReceive: vi.fn().mockResolvedValue({
+        allowed: true,
+        plan: "PREMIUM",
+        dailyLimit: null,
+        used: 0,
+        remaining: null,
+      }),
     },
     commands: { detect: vi.fn().mockReturnValue(null), handle: vi.fn() },
     conversation: {
@@ -65,23 +78,19 @@ function buildMocks(): Mocks {
       send: vi.fn().mockResolvedValue({ messageSid: "SM123", status: "queued" }),
     },
     ocr: {
-      extractTextFromImage: vi
-        .fn()
-        .mockResolvedValue({
-          text: "ejercicio leído",
-          confidence: 0.9,
-          modelUsed: "claude-opus-4-7",
-          tokensUsed: 100,
-        }),
+      extractTextFromImage: vi.fn().mockResolvedValue({
+        text: "ejercicio leído",
+        confidence: 0.9,
+        modelUsed: "claude-opus-4-7",
+        tokensUsed: 100,
+      }),
     },
     audio: {
-      transcribe: vi
-        .fn()
-        .mockResolvedValue({
-          text: "no entiendo las restas",
-          language: "es",
-          modelUsed: "whisper-1",
-        }),
+      transcribe: vi.fn().mockResolvedValue({
+        text: "no entiendo las restas",
+        language: "es",
+        modelUsed: "whisper-1",
+      }),
     },
     llm: {
       generate: vi.fn().mockResolvedValue({
@@ -90,6 +99,21 @@ function buildMocks(): Mocks {
         modelUsed: "claude-opus-4-7",
         cache: { cacheCreationInputTokens: 0, cacheReadInputTokens: 4500 },
       }),
+    },
+    diagnosticHandler: {
+      isInProgress: vi.fn().mockReturnValue(false),
+      startOrResume: vi.fn(),
+      handleAnswer: vi.fn(),
+      formatStartMessage: vi.fn().mockReturnValue("Hola Mateo, vamos con el diagnóstico..."),
+      formatNextMessage: vi.fn().mockReturnValue("Buena. Próxima pregunta..."),
+      formatCantUnderstandMessage: vi.fn().mockReturnValue("No entendí, mandá A/B/C/D"),
+      formatCompletedMessage: vi.fn().mockReturnValue("¡Genial Mateo! Terminamos el diagnóstico."),
+      formatAlreadyCompletedMessage: vi.fn().mockReturnValue("Mateo, ya hicimos el diagnóstico."),
+    },
+    prisma: {
+      studentProfile: {
+        findUnique: vi.fn().mockResolvedValue({ diagnosticState: null }),
+      },
     },
   };
 }
@@ -100,7 +124,7 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[8];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[10];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   return new TutorOrchestratorService(
@@ -112,6 +136,8 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     m.ocr as never,
     m.audio as never,
     m.llm as never,
+    m.diagnosticHandler as never,
+    m.prisma as never,
     loggerStub,
   );
 }

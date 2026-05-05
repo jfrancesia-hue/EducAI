@@ -318,6 +318,7 @@ model StudentProfile {
   weakSubjects        String[]
   diagnosticCompleted Boolean  @default(false)
   diagnosticScore     Json?
+  diagnosticState     Json?
   preferredChannel    String   @default("whatsapp")
   whatsappPhone       String?  @unique
   createdAt           DateTime @default(now())
