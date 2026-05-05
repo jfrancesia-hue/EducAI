@@ -8,4 +8,4 @@ export * from "./services/diagnostic.service.js";
 export * from "./services/ocr.service.js";
 export * from "./services/audio.service.js";
 export * from "./llm/types.js";
-
+export * from "./llm/anthropic-client.js";
