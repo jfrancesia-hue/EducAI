@@ -123,7 +123,7 @@ const heroTagStyles = [
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f8f3] text-slate-950">
-      <section className="relative min-h-[92vh] px-4 py-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-[92vh] px-4 pb-4 pt-24 sm:px-6 lg:px-8">
         <VisualImage
           src={heroImage}
           alt="Docente acompanando a estudiantes en un aula luminosa"
@@ -137,7 +137,7 @@ export default function HomePage() {
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#f7f8f3] to-transparent" />
         <div className="absolute left-0 top-28 hidden h-44 w-1 bg-gradient-to-b from-[#18b6a4] via-[#f8d95c] to-[#ef5da8] md:block" />
 
-        <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-float backdrop-blur-xl">
+        <header className="fixed left-4 right-4 top-3 z-50 mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/18 bg-slate-950/82 px-4 py-3 text-white shadow-float backdrop-blur-xl sm:left-6 sm:right-6 lg:left-8 lg:right-8">
           <Link href="/" className="flex items-center gap-3" aria-label="EducAI inicio">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-950">
               <GraduationCap className="h-5 w-5" aria-hidden="true" />
@@ -184,7 +184,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(92vh-96px)] max-w-7xl items-center py-16">
+        <div className="relative z-10 mx-auto flex min-h-[calc(92vh-176px)] max-w-7xl items-center py-16">
           <div className="max-w-3xl">
             <Badge
               className="border-white/30 bg-[#18b6a4]/22 text-white backdrop-blur-md"
