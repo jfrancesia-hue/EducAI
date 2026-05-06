@@ -11,10 +11,13 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,prisma,yml,yaml}\"",
     "db:generate": "pnpm --filter @educai/database db:generate",
+    "db:validate": "pnpm --filter @educai/database db:validate",
     "db:migrate": "pnpm --filter @educai/database db:migrate",
+    "db:deploy": "pnpm --filter @educai/database db:deploy",
     "db:seed": "pnpm --filter @educai/database db:seed",
     "db:reset": "pnpm --filter @educai/database db:reset",
     "db:studio": "pnpm --filter @educai/database db:studio",
+    "prod:check": "pnpm db:validate && pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "prepare": "husky"

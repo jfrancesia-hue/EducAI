@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DiagnosticService, type DiagnosticState } from "@educai/ai";
 import { Prisma } from "@educai/database";
+import type { AuthenticatedUser } from "../auth/types.js";
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import type { Logger } from "pino";
@@ -8,6 +9,8 @@ import type { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import type { CreateStudentDto } from "./dto/create-student.dto.js";
 import type { UpdateStudentDto } from "./dto/update-student.dto.js";
 import { StudentNotFoundError, StudentProfileNotFoundError } from "./errors/student.errors.js";
+
+type RlsDb = Prisma.TransactionClient;
 
 @Injectable()
 export class StudentService {
@@ -21,28 +24,30 @@ export class StudentService {
     this.log = logger.child({ component: "StudentService" });
   }
 
-  async create(dto: CreateStudentDto) {
-    const student = await this.prisma.student.create({
-      data: {
-        tenantId: dto.tenantId,
-        familyId: dto.familyId,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        grade: dto.grade,
-        profile: {
-          create: {
-            tenantId: dto.tenantId,
-            grade: dto.grade,
-            country: "AR",
-            curriculum: dto.curriculum ?? "AR-NOA",
-            strongSubjects: [],
-            weakSubjects: [],
-            whatsappPhone: dto.whatsappPhone,
+  async create(dto: CreateStudentDto, user: AuthenticatedUser) {
+    const student = await this.prisma.withUser(user, async (db) =>
+      db.student.create({
+        data: {
+          tenantId: dto.tenantId,
+          familyId: dto.familyId,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          grade: dto.grade,
+          profile: {
+            create: {
+              tenantId: dto.tenantId,
+              grade: dto.grade,
+              country: "AR",
+              curriculum: dto.curriculum ?? "AR-NOA",
+              strongSubjects: [],
+              weakSubjects: [],
+              whatsappPhone: dto.whatsappPhone,
+            },
           },
         },
-      },
-      include: { profile: true },
-    });
+        include: { profile: true },
+      }),
+    );
 
     this.log.info(
       { studentId: student.id, familyId: dto.familyId, grade: dto.grade },
@@ -52,11 +57,13 @@ export class StudentService {
     return { data: student };
   }
 
-  async findOne(id: string) {
-    const student = await this.prisma.student.findFirst({
-      where: { id, deletedAt: null },
-      include: { profile: true, family: true, school: true },
-    });
+  async findOne(id: string, user: AuthenticatedUser) {
+    const student = await this.prisma.withUser(user, (db) =>
+      db.student.findFirst({
+        where: { id, deletedAt: null },
+        include: { profile: true, family: true, school: true },
+      }),
+    );
 
     if (!student) {
       throw new StudentNotFoundError(id);
@@ -65,29 +72,31 @@ export class StudentService {
     return { data: student };
   }
 
-  async update(id: string, dto: UpdateStudentDto) {
-    await this.ensureExists(id);
-
+  async update(id: string, dto: UpdateStudentDto, user: AuthenticatedUser) {
     const profileTouched =
       dto.grade !== undefined || dto.curriculum !== undefined || dto.whatsappPhone !== undefined;
 
-    const student = await this.prisma.student.update({
-      where: { id },
-      data: {
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        grade: dto.grade,
-        profile: profileTouched
-          ? {
-              update: {
-                grade: dto.grade,
-                curriculum: dto.curriculum,
-                whatsappPhone: dto.whatsappPhone,
-              },
-            }
-          : undefined,
-      },
-      include: { profile: true },
+    const student = await this.prisma.withUser(user, async (db) => {
+      await this.ensureExists(db, id);
+
+      return db.student.update({
+        where: { id },
+        data: {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          grade: dto.grade,
+          profile: profileTouched
+            ? {
+                update: {
+                  grade: dto.grade,
+                  curriculum: dto.curriculum,
+                  whatsappPhone: dto.whatsappPhone,
+                },
+              }
+            : undefined,
+        },
+        include: { profile: true },
+      });
     });
 
     this.log.info({ studentId: id, profileTouched }, "student.updated");
@@ -99,16 +108,15 @@ export class StudentService {
    * Inicia o retoma un diagnóstico. Si ya hay state in-progress en DB lo
    * retoma y devuelve la última pregunta sin respuesta. Si no, arranca uno nuevo.
    */
-  async startDiagnostic(id: string) {
-    const student = await this.ensureExists(id);
-    const profile = await this.ensureProfile(student.id);
+  async startDiagnostic(id: string, user: AuthenticatedUser) {
+    const { student, profile } = await this.loadStudentAndProfile(id, user);
 
     const existing = this.readState(profile.diagnosticState);
     const state = existing ?? this.diagnostic.start(profile.id, student.grade);
     const isResume = existing != null;
 
     const question = await this.diagnostic.nextQuestion(state);
-    await this.persistState(profile.id, state);
+    await this.prisma.withUser(user, (db) => this.persistState(db, profile.id, state));
 
     this.log.info(
       {
@@ -124,9 +132,8 @@ export class StudentService {
     return { data: { state, question, resumed: isResume } };
   }
 
-  async answerDiagnostic(id: string, dto: DiagnosticAnswerDto) {
-    const student = await this.ensureExists(id);
-    const profile = await this.ensureProfile(student.id);
+  async answerDiagnostic(id: string, dto: DiagnosticAnswerDto, user: AuthenticatedUser) {
+    const { student, profile } = await this.loadStudentAndProfile(id, user);
 
     const state = this.readState(profile.diagnosticState);
     if (!state) {
@@ -137,14 +144,16 @@ export class StudentService {
 
     if (updated.completed) {
       const summary = await this.diagnostic.summarize(updated);
-      await this.prisma.studentProfile.update({
-        where: { id: profile.id },
-        data: {
-          diagnosticCompleted: true,
-          diagnosticScore: summary as unknown as Prisma.InputJsonValue,
-          diagnosticState: Prisma.JsonNull,
-        },
-      });
+      await this.prisma.withUser(user, (db) =>
+        db.studentProfile.update({
+          where: { id: profile.id },
+          data: {
+            diagnosticCompleted: true,
+            diagnosticScore: summary as unknown as Prisma.InputJsonValue,
+            diagnosticState: Prisma.JsonNull,
+          },
+        }),
+      );
 
       this.log.info(
         {
@@ -160,7 +169,7 @@ export class StudentService {
     }
 
     const nextQuestion = await this.diagnostic.nextQuestion(updated);
-    await this.persistState(profile.id, updated);
+    await this.prisma.withUser(user, (db) => this.persistState(db, profile.id, updated));
 
     this.log.info(
       {
@@ -175,27 +184,31 @@ export class StudentService {
     return { data: { state: updated, summary: null, nextQuestion } };
   }
 
-  async progress(id: string) {
-    const student = await this.ensureExists(id);
-    const profile = await this.ensureProfile(student.id);
+  async progress(id: string, user: AuthenticatedUser) {
+    const { student, profile, completedSessions, achievements, minutesAggregation } =
+      await this.prisma.withUser(user, async (db) => {
+        const student = await this.ensureExists(db, id);
+        const profile = await this.ensureProfile(db, student.id);
+        const [completedSessions, achievements, minutesAggregation] = await Promise.all([
+          db.learningSession.count({
+            where: { studentProfileId: profile.id, completed: true },
+          }),
+          db.achievement.findMany({
+            where: { studentProfileId: profile.id },
+            orderBy: { earnedAt: "desc" },
+            take: 5,
+          }),
+          db.learningSession.aggregate({
+            where: {
+              studentProfileId: profile.id,
+              createdAt: { gte: this.startOfWeek() },
+            },
+            _sum: { durationMinutes: true },
+          }),
+        ]);
 
-    const [completedSessions, achievements, minutesAggregation] = await Promise.all([
-      this.prisma.learningSession.count({
-        where: { studentProfileId: profile.id, completed: true },
-      }),
-      this.prisma.achievement.findMany({
-        where: { studentProfileId: profile.id },
-        orderBy: { earnedAt: "desc" },
-        take: 5,
-      }),
-      this.prisma.learningSession.aggregate({
-        where: {
-          studentProfileId: profile.id,
-          createdAt: { gte: this.startOfWeek() },
-        },
-        _sum: { durationMinutes: true },
-      }),
-    ]);
+        return { student, profile, completedSessions, achievements, minutesAggregation };
+      });
 
     return {
       data: {
@@ -219,8 +232,16 @@ export class StudentService {
     return date;
   }
 
-  private async ensureExists(id: string) {
-    const student = await this.prisma.student.findFirst({ where: { id, deletedAt: null } });
+  private async loadStudentAndProfile(id: string, user: AuthenticatedUser) {
+    return this.prisma.withUser(user, async (db) => {
+      const student = await this.ensureExists(db, id);
+      const profile = await this.ensureProfile(db, student.id);
+      return { student, profile };
+    });
+  }
+
+  private async ensureExists(db: RlsDb, id: string) {
+    const student = await db.student.findFirst({ where: { id, deletedAt: null } });
 
     if (!student) {
       throw new StudentNotFoundError(id);
@@ -229,8 +250,8 @@ export class StudentService {
     return student;
   }
 
-  private async ensureProfile(studentId: string) {
-    const profile = await this.prisma.studentProfile.findUnique({ where: { studentId } });
+  private async ensureProfile(db: RlsDb, studentId: string) {
+    const profile = await db.studentProfile.findUnique({ where: { studentId } });
 
     if (!profile) {
       throw new StudentProfileNotFoundError(studentId);
@@ -250,8 +271,12 @@ export class StudentService {
     return state;
   }
 
-  private async persistState(studentProfileId: string, state: DiagnosticState): Promise<void> {
-    await this.prisma.studentProfile.update({
+  private async persistState(
+    db: RlsDb,
+    studentProfileId: string,
+    state: DiagnosticState,
+  ): Promise<void> {
+    await db.studentProfile.update({
       where: { id: studentProfileId },
       data: {
         diagnosticState: state as unknown as Prisma.InputJsonValue,

@@ -1,4 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { TenantAccessDeniedError } from "../../auth/errors.js";
+import { isElevatedRole, type AuthenticatedRequest } from "../../auth/types.js";
 import { PrismaService } from "../../prisma/prisma.service.js";
 import {
   FamilyAccessDeniedError,
@@ -6,43 +8,60 @@ import {
   StudentNotFoundError,
 } from "../errors/student.errors.js";
 
-const FAMILY_HEADER = "x-family-id";
-
-interface ScopedRequest {
-  headers: Record<string, string | string[] | undefined>;
+interface ScopedRequest extends AuthenticatedRequest {
   params?: Record<string, string | undefined>;
+  body?: {
+    tenantId?: string;
+    familyId?: string;
+  };
 }
 
-/**
- * Hasta que se integre auth real (JWT con payload {familyId}),
- * la familia solicitante se identifica por el header x-family-id.
- * Reemplazar este guard por uno basado en req.user.familyId
- * cuando se introduzca el módulo de auth.
- */
 @Injectable()
 export class FamilyScopeGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<ScopedRequest>();
-    const familyId = this.extractFamilyId(request);
+    const user = request.user;
 
+    if (
+      request.body?.tenantId &&
+      user.role !== "SUPER_ADMIN" &&
+      request.body.tenantId !== user.tenantId
+    ) {
+      throw new TenantAccessDeniedError(request.body.tenantId);
+    }
+
+    if (isElevatedRole(user)) {
+      return true;
+    }
+
+    const familyId = user.familyId;
     if (!familyId) {
       throw new FamilyContextMissingError();
     }
 
     const studentId = request.params?.id;
     if (!studentId) {
+      if (request.body?.familyId && request.body.familyId !== familyId) {
+        throw new FamilyAccessDeniedError("new", familyId);
+      }
       return true;
     }
 
-    const student = await this.prisma.student.findFirst({
-      where: { id: studentId, deletedAt: null },
-      select: { id: true, familyId: true },
-    });
+    const student = await this.prisma.withUser(user, (db) =>
+      db.student.findFirst({
+        where: { id: studentId, deletedAt: null },
+        select: { id: true, tenantId: true, familyId: true },
+      }),
+    );
 
     if (!student) {
       throw new StudentNotFoundError(studentId);
+    }
+
+    if (student.tenantId !== user.tenantId) {
+      throw new TenantAccessDeniedError(student.tenantId);
     }
 
     if (student.familyId !== familyId) {
@@ -50,13 +69,5 @@ export class FamilyScopeGuard implements CanActivate {
     }
 
     return true;
-  }
-
-  private extractFamilyId(request: ScopedRequest): string | undefined {
-    const raw = request.headers[FAMILY_HEADER];
-    if (Array.isArray(raw)) {
-      return raw[0]?.trim() || undefined;
-    }
-    return raw?.trim() || undefined;
   }
 }

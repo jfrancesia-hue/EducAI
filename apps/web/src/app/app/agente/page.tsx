@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -14,6 +13,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { AgentWorkspace } from "../../_components/agent-workspace";
+import { VisualImage } from "../../_components/visual-image";
 
 const agentHeroImage =
   "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1500&q=85";
@@ -62,7 +62,7 @@ export default function AgentPage() {
 
         <section className="px-5 pt-5 sm:px-7 sm:pt-7">
           <div className="relative overflow-hidden rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-float sm:p-6 lg:p-7">
-            <Image
+            <VisualImage
               src={agentHeroImage}
               alt="Equipo docente trabajando con tecnologia educativa"
               fill

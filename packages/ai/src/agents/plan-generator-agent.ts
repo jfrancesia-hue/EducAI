@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { LlmClient } from "../llm/types.js";
 import { DeterministicLlmClient } from "../llm/types.js";
+import { buildEducAiSystemBlocks } from "../prompts/educai-institutional-system.js";
 
 export const lessonPlanSchema = z.object({
   overview: z.string(),
@@ -48,21 +49,35 @@ export class PlanGeneratorAgent {
   constructor(private readonly llm: LlmClient = new DeterministicLlmClient()) {}
 
   async generate(input: PlanGeneratorInput): Promise<LessonPlanOutput> {
-    await this.llm.generate({
+    const result = await this.llm.generate({
       model: "claude-3-5-sonnet-latest",
+      maxTokens: 1800,
+      temperature: 0.2,
       responseFormat: "json",
+      system: buildEducAiSystemBlocks(
+        "Tarea: generar una planificacion docente concreta, breve, realista y editable.",
+      ),
       messages: [
         {
-          role: "system",
-          content:
-            "Genera planificaciones docentes realistas para Argentina. Devolve JSON valido y actividades concretas.",
-        },
-        {
           role: "user",
-          content: JSON.stringify(input),
+          content: JSON.stringify({
+            ...input,
+            outputRules: [
+              "JSON estricto sin markdown",
+              "actividades de aula reales",
+              "criterios observables",
+              "sin relleno",
+              "material listo para revision docente",
+            ],
+          }),
         },
       ],
     });
+
+    const generated = parseLessonPlan(result.content);
+    if (generated) {
+      return generated;
+    }
 
     return lessonPlanSchema.parse({
       overview: `Secuencia sobre ${input.topic} para ${input.subject}.`,
@@ -72,9 +87,21 @@ export class PlanGeneratorAgent {
         number: index + 1,
         duration: Math.round(input.totalDurationMinutes / input.sessionCount),
         phases: [
-          { name: "Apertura", duration: 10, activities: ["Recuperar saberes previos con una pregunta disparadora."] },
-          { name: "Desarrollo", duration: 40, activities: ["Resolver un desafio en grupos y comparar estrategias."] },
-          { name: "Cierre", duration: 10, activities: ["Registrar una idea clave y una duda para la proxima clase."] },
+          {
+            name: "Apertura",
+            duration: 10,
+            activities: ["Recuperar saberes previos con una pregunta disparadora."],
+          },
+          {
+            name: "Desarrollo",
+            duration: 40,
+            activities: ["Resolver un desafio en grupos y comparar estrategias."],
+          },
+          {
+            name: "Cierre",
+            duration: 10,
+            activities: ["Registrar una idea clave y una duda para la proxima clase."],
+          },
         ],
         resources: ["Pizarron", "Tarjetas imprimibles", "Cuaderno"],
         differentiation: {
@@ -87,8 +114,17 @@ export class PlanGeneratorAgent {
         rubric: ["Identifica el concepto", "Explica el procedimiento", "Aplica en contexto"],
         instruments: ["Lista de cotejo", "Produccion grupal"],
       },
-      printables: [{ name: "Guia de practica", prompt: `Ejercicios graduados sobre ${input.topic}` }],
+      printables: [
+        { name: "Guia de practica", prompt: `Ejercicios graduados sobre ${input.topic}` },
+      ],
     });
   }
 }
 
+function parseLessonPlan(content: string): LessonPlanOutput | null {
+  try {
+    return lessonPlanSchema.parse(JSON.parse(content));
+  } catch {
+    return null;
+  }
+}

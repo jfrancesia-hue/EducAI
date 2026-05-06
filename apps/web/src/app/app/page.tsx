@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import {
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { VisualImage } from "../_components/visual-image";
 
 const classroom =
   "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1400&q=85";
@@ -222,7 +222,7 @@ export default function EducAiAppPage() {
               </button>
               <div>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                  Modo demo - Colegio del Valle
+                  Colegio del Valle
                 </p>
                 <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
                   Centro de produccion pedagogica
@@ -274,7 +274,7 @@ export default function EducAiAppPage() {
           <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.24fr_0.76fr]">
             <section className="grid content-start gap-5">
               <div className="relative overflow-hidden rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-float sm:p-6">
-                <Image
+                <VisualImage
                   src={classroom}
                   alt="Aula real con estudiantes trabajando"
                   fill
@@ -488,7 +488,7 @@ export default function EducAiAppPage() {
             <aside className="grid content-start gap-5">
               <div className="overflow-hidden rounded-lg border border-[#d5e1dc] bg-white shadow-whisper">
                 <div className="relative aspect-[16/10]">
-                  <Image
+                  <VisualImage
                     src={student}
                     alt="Estudiante leyendo con acompanamiento"
                     fill
@@ -564,7 +564,7 @@ export default function EducAiAppPage() {
               </div>
 
               <div className="relative overflow-hidden rounded-lg border border-[#d5e1dc] bg-[#172d65] p-5 text-white shadow-whisper">
-                <Image
+                <VisualImage
                   src={workshop}
                   alt="Equipo docente trabajando sobre una mesa"
                   fill

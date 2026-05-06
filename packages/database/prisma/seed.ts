@@ -189,11 +189,11 @@ async function ensureSchool() {
   });
 
   const teacherUser = await prisma.user.upsert({
-    where: { email: "docente.demo@educai.local" },
+    where: { email: "docente.seed@educai.local" },
     update: {},
     create: {
       tenantId: schoolTenant.id,
-      email: "docente.demo@educai.local",
+      email: "docente.seed@educai.local",
       fullName: "Lucía Docente",
       role: UserRole.TEACHER,
     },

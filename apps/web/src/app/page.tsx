@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,6 +16,7 @@ import {
 
 import { Badge, Button, Card, CardHeader, CardTitle } from "@educai/ui";
 import { ImmersiveShowcase } from "./_components/immersive-showcase";
+import { VisualImage } from "./_components/visual-image";
 
 const heroImage =
   "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1600&q=85";
@@ -124,7 +124,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f8f3] text-slate-950">
       <section className="relative min-h-[92vh] px-4 py-4 sm:px-6 lg:px-8">
-        <Image
+        <VisualImage
           src={heroImage}
           alt="Docente acompanando a estudiantes en un aula luminosa"
           fill
@@ -159,6 +159,9 @@ export default function HomePage() {
             <Link href="#ecosistema" className="transition hover:text-white">
               Ecosistema
             </Link>
+            <Link href="/planes" className="transition hover:text-white">
+              Planes
+            </Link>
           </nav>
           <div className="flex items-center gap-2">
             <Button
@@ -166,7 +169,7 @@ export default function HomePage() {
               size="sm"
               className="hidden bg-[#ff7a1a] text-white shadow-[0_12px_28px_rgba(255,122,26,0.28)] hover:bg-[#ea6508] sm:inline-flex"
             >
-              <Link href="/app/agente">Agente IA</Link>
+              <Link href="/login?next=/app/agente">Agente IA</Link>
             </Button>
             <Button
               asChild
@@ -174,8 +177,8 @@ export default function HomePage() {
               pill
               className="bg-white text-slate-950 shadow-none hover:bg-white/90"
             >
-              <Link href="/onboarding">
-                Probar <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <Link href="/login?next=/app">
+                Empezar <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
           </div>
@@ -216,8 +219,8 @@ export default function HomePage() {
                 pill
                 className="bg-[#f8d95c] text-slate-950 shadow-float hover:bg-[#f3ce36]"
               >
-                <Link href="/onboarding">
-                  Empezar piloto <Sparkles className="h-5 w-5" aria-hidden="true" />
+                <Link href="/planes">
+                  Ver planes <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button
@@ -304,7 +307,7 @@ export default function HomePage() {
         </div>
 
         <div className="relative min-h-[620px] overflow-hidden rounded-lg bg-slate-950 p-4 shadow-float sm:p-6">
-          <Image
+          <VisualImage
             src={teacherImage}
             alt="Docente usando tecnologia educativa con estudiantes"
             fill
@@ -382,7 +385,7 @@ export default function HomePage() {
                 className="overflow-hidden rounded-lg border-slate-200 shadow-whisper"
               >
                 <div className="relative aspect-[4/3]">
-                  <Image
+                  <VisualImage
                     src={journey.image}
                     alt={journey.title}
                     fill
@@ -442,14 +445,13 @@ export default function HomePage() {
               dias.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-white/74">
-              El siguiente salto es cerrar auth, CI, deploy y observabilidad. La experiencia visual
-              ya empieza a contar una historia fuerte: aprendizaje posible, datos cuidados y apoyo
-              real.
+              EducAI combina auth, CI, deploy y observabilidad con una experiencia de trabajo
+              diario: aprendizaje posible, datos cuidados y apoyo real para equipos docentes.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" pill className="bg-white text-slate-950 hover:bg-white/90">
-                <Link href="/onboarding">
-                  Activar piloto <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                <Link href="/planes">
+                  Elegir plan <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button
@@ -468,13 +470,13 @@ export default function HomePage() {
           <div className="rounded-lg border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
             <div className="flex items-center gap-3 border-b border-white/10 pb-4">
               <LockKeyhole className="h-5 w-5 text-[#f8d95c]" aria-hidden="true" />
-              <p className="font-display text-lg font-semibold">Checklist pre-produccion</p>
+              <p className="font-display text-lg font-semibold">Checklist operativo</p>
             </div>
             <div className="mt-5 grid gap-3">
               {[
                 "Auth + roles",
-                "CI verde",
-                "Deploy real",
+                "CI automatizada",
+                "Deploy productivo",
                 "Rate limiting",
                 "Sentry/PostHog",
                 "Tests de negocio",
@@ -498,6 +500,9 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 pt-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>2026 Nativos Consultora Digital. Hecho en Argentina para LATAM.</p>
           <div className="flex gap-4">
+            <Link href="/terminos" className="hover:text-white">
+              Terminos
+            </Link>
             <Link href="/privacidad" className="hover:text-white">
               Privacidad
             </Link>

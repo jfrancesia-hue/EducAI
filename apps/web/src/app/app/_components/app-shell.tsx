@@ -14,6 +14,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  BadgeDollarSign,
   UsersRound,
 } from "lucide-react";
 
@@ -25,7 +26,8 @@ const navItems = [
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
   { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
-] satisfies Array<{ label: string; icon: typeof Home; href: string }>;
+  { label: "Admin", icon: BadgeDollarSign, href: "/app/admin" },
+] satisfies Array<{ label: string; icon: typeof Home; href: Route }>;
 
 type AppShellProps = {
   title: string;
@@ -33,11 +35,7 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-export function AppShell({
-  title,
-  eyebrow = "Modo demo - Colegio del Valle",
-  children,
-}: AppShellProps) {
+export function AppShell({ title, eyebrow = "Colegio del Valle", children }: AppShellProps) {
   const pathname = usePathname();
 
   return (
@@ -65,7 +63,7 @@ export function AppShell({
                 return (
                   <Link
                     key={item.label}
-                    href={item.href as Route}
+                    href={item.href}
                     className={[
                       "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
                       active
@@ -146,7 +144,7 @@ export function AppShell({
               return (
                 <Link
                   key={item.label}
-                  href={item.href as Route}
+                  href={item.href}
                   className={[
                     "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
                     active

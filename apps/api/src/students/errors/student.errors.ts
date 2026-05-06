@@ -35,7 +35,7 @@ export class FamilyContextMissingError extends ForbiddenException {
   constructor() {
     super({
       code: "FAMILY_CONTEXT_MISSING",
-      message: "Falta el header x-family-id que identifica a la familia solicitante",
+      message: "El token autenticado no incluye familyId",
     });
   }
 }
