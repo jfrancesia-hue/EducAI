@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { getSessionSecret, verifySessionJwt, type SessionJwtPayload } from "./session-jwt";
 
 const SESSION_COOKIE = "educai_session";
+const FOUNDER_EMAIL = "jfrancesia@gmail.com";
 
 export async function getServerSession(): Promise<SessionJwtPayload | null> {
   const secret = getSessionSecret();
@@ -15,5 +16,7 @@ export async function getServerSession(): Promise<SessionJwtPayload | null> {
 }
 
 export function isAdminSession(session: SessionJwtPayload | null): boolean {
-  return ["SUPER_ADMIN", "MINISTRY", "SCHOOL_ADMIN"].includes(session?.role ?? "");
+  const founderEmail = (process.env.EDUCAI_FOUNDER_EMAIL ?? FOUNDER_EMAIL).toLowerCase();
+  const sessionEmail = (session?.email ?? session?.sub ?? "").toLowerCase();
+  return session?.role === "SUPER_ADMIN" && sessionEmail === founderEmail;
 }

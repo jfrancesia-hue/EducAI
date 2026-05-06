@@ -63,7 +63,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <AppShell title="Dashboard del fundador" eyebrow="EducAI Admin">
+    <AppShell title="Dashboard del fundador" eyebrow="EducAI Admin" showAdmin>
       <div className="grid gap-5 p-4 sm:p-6">
         <div className="rounded-lg border border-[#d5e1dc] bg-[#11231f] p-5 text-white shadow-float">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

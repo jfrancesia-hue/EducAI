@@ -105,7 +105,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                       className="h-full w-full bg-transparent text-[#14120f] outline-none placeholder:text-[#9a907d]"
                       name="email"
                       placeholder="usuario@institucion.edu"
-                      defaultValue="admin@educai.local"
+                      defaultValue="jfrancesia@gmail.com"
                       type="email"
                     />
                   </span>
@@ -163,8 +163,8 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
               </div>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                Acceso local de revision: admin@educai.local / EducAI2026!. En produccion se
-                deshabilita y se conecta el proveedor SSO o Supabase Auth.
+                Acceso fundador de revision: jfrancesia@gmail.com / demo1234. En produccion se
+                recomienda conectar el proveedor SSO o Supabase Auth.
               </p>
             </div>
           </div>

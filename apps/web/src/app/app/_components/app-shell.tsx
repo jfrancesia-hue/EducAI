@@ -26,17 +26,24 @@ const navItems = [
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
   { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
-  { label: "Admin", icon: BadgeDollarSign, href: "/app/admin" },
-] satisfies Array<{ label: string; icon: typeof Home; href: Route }>;
+  { label: "Admin", icon: BadgeDollarSign, href: "/app/admin", adminOnly: true },
+] satisfies Array<{ label: string; icon: typeof Home; href: Route; adminOnly?: boolean }>;
 
 type AppShellProps = {
   title: string;
   eyebrow?: string;
+  showAdmin?: boolean;
   children: ReactNode;
 };
 
-export function AppShell({ title, eyebrow = "Colegio del Valle", children }: AppShellProps) {
+export function AppShell({
+  title,
+  eyebrow = "Colegio del Valle",
+  showAdmin = false,
+  children,
+}: AppShellProps) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || showAdmin);
 
   return (
     <main className="min-h-screen bg-[#eef5f3] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
@@ -58,7 +65,7 @@ export function AppShell({ title, eyebrow = "Colegio del Valle", children }: App
             </Link>
 
             <nav className="mt-8 grid gap-2">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const active = pathname === item.href;
                 return (
                   <Link
@@ -139,7 +146,7 @@ export function AppShell({ title, eyebrow = "Colegio del Valle", children }: App
           </header>
 
           <nav className="flex gap-2 overflow-x-auto border-b border-[#d5e1dc] bg-white/70 px-4 py-3 sm:px-6 lg:hidden">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const active = pathname === item.href;
               return (
                 <Link

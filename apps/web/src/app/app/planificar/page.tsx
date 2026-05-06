@@ -11,6 +11,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
+import { getServerSession, isAdminSession } from "../../../lib/server-session";
 
 const blocks = [
   {
@@ -39,9 +40,11 @@ const drafts = [
   ["Ciencias 5C", "Ecosistemas", "40 min", "Falta objetivo"],
 ];
 
-export default function PlanningModulePage() {
+export default async function PlanningModulePage() {
+  const showAdmin = isAdminSession(await getServerSession());
+
   return (
-    <AppShell title="Modulo de planificacion">
+    <AppShell title="Modulo de planificacion" showAdmin={showAdmin}>
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.8fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-6 text-white shadow-float">

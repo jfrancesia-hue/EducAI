@@ -5,13 +5,18 @@ import { getSessionSecret } from "../../../../lib/session-jwt";
 export const runtime = "nodejs";
 
 const SESSION_COOKIE = "educai_session";
-const REVIEW_EMAIL = "admin@educai.local";
-const REVIEW_PASSWORD = "EducAI2026!";
+const FOUNDER_EMAIL = "jfrancesia@gmail.com";
+const FOUNDER_PASSWORD = "demo1234";
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
+  const configuredFounderPassword = process.env.EDUCAI_FOUNDER_PASSWORD;
+
+  if (process.env.NODE_ENV === "production" && !configuredFounderPassword) {
     return NextResponse.json(
-      { code: "LOCAL_LOGIN_DISABLED", message: "Login local deshabilitado en produccion" },
+      {
+        code: "FOUNDER_LOGIN_DISABLED",
+        message: "Login fundador deshabilitado hasta configurar EDUCAI_FOUNDER_PASSWORD",
+      },
       { status: 404 },
     );
   }
@@ -21,8 +26,8 @@ export async function POST(request: NextRequest) {
   const password = formValue(formData, "password");
   const acceptedTerms = formData.get("acceptTerms") === "on";
   const next = safeNextPath(formValue(formData, "next") || "/app");
-  const expectedEmail = (process.env.EDUCAI_REVIEW_EMAIL ?? REVIEW_EMAIL).toLowerCase();
-  const expectedPassword = process.env.EDUCAI_REVIEW_PASSWORD ?? REVIEW_PASSWORD;
+  const expectedEmail = (process.env.EDUCAI_FOUNDER_EMAIL ?? FOUNDER_EMAIL).toLowerCase();
+  const expectedPassword = configuredFounderPassword ?? FOUNDER_PASSWORD;
   const secret = getSessionSecret();
 
   if (!acceptedTerms) {
@@ -42,7 +47,8 @@ export async function POST(request: NextRequest) {
   const now = Math.floor(Date.now() / 1000);
   const token = signJwt(
     {
-      sub: "local-review-admin",
+      sub: expectedEmail,
+      email: expectedEmail,
       tenantId: "tenant_visual",
       role: "SUPER_ADMIN",
       exp: now + 60 * 60 * 8,
@@ -53,7 +59,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.redirect(new URL(next, request.url), { status: 303 });
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 8,

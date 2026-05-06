@@ -1,5 +1,6 @@
 export type SessionJwtPayload = {
   sub?: string;
+  email?: string;
   tenantId?: string;
   tenant_id?: string;
   role?: string;

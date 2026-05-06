@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import {
   Activity,
+  BadgeDollarSign,
   Bell,
   BookOpenCheck,
   Brain,
@@ -28,6 +29,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { VisualImage } from "../_components/visual-image";
+import { getServerSession, isAdminSession } from "../../lib/server-session";
 
 const classroom =
   "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1400&q=85";
@@ -43,7 +45,7 @@ type NavItem = {
   active?: boolean;
 };
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { label: "Hoy", icon: Home, href: "/app", active: true },
   { label: "Estudiantes", icon: UsersRound, href: "/app/estudiantes" },
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
@@ -153,7 +155,12 @@ const tasks = [
   "Validar ticket de salida para seguimiento semanal",
 ];
 
-export default function EducAiAppPage() {
+export default async function EducAiAppPage() {
+  const showAdmin = isAdminSession(await getServerSession());
+  const navItems = showAdmin
+    ? [...baseNavItems, { label: "Admin", icon: BadgeDollarSign, href: "/app/admin" }]
+    : baseNavItems;
+
   return (
     <main className="min-h-screen bg-[#eef5f3] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
       <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-lg border border-[#d5e1dc] bg-[#f8fbf7] shadow-float lg:grid-cols-[240px_1fr]">

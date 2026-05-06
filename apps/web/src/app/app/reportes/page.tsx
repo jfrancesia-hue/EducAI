@@ -12,6 +12,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
+import { getServerSession, isAdminSession } from "../../../lib/server-session";
 
 const reportCards = [
   {
@@ -49,9 +50,11 @@ const rows = [
   ["Ciencias 5C", "88%", "Alto", "Compartir reporte"],
 ];
 
-export default function ReportsModulePage() {
+export default async function ReportsModulePage() {
+  const showAdmin = isAdminSession(await getServerSession());
+
   return (
-    <AppShell title="Modulo de reportes">
+    <AppShell title="Modulo de reportes" showAdmin={showAdmin}>
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.82fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
