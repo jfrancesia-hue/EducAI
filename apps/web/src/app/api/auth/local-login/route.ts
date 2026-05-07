@@ -5,17 +5,17 @@ import { getSessionSecret } from "../../../../lib/session-jwt";
 export const runtime = "nodejs";
 
 const SESSION_COOKIE = "educai_session";
-const FOUNDER_EMAIL = "jfrancesia@gmail.com";
-const FOUNDER_PASSWORD = "demo1234";
 
 export async function POST(request: NextRequest) {
+  const configuredFounderEmail = process.env.EDUCAI_FOUNDER_EMAIL;
   const configuredFounderPassword = process.env.EDUCAI_FOUNDER_PASSWORD;
 
-  if (process.env.NODE_ENV === "production" && !configuredFounderPassword) {
+  if (!configuredFounderEmail || !configuredFounderPassword) {
     return NextResponse.json(
       {
         code: "FOUNDER_LOGIN_DISABLED",
-        message: "Login fundador deshabilitado hasta configurar EDUCAI_FOUNDER_PASSWORD",
+        message:
+          "Login fundador deshabilitado: configurar EDUCAI_FOUNDER_EMAIL y EDUCAI_FOUNDER_PASSWORD",
       },
       { status: 404 },
     );
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
   const password = formValue(formData, "password");
   const acceptedTerms = formData.get("acceptTerms") === "on";
   const next = safeNextPath(formValue(formData, "next") || "/app");
-  const expectedEmail = (process.env.EDUCAI_FOUNDER_EMAIL ?? FOUNDER_EMAIL).toLowerCase();
-  const expectedPassword = configuredFounderPassword ?? FOUNDER_PASSWORD;
+  const expectedEmail = configuredFounderEmail.toLowerCase();
+  const expectedPassword = configuredFounderPassword;
   const secret = getSessionSecret();
 
   if (!acceptedTerms) {

@@ -105,8 +105,9 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                       className="h-full w-full bg-transparent text-[#14120f] outline-none placeholder:text-[#9a907d]"
                       name="email"
                       placeholder="usuario@institucion.edu"
-                      defaultValue="jfrancesia@gmail.com"
                       type="email"
+                      autoComplete="email"
+                      required
                     />
                   </span>
                 </label>
@@ -119,6 +120,8 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
                       name="password"
                       placeholder="••••••••••"
                       type="password"
+                      autoComplete="current-password"
+                      required
                     />
                   </span>
                 </label>
@@ -163,8 +166,11 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
               </div>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                Acceso fundador de revision: jfrancesia@gmail.com / demo1234. En produccion se
-                recomienda conectar el proveedor SSO o Supabase Auth.
+                Acceso restringido. Si necesitas una invitacion para el piloto, escribinos desde
+                <Link className="ml-1 font-semibold text-[#087968] underline" href="/contacto">
+                  /contacto
+                </Link>
+                .
               </p>
             </div>
           </div>

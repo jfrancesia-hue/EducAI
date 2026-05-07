@@ -139,4 +139,26 @@ describe.skipIf(SKIP)("RLS smoke (aislamiento multi-tenant)", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("Role: tenant A no ve roles tenant-scoped de B (pero si ve los globales)", async () => {
+    const rolesB = await withServiceRole(prisma, (tx) =>
+      tx.role.findMany({
+        where: { tenantId: tenantB.id },
+        select: { id: true, tenantId: true },
+      }),
+    );
+
+    const visibleFromA = await withRlsClaims(
+      prisma,
+      { role: "ADMIN", tenant_id: tenantA.id },
+      (tx) => tx.role.findMany({ select: { id: true, tenantId: true } }),
+    );
+
+    const visibleIds = new Set(visibleFromA.map((r) => r.id));
+    for (const roleB of rolesB) {
+      expect(visibleIds.has(roleB.id)).toBe(false);
+    }
+
+    expect(visibleFromA.every((r) => r.tenantId === null || r.tenantId === tenantA.id)).toBe(true);
+  });
 });
