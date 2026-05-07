@@ -19,12 +19,12 @@ const agentHeroImage =
   "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1500&q=85";
 
 const agentStats = [
-  { label: "Casos activos", value: "12", icon: Brain, tone: "bg-[#18b6a4] text-white" },
-  { label: "Entregables", value: "36", icon: CheckCircle2, tone: "bg-[#f8d95c] text-[#11231f]" },
-  { label: "Revisiones", value: "2", icon: ShieldCheck, tone: "bg-[#ef5da8] text-white" },
+  { label: "Cursos activos", value: "12", icon: Brain, tone: "bg-[#18b6a4] text-white" },
+  { label: "Borradores", value: "36", icon: CheckCircle2, tone: "bg-[#f8d95c] text-[#11231f]" },
+  { label: "Docentes", value: "8", icon: ShieldCheck, tone: "bg-[#ef5da8] text-white" },
 ];
 
-const capabilities = ["Planifica", "Produce", "Corrige", "Evalua"];
+const capabilities = ["Planifica", "Produce", "Ajusta", "Evalua"];
 
 export default function AgentPage() {
   return (
@@ -92,8 +92,9 @@ export default function AgentPage() {
                   El agente que convierte una idea docente en clases, recursos y evaluaciones.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-white/86 sm:text-lg">
-                  No es un chatbot. EducAI entiende el objetivo, ordena la clase, produce borradores
-                  editables y deja todo listo para que el docente decida.
+                  No es un chatbot ni un agente solo para casos especiales. EducAI entiende el
+                  objetivo, ordena la clase, produce borradores editables y propone apoyos para
+                  distintos ritmos sin quitarle control al docente.
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -116,9 +117,14 @@ export default function AgentPage() {
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button className="min-h-14 bg-[#ff7a1a] px-8 text-base font-bold text-white shadow-[0_18px_42px_rgba(255,122,26,0.38)] hover:bg-[#ea6508]">
-                    Ejecutar Agente IA
-                    <Sparkles className="h-5 w-5" aria-hidden="true" />
+                  <Button
+                    asChild
+                    className="min-h-14 bg-[#ff7a1a] px-8 text-base font-bold text-white shadow-[0_18px_42px_rgba(255,122,26,0.38)] hover:bg-[#ea6508]"
+                  >
+                    <Link href="#workspace">
+                      Ejecutar Agente IA
+                      <Sparkles className="h-5 w-5" aria-hidden="true" />
+                    </Link>
                   </Button>
                   <Button
                     asChild
@@ -177,16 +183,21 @@ export default function AgentPage() {
                     Recurso pedagogico listo para editar antes de usar en clase.
                   </p>
                 </div>
-                <Button className="mt-4 min-h-12 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]">
-                  Ejecutar guia ahora
-                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <Button
+                  asChild
+                  className="mt-4 min-h-12 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
+                >
+                  <Link href="#workspace">
+                    Ejecutar guia ahora
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  </Link>
                 </Button>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="p-5 sm:p-7">
+        <section id="workspace" className="scroll-mt-6 p-5 sm:p-7">
           <AgentWorkspace />
         </section>
       </div>

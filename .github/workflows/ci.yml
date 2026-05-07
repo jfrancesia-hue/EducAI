@@ -44,6 +44,7 @@ jobs:
       DATABASE_URL: postgresql://educai:educai_ci_password@localhost:5432/educai_ci?schema=public
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
+      SKIP_RLS_SMOKE: "0"
 
     steps:
       - name: Checkout
@@ -72,7 +73,41 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Apply Prisma migrations
+        run: pnpm db:deploy
+
+      - name: Apply Supabase migrations (RLS + storage policies)
+        run: |
+          for sql in supabase/migrations/*.sql; do
+            echo "==> $sql"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$sql"
+          done
+
+      - name: Create non-superuser role for RLS smoke
+        # `educai` (POSTGRES_USER) es superuser y bypassa RLS automaticamente,
+        # asi que un smoke corrido con esa URL daria falso verde. Creamos un
+        # rol app-level NOBYPASSRLS y lo usamos solo para los tests RLS.
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+            do $$
+            begin
+              if not exists (select 1 from pg_roles where rolname = 'educai_app') then
+                create role educai_app login password 'educai_app_password' nobypassrls nosuperuser;
+              end if;
+            end $$;
+            grant usage on schema public to educai_app;
+            grant select, insert, update, delete on all tables in schema public to educai_app;
+            grant usage, select on all sequences in schema public to educai_app;
+            alter default privileges in schema public grant select, insert, update, delete on tables to educai_app;
+            alter default privileges in schema public grant usage, select on sequences to educai_app;
+          SQL
+
+      - name: Seed database
+        run: pnpm db:seed
+
       - name: Test
+        env:
+          DATABASE_URL_APP: postgresql://educai_app:educai_app_password@localhost:5432/educai_ci?schema=public
         run: pnpm test
 
       - name: Build

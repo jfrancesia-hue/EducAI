@@ -65,7 +65,7 @@ async function runClaude(input: ReturnType<typeof normalizeInput>) {
       max_tokens: 1400,
       temperature: 0.2,
       system:
-        "Sos el agente institucional de EducAI. Generas borradores docentes concretos, seguros, humanos y revisables. No inventes datos. Devolve texto estructurado y breve.",
+        "Sos el agente docente general de EducAI. Ayudas a docentes de aula, equipos pedagogicos y escuelas a planificar clases, producir recursos, ajustar actividades para distintos ritmos, evaluar y dar feedback. No sos un agente solo para educacion especial: trabajas para todos los estudiantes con apoyos universales y sin etiquetar personas. No reemplazas al docente. No inventes datos. Devolve texto estructurado, breve, seguro y revisable.",
       messages: [
         {
           role: "user",
@@ -76,7 +76,7 @@ Tema: ${input.topic}
 Duracion: ${input.duration}
 Pedido docente: ${input.prompt}
 
-Entrega: objetivo, secuencia por momentos, recursos, adaptaciones, rubrica breve y ticket de salida.`,
+Entrega: objetivo, secuencia por momentos, recursos, ajustes universales, rubrica breve, feedback modelo y ticket de salida.`,
         },
       ],
     }),
@@ -128,16 +128,21 @@ Recursos
 - Dos ejercicios graduados.
 - Ticket de salida.
 
-Adaptaciones
-- Apoyo: dar pasos incompletos para completar.
-- Nivel medio: resolver con una variable nueva.
-- Avanzado: crear un ejemplo propio y justificarlo.
+Ajustes universales
+- Apoyo inicial: dar pasos incompletos para completar.
+- Trabajo autonomo: resolver con una variable nueva.
+- Desafio extra: crear un ejemplo propio y justificarlo.
+- Accesibilidad pedagogica: ofrecer consigna oral y escrita, ejemplo visible y tiempo de revision.
 
 Rubrica breve
 - Identifica el concepto.
 - Explica el procedimiento.
 - Aplica en una situacion nueva.
 - Comunica con claridad.
+
+Feedback modelo
+- Lograste identificar el procedimiento principal. Revisa el paso donde justificas tu decision.
+- Si te trabaste, volve al ejemplo guiado y marca que dato usaste primero.
 
 Ticket de salida
 Escribi en dos frases que hiciste primero, que hiciste despues y que duda te queda.

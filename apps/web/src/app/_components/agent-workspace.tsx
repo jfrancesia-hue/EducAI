@@ -21,9 +21,9 @@ import { Badge, Button } from "@educai/ui";
 const scenarios = [
   {
     id: "lesson-design",
-    title: "Plan de clase en 35 minutos",
+    title: "Plan de clase para aula general",
     context:
-      "Curso 7A. El docente necesita trabajar proporcionalidad con inicio claro, practica guiada y cierre evaluable.",
+      "Curso 7A. El docente necesita trabajar proporcionalidad con inicio claro, practica guiada y cierre evaluable para todo el grupo.",
     topic: "Proporcionalidad directa",
     subject: "Matematica",
     grade: "7A",
@@ -36,6 +36,26 @@ const scenarios = [
       "Consigna lista para proyectar",
       "Practica con solucionario docente",
       "Ticket de salida para evaluar comprension",
+    ],
+  },
+  {
+    id: "universal-differentiation",
+    title: "Ajustes para distintos ritmos",
+    context:
+      "Curso 4B. Hay estudiantes con ritmos distintos y el docente necesita una misma actividad con apoyos graduados.",
+    topic: "Lectura de graficos",
+    subject: "Ciencias sociales",
+    grade: "4B",
+    duration: "45 minutos",
+    prompt:
+      "Crear una actividad comun con apoyos, desafio extra y criterios observables sin etiquetar estudiantes.",
+    guardrail:
+      "Usar enfoque universal: apoyos graduados para todos, sin diagnosticar ni separar por condiciones personales.",
+    outputs: [
+      "Actividad base para todo el curso",
+      "Apoyos graduados por nivel de autonomia",
+      "Desafio de extension",
+      "Criterios de observacion docente",
     ],
   },
   {
@@ -83,7 +103,7 @@ const scenarios = [
 const steps = [
   { label: "Definir", icon: Target, detail: "Objetivo, curso, tiempo y evidencia esperada" },
   { label: "Producir", icon: FileText, detail: "Plan, consignas, recursos y rubricas" },
-  { label: "Ordenar", icon: Route, detail: "Secuencia aplicable para aula real" },
+  { label: "Ajustar", icon: Route, detail: "Apoyos y desafios para distintos ritmos" },
   { label: "Comunicar", icon: MessageCircle, detail: "Resumen docente o institucional" },
   { label: "Evaluar", icon: ClipboardList, detail: "Criterios, feedback y proximo paso" },
 ];
@@ -249,8 +269,8 @@ export function AgentWorkspace() {
                 Produccion pedagogica revisable
               </h2>
               <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-                Ahora el agente se ejecuta desde la UI. En local usa template sin costo; en
-                produccion usa Claude si `ANTHROPIC_API_KEY` esta configurada.
+                El agente trabaja para docentes de aula general: planifica, produce, ajusta por
+                ritmos, evalua y deja cada salida como borrador editable.
               </p>
             </div>
             <Button

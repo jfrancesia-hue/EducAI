@@ -43,6 +43,22 @@ Accion: usar modelo fuerte, salida estructurada, guardrails y revision humana.
 - OCR: solo transcribir, no resolver.
 - Audio: transcribir y resumir, no conversar desde audio completo.
 
+## Limites Por Plan
+
+Estos limites son comerciales y deben implementarse con cuotas por tenant antes
+de venta publica:
+
+- Docente: cuota individual mensual, historial personal y sin workspace
+  compartido.
+- Equipo docente: cuota compartida, biblioteca de recursos y roles basicos.
+- Escuela: cuota institucional, multiples roles, reportes y auditoria.
+- Red educativa: cuota por sede, analitica consolidada y soporte de adopcion.
+- Gobierno / Ministerio: contrato a medida, SLA, integraciones y limites
+  definidos por convenio.
+
+Cuando un plan supera cuota, el producto debe ofrecer upgrade, compra adicional
+o pasar a templates locales sin costo de LLM.
+
 ## Cuando Escalar A Humano
 
 - Crisis emocional.

@@ -5,15 +5,52 @@ import {
   Building2,
   CheckCircle2,
   GraduationCap,
+  UserRoundCheck,
   Landmark,
   Layers,
   ShieldCheck,
   Sparkles,
+  UsersRound,
 } from "lucide-react";
 
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@educai/ui";
 
 const plans = [
+  {
+    id: "docente",
+    name: "Docente",
+    price: "USD 9",
+    cadence: "/ mes",
+    summary: "Para docentes que quieren planificar, producir y evaluar mejor en menos tiempo.",
+    icon: UserRoundCheck,
+    tone: "bg-[#e7fbf7] text-[#087968]",
+    accent: "bg-[#18b6a4]",
+    env: "STRIPE_PRICE_DOCENTE",
+    features: [
+      "1 docente",
+      "Agente IA para clases, recursos y rubricas",
+      "Historial de entregables personales",
+      "Borradores editables con control docente",
+    ],
+  },
+  {
+    id: "equipo",
+    name: "Equipo docente",
+    price: "USD 49",
+    cadence: "/ mes",
+    summary: "Para departamentos o equipos chicos que comparten criterios, recursos y seguimiento.",
+    icon: UsersRound,
+    tone: "bg-[#fff6c9] text-[#876100]",
+    accent: "bg-[#f8d95c]",
+    env: "STRIPE_PRICE_EQUIPO",
+    featured: true,
+    features: [
+      "Hasta 10 docentes",
+      "Biblioteca compartida de recursos",
+      "Rubricas y feedback por criterio comun",
+      "Seguimiento semanal por curso o materia",
+    ],
+  },
   {
     id: "escuela",
     name: "Escuela",
@@ -21,8 +58,8 @@ const plans = [
     cadence: "/ mes",
     summary: "Para una institucion que quiere activar EducAI con docentes y coordinacion.",
     icon: Building2,
-    tone: "bg-[#e7fbf7] text-[#087968]",
-    accent: "bg-[#18b6a4]",
+    tone: "bg-[#fdeaf4] text-[#b82170]",
+    accent: "bg-[#ef5da8]",
     env: "STRIPE_PRICE_ESCUELA",
     features: [
       "Hasta 40 docentes",
@@ -38,10 +75,9 @@ const plans = [
     cadence: "/ mes",
     summary: "Para grupos de escuelas que necesitan visibilidad multi-sede y adopcion guiada.",
     icon: Layers,
-    tone: "bg-[#fff6c9] text-[#876100]",
-    accent: "bg-[#f8d95c]",
+    tone: "bg-[#efedff] text-[#4f3ee2]",
+    accent: "bg-[#7c6cff]",
     env: "STRIPE_PRICE_RED",
-    featured: true,
     features: [
       "Hasta 5 instituciones",
       "Panel directivo y analitica consolidada",
@@ -56,8 +92,8 @@ const plans = [
     cadence: "",
     summary: "Para despliegues territoriales con integraciones, seguridad y soporte dedicado.",
     icon: Landmark,
-    tone: "bg-[#efedff] text-[#4f3ee2]",
-    accent: "bg-[#7c6cff]",
+    tone: "bg-[#eef5f3] text-[#11231f]",
+    accent: "bg-[#11231f]",
     env: "STRIPE_PRICE_MINISTERIO",
     features: [
       "Tenancy avanzado",
@@ -104,14 +140,14 @@ export default function PlansPage({ searchParams }: PlanPageProps) {
           <div className="grid gap-8 py-16 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
             <div>
               <Badge className="border-white/20 bg-white/12 text-white" variant="outline">
-                Monetizacion lista con Stripe
+                Monetizacion por planes
               </Badge>
               <h1 className="mt-5 max-w-3xl font-display text-5xl font-bold leading-tight tracking-tight sm:text-6xl">
-                Planes simples para vender EducAI a escuelas y redes.
+                Planes para docentes, equipos, escuelas y redes.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/76">
-                Suscripciones mensuales con Checkout, cupones y precios configurables desde Stripe.
-                La plataforma queda preparada para cobrar sin construir billing manual.
+                La misma estructura economica puede venderse individual, por equipo o por
+                institucion. Stripe maneja Checkout, cupones y suscripciones mensuales.
               </p>
             </div>
             <div className="rounded-lg border border-white/14 bg-white/10 p-5 backdrop-blur-xl">
@@ -120,7 +156,7 @@ export default function PlansPage({ searchParams }: PlanPageProps) {
                 <p className="font-display text-xl font-semibold">Modelo rentable</p>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                {["MRR recurrente", "Ventas B2B", "Upgrade por red"].map((item) => (
+                {["Docente individual", "Equipo escolar", "Upgrade institucional"].map((item) => (
                   <div key={item} className="rounded-lg bg-white/10 p-4 text-sm text-white/78">
                     {item}
                   </div>
@@ -144,7 +180,7 @@ export default function PlansPage({ searchParams }: PlanPageProps) {
           </div>
         ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-5">
           {plans.map((plan) => {
             const configured = Boolean(process.env[plan.env]);
             const Icon = plan.icon;
@@ -256,7 +292,8 @@ export default function PlansPage({ searchParams }: PlanPageProps) {
 
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-600 shadow-whisper">
           Para activar cobro directo configura `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_APP_URL` y los
-          Price IDs `STRIPE_PRICE_ESCUELA`, `STRIPE_PRICE_RED` y `STRIPE_PRICE_MINISTERIO`.
+          Price IDs `STRIPE_PRICE_DOCENTE`, `STRIPE_PRICE_EQUIPO`, `STRIPE_PRICE_ESCUELA`,
+          `STRIPE_PRICE_RED` y `STRIPE_PRICE_MINISTERIO`.
         </div>
       </section>
     </main>

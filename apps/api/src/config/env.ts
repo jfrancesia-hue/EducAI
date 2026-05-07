@@ -22,6 +22,8 @@ export function validateRuntimeEnv(): void {
   if ((process.env.JWT_SECRET?.length ?? 0) < 32) {
     throw new Error("JWT_SECRET debe tener al menos 32 caracteres en produccion");
   }
+
+  assertDatabaseUrlDoesNotBypassRls(process.env.DATABASE_URL);
 }
 
 export function getAllowedOrigins(): string[] {
@@ -33,4 +35,23 @@ export function getAllowedOrigins(): string[] {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
+}
+
+function assertDatabaseUrlDoesNotBypassRls(databaseUrl: string | undefined): void {
+  if (!databaseUrl) {
+    return;
+  }
+
+  let username = "";
+  try {
+    username = new URL(databaseUrl).username;
+  } catch {
+    throw new Error("DATABASE_URL de produccion no es una URL valida");
+  }
+
+  if (["postgres", "supabase_admin"].includes(username)) {
+    throw new Error(
+      "DATABASE_URL de produccion no debe usar un rol con BYPASSRLS; usa un rol app NOBYPASSRLS como educai_app",
+    );
+  }
 }

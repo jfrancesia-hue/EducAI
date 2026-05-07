@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 const STRIPE_API_VERSION = "2026-02-25.clover";
 
 const priceEnvByPlan = {
+  docente: "STRIPE_PRICE_DOCENTE",
+  equipo: "STRIPE_PRICE_EQUIPO",
   escuela: "STRIPE_PRICE_ESCUELA",
   red: "STRIPE_PRICE_RED",
   ministerio: "STRIPE_PRICE_MINISTERIO",

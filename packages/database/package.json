@@ -10,6 +10,7 @@
     "dev": "tsc -w -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
+    "test:rls": "vitest run test/rls-smoke.spec.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:validate": "node ../../scripts/prisma-validate.mjs",
     "db:generate": "prisma generate",
