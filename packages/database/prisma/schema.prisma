@@ -612,3 +612,19 @@ model AuditLog {
   @@index([createdAt])
 }
 
+/// Tabla de idempotencia para webhooks de Twilio. Twilio reintenta cada
+/// webhook hasta 3 veces si la respuesta tarda >15s, lo que generaria
+/// duplicados de respuesta y doble cobro de tokens Claude.
+/// El messageSid es asignado por Twilio y es unico por mensaje.
+model ProcessedTwilioMessage {
+  messageSid  String   @id
+  receivedAt  DateTime @default(now())
+  completedAt DateTime?
+  outcome     String   @default("received")
+  tenantId    String?
+  studentId   String?
+
+  @@index([receivedAt])
+  @@index([tenantId])
+}
+
