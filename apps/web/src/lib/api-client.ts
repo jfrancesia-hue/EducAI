@@ -55,14 +55,9 @@ export async function apiFetch<T>(path: string, options: ApiClientOptions = {}):
   const payload = text ? safeParse(text) : null;
 
   if (!response.ok) {
-    const code =
-      typeof payload === "object" && payload !== null && "code" in payload
-        ? String((payload as { code: unknown }).code)
-        : `HTTP_${response.status}`;
-    const message =
-      typeof payload === "object" && payload !== null && "message" in payload
-        ? String((payload as { message: unknown }).message)
-        : response.statusText;
+    const fallbackCode = `HTTP_${response.status}`;
+    const code = pickStringField(payload, "code") ?? fallbackCode;
+    const message = pickStringField(payload, "message") ?? response.statusText;
     throw new ApiClientError(response.status, code, message);
   }
 
@@ -81,4 +76,10 @@ function safeParse(text: string): unknown {
   } catch {
     return text;
   }
+}
+
+function pickStringField(payload: unknown, key: string): string | undefined {
+  if (typeof payload !== "object" || payload === null) return undefined;
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
 }

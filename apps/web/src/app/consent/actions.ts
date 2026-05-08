@@ -13,12 +13,12 @@ export async function signConsentAction(
   _prev: ConsentFormState,
   formData: FormData,
 ): Promise<ConsentFormState> {
-  const studentId = String(formData.get("studentId") ?? "").trim();
-  const next = String(formData.get("next") ?? "/app").trim();
+  const studentId = readField(formData, "studentId").trim();
+  const next = (readField(formData, "next") || "/app").trim();
   const terms = formData.get("termsAccepted") === "on";
   const privacy = formData.get("privacyAccepted") === "on";
   const ai = formData.get("aiProcessingAccepted") === "on";
-  const fullName = String(formData.get("fullName") ?? "").trim();
+  const fullName = readField(formData, "fullName").trim();
 
   if (!studentId) {
     return { error: "Falta el alumno asociado al consentimiento." };
@@ -55,4 +55,9 @@ function safeNext(next: string): string {
     return "/app";
   }
   return next;
+}
+
+function readField(formData: FormData, key: string): string {
+  const raw = formData.get(key);
+  return typeof raw === "string" ? raw : "";
 }

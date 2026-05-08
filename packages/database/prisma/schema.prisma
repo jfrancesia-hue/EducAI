@@ -431,15 +431,43 @@ model Subscription {
   status           SubscriptionStatus @default(ACTIVE)
   provider         String
   providerSubId    String?
+  providerCustomerId String?
+  externalReference String?           @unique
   currentPeriodEnd DateTime
   canceledAt       DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
   family           Family             @relation(fields: [familyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  events           BillingEvent[]
 
   @@index([tenantId])
   @@index([status])
+  @@index([provider, providerSubId])
+}
+
+/// Eventos de billing recibidos por webhook (MercadoPago, Stripe, etc).
+/// Sirve como log auditable y como idempotencia (eventId PK + provider).
+model BillingEvent {
+  id              String   @id @default(cuid())
+  provider        String
+  providerEventId String
+  eventType       String
+  status          String
+  subscriptionId  String?
+  tenantId        String?
+  payload         Json
+  receivedAt      DateTime @default(now())
+  processedAt     DateTime?
+  outcome         String?
+  errorMessage    String?
+
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([provider, providerEventId])
+  @@index([tenantId])
+  @@index([subscriptionId])
+  @@index([receivedAt])
 }
 
 model Curriculum {
