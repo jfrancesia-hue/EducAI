@@ -5,6 +5,8 @@ import { createHmac } from "node:crypto";
 import type { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { AppModule } from "../src/app.module.js";
+import { GlobalExceptionFilter } from "../src/common/filters/global-exception.filter.js";
+import { AppLogger } from "../src/common/logger/app-logger.service.js";
 import { PrismaService } from "../src/prisma/prisma.service.js";
 
 const TEST_JWT_SECRET = "test-secret-with-enough-length-for-auth";
@@ -72,9 +74,11 @@ describe("Students API (e2e)", () => {
       .compile();
 
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix("api/v1", { exclude: ["health", "readiness"] });
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
+    app.useGlobalFilters(new GlobalExceptionFilter(app.get(AppLogger)));
     await app.init();
   });
 
@@ -84,7 +88,7 @@ describe("Students API (e2e)", () => {
 
   it("POST /students rechaza body invalido (sin tenantId, grade fuera de rango)", async () => {
     const response = await request(app.getHttpServer())
-      .post("/students")
+      .post("/api/v1/students")
       .set("Authorization", `Bearer ${familyToken}`)
       .send({ familyId: "fam_1", firstName: "X", lastName: "Y", grade: 99 });
 
@@ -99,7 +103,7 @@ describe("Students API (e2e)", () => {
     });
 
     const response = await request(app.getHttpServer())
-      .post("/students")
+      .post("/api/v1/students")
       .set("Authorization", `Bearer ${familyToken}`)
       .send({
         tenantId: "tnt_1",
@@ -114,7 +118,7 @@ describe("Students API (e2e)", () => {
   });
 
   it("GET /students/:id sin token devuelve 401", async () => {
-    const response = await request(app.getHttpServer()).get("/students/stu_1");
+    const response = await request(app.getHttpServer()).get("/api/v1/students/stu_1");
 
     expect(response.status).toBe(401);
     expect(response.body.code).toBe("AUTH_TOKEN_MISSING");
@@ -128,7 +132,7 @@ describe("Students API (e2e)", () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get("/students/stu_1")
+      .get("/api/v1/students/stu_1")
       .set(
         "Authorization",
         `Bearer ${signToken({
@@ -148,7 +152,7 @@ describe("Students API (e2e)", () => {
     prismaMock.student.findFirst.mockResolvedValueOnce(null);
 
     const response = await request(app.getHttpServer())
-      .get("/students/stu_404")
+      .get("/api/v1/students/stu_404")
       .set("Authorization", `Bearer ${familyToken}`);
 
     expect(response.status).toBe(404);
@@ -170,7 +174,7 @@ describe("Students API (e2e)", () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get("/students/stu_1/progress")
+      .get("/api/v1/students/stu_1/progress")
       .set("Authorization", `Bearer ${familyToken}`);
 
     expect(response.status).toBe(200);

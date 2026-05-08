@@ -4,11 +4,16 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { json, urlencoded } from "express";
 import { AppModule } from "./app.module.js";
+import { initSentry } from "./common/observability/sentry.js";
 
 async function bootstrap() {
+  initSentry("educai-whatsapp-agent");
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     cors: false,
   });
+
+  app.enableShutdownHooks();
 
   // Twilio envía webhooks como x-www-form-urlencoded; sin esto el body llega vacío.
   app.use(urlencoded({ extended: false, limit: "1mb" }));
