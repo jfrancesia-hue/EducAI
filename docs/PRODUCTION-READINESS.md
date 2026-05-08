@@ -6,13 +6,25 @@ Proyecto Supabase objetivo: `https://mfjpoaipjlimzdxkusav.supabase.co`.
 
 Estado Supabase actual:
 
-- Migraciones Prisma aplicadas y baselined en Supabase.
-- Seed de demo aplicado: 3 familias, 5 estudiantes con `StudentProfile`.
-- Rol `educai_app` creado sin superuser ni `BYPASSRLS`.
-- `DATABASE_URL_APP` configurado localmente para usar `educai_app`.
-- Smoke test RLS multi-tenant pasa contra Supabase real usando `DATABASE_URL_APP`.
+- Migraciones Prisma aplicadas y baselined en Supabase: `001_init`,
+  `002_diagnostic_state`, `enable_rls`, `role_rls`, `processed_twilio_message`,
+  `parental_consent`, `billing_events` (todas verificadas el 2026-05-07).
+- Seed de demo aplicado: 4 tenants (incluye `familia-nativos-consultora` y
+  `familia-garcia-salta` requeridos para el smoke), 5 estudiantes con
+  `StudentProfile`.
+- Rol `educai_app` recreado el 2026-05-07 con NOBYPASSRLS y grants completos
+  sobre `public` (incluido default privileges para tablas/secuencias/funciones
+  futuras). Password rotada — no se commitea (ver `scripts/create-educai-app-role.sql`).
+- `DATABASE_URL_APP` actualizado en `apps/api/.env` local con la password real
+  del rol. Antes apuntaba al mismo postgres superuser, lo que invalidaba la
+  defensa RLS.
+- Smoke test RLS multi-tenant: **8/8 pasa contra Supabase prod real** con
+  `DATABASE_URL_APP` apuntando a `educai_app`. Cubre aislamiento de Student,
+  Subscription, AuditLog (WITH CHECK), Role y service_role bypass.
 - `supabase/migrations/001_initial_rls.sql` aplicado contra Supabase.
-- `supabase/migrations/002_storage_policies.sql` pendiente: debe aplicarse desde Supabase SQL Editor/admin porque la conexion `postgres` no es owner de `storage.objects`.
+- `supabase/migrations/002_storage_policies.sql` pendiente: confirmado que
+  requiere admin SQL Editor del Dashboard porque la conexion `postgres` no es
+  owner de `storage.objects` (error `must be owner of table objects`).
 
 ## Veredicto
 
