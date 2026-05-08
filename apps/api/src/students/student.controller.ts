@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nest
 import { CurrentUser } from "../auth/authenticated-user.decorator.js";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard.js";
 import { isElevatedRole, type AuthenticatedUser } from "../auth/types.js";
+import { Audited } from "../common/audit/audited.decorator.js";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import { UpdateStudentDto } from "./dto/update-student.dto.js";
@@ -18,6 +19,7 @@ export class StudentController {
 
   @Post()
   @ApiCreatedResponse({ description: "Perfil de estudiante creado" })
+  @Audited({ action: "student.created", entity: "Student" })
   create(@Body() dto: CreateStudentDto, @CurrentUser() user: AuthenticatedUser) {
     return this.students.create(
       {
@@ -31,12 +33,14 @@ export class StudentController {
 
   @Get(":id")
   @ApiOkResponse({ description: "Perfil de estudiante" })
+  @Audited({ action: "student.read", entity: "Student" })
   findOne(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.students.findOne(id, user);
   }
 
   @Patch(":id")
   @ApiOkResponse({ description: "Perfil actualizado" })
+  @Audited({ action: "student.updated", entity: "Student" })
   update(
     @Param("id") id: string,
     @Body() dto: UpdateStudentDto,
@@ -47,12 +51,14 @@ export class StudentController {
 
   @Post(":id/diagnostic")
   @ApiCreatedResponse({ description: "Diagnostico iniciado" })
+  @Audited({ action: "student.diagnostic_started", entity: "Student" })
   startDiagnostic(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.students.startDiagnostic(id, user);
   }
 
   @Post(":id/diagnostic/answer")
   @ApiOkResponse({ description: "Respuesta diagnosticada" })
+  @Audited({ action: "student.diagnostic_answered", entity: "Student" })
   answerDiagnostic(
     @Param("id") id: string,
     @Body() dto: DiagnosticAnswerDto,
@@ -63,6 +69,7 @@ export class StudentController {
 
   @Get(":id/progress")
   @ApiOkResponse({ description: "Progreso agregado" })
+  @Audited({ action: "student.progress_read", entity: "Student" })
   progress(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.students.progress(id, user);
   }

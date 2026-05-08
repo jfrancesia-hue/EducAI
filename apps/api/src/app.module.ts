@@ -1,6 +1,9 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import { AgentModule } from "./agent/agent.module.js";
+import { AuditLogInterceptor } from "./common/audit/audit-log.interceptor.js";
+import { AuditLogModule } from "./common/audit/audit-log.module.js";
 import { LoggerModule } from "./common/logger/logger.module.js";
 import { RateLimitGuard } from "./common/rate-limit/rate-limit.guard.js";
 import { CurriculumModule } from "./curriculum/curriculum.module.js";
@@ -14,12 +17,19 @@ import { StudentModule } from "./students/student.module.js";
     ConfigModule.forRoot({ isGlobal: true }),
     LoggerModule,
     PrismaModule,
+    AuditLogModule,
     StudentModule,
     CurriculumModule,
     LessonPlanModule,
     AgentModule,
   ],
   controllers: [HealthController],
-  providers: [RateLimitGuard],
+  providers: [
+    RateLimitGuard,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLogInterceptor,
+    },
+  ],
 })
 export class AppModule {}

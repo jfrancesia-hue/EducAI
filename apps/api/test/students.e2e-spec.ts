@@ -30,6 +30,7 @@ const prismaMock = {
   $connect: vi.fn().mockResolvedValue(undefined),
   $disconnect: vi.fn().mockResolvedValue(undefined),
   withUser: vi.fn(),
+  withServiceRole: vi.fn(),
   student: {
     create: vi.fn(),
     findFirst: vi.fn(),
@@ -46,9 +47,15 @@ const prismaMock = {
   achievement: {
     findMany: vi.fn().mockResolvedValue([]),
   },
+  auditLog: {
+    create: vi.fn().mockResolvedValue({ id: "audit_1" }),
+  },
 };
 prismaMock.withUser.mockImplementation(
   (_user: unknown, callback: (db: typeof prismaMock) => unknown) => callback(prismaMock),
+);
+prismaMock.withServiceRole.mockImplementation((callback: (db: typeof prismaMock) => unknown) =>
+  callback(prismaMock),
 );
 
 describe("Students API (e2e)", () => {
