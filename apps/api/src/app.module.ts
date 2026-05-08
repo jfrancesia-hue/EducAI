@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { AgentModule } from "./agent/agent.module.js";
 import { LoggerModule } from "./common/logger/logger.module.js";
 import { RateLimitGuard } from "./common/rate-limit/rate-limit.guard.js";
 import { CurriculumModule } from "./curriculum/curriculum.module.js";
@@ -16,6 +17,7 @@ import { StudentModule } from "./students/student.module.js";
     StudentModule,
     CurriculumModule,
     LessonPlanModule,
+    AgentModule,
   ],
   controllers: [HealthController],
   providers: [RateLimitGuard],
