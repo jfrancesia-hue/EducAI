@@ -12,9 +12,9 @@
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'educai_app') then
-    create role educai_app with login password '<REPLACE_WITH_STRONG_PASSWORD>' nobypassrls;
+    create role educai_app with login password 'umFfWkfPzadgIIOBLffyHDsfMYmxTiuU' nobypassrls;
   else
-    alter role educai_app with password '<REPLACE_WITH_STRONG_PASSWORD>';
+    alter role educai_app with password 'umFfWkfPzadgIIOBLffyHDsfMYmxTiuU';
     alter role educai_app nobypassrls;
   end if;
 end $$;
