@@ -78,6 +78,8 @@ model User {
   auditLogs    AuditLog[]
   posts        CommunityPost[]
   comments     CommunityComment[]
+  parentalConsentsSigned   ParentalConsent[] @relation("ParentalConsentParent")
+  parentalConsentsRevoked  ParentalConsent[] @relation("ParentalConsentRevoker")
 
   @@index([tenantId])
   @@index([role])
@@ -240,6 +242,7 @@ model Student {
   school      School?     @relation(fields: [schoolId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   enrollments Enrollment[]
   profile     StudentProfile?
+  parentalConsents ParentalConsent[]
 
   @@index([tenantId])
   @@index([familyId])
@@ -610,6 +613,44 @@ model AuditLog {
   @@index([tenantId])
   @@index([actorId])
   @@index([createdAt])
+}
+
+/// Consentimiento parental verificable. Requerido por Ley 26.061 (AR),
+/// LGPD art. 14 §1 (BR) y COPPA §312.5 (US) para procesar datos de menores.
+///
+/// Cada fila representa una firma del padre/tutor para un alumno y una
+/// version del documento legal. Es revocable: revokedAt y revocationReason
+/// se setean cuando se ejerce el derecho de retiro.
+///
+/// Multi-tenant via tenantId con RLS. La query "tiene consent activo?"
+/// es: WHERE studentId = X AND revokedAt IS NULL ORDER BY signedAt DESC.
+model ParentalConsent {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  studentId           String
+  parentUserId        String
+  documentVersion     String
+  termsAccepted       Boolean
+  privacyAccepted     Boolean
+  aiProcessingAccepted Boolean
+  signedAt            DateTime @default(now())
+  ipAddress           String
+  userAgent           String   @db.VarChar(512)
+  revokedAt           DateTime?
+  revokedByUserId     String?
+  revocationReason    String?  @db.VarChar(512)
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent              User     @relation("ParentalConsentParent", fields: [parentUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  revokedBy           User?    @relation("ParentalConsentRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([studentId, documentVersion, parentUserId])
+  @@index([tenantId])
+  @@index([studentId, revokedAt])
+  @@index([parentUserId])
 }
 
 /// Tabla de idempotencia para webhooks de Twilio. Twilio reintenta cada

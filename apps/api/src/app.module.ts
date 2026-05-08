@@ -6,6 +6,7 @@ import { AuditLogInterceptor } from "./common/audit/audit-log.interceptor.js";
 import { AuditLogModule } from "./common/audit/audit-log.module.js";
 import { LoggerModule } from "./common/logger/logger.module.js";
 import { RateLimitGuard } from "./common/rate-limit/rate-limit.guard.js";
+import { ConsentModule } from "./consent/consent.module.js";
 import { CurriculumModule } from "./curriculum/curriculum.module.js";
 import { HealthController } from "./health.controller.js";
 import { LessonPlanModule } from "./lesson-plans/lesson-plan.module.js";
@@ -22,6 +23,7 @@ import { StudentModule } from "./students/student.module.js";
     CurriculumModule,
     LessonPlanModule,
     AgentModule,
+    ConsentModule,
   ],
   controllers: [HealthController],
   providers: [
