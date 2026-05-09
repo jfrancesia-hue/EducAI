@@ -33,6 +33,8 @@ export interface OrchestratorOutcome {
   safetyStatus?: string;
   reply?: string;
   diagnosticAction?: string;
+  tenantId?: string;
+  studentId?: string;
 }
 
 const DEFAULT_SUBJECT = "general";
@@ -288,6 +290,8 @@ export class TutorOrchestratorService {
       reply,
       safetyStatus: "safe",
       diagnosticAction,
+      tenantId: student.tenantId,
+      studentId: student.studentId,
     };
   }
 
@@ -343,6 +347,8 @@ export class TutorOrchestratorService {
       outboundSid: send.messageSid,
       reply: result.reply,
       safetyStatus: "safe",
+      tenantId: student.tenantId,
+      studentId: student.studentId,
     };
   }
 
@@ -393,6 +399,8 @@ export class TutorOrchestratorService {
       bypassedLlm: tutorResponse.bypassedLlm,
       safetyStatus: tutorResponse.safety.status,
       reply: tutorResponse.content,
+      tenantId: student.tenantId,
+      studentId: student.studentId,
     };
   }
 

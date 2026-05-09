@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import {
   Activity,
+  BadgeDollarSign,
   Bell,
   BookOpenCheck,
   Brain,
@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { VisualImage } from "../_components/visual-image";
+import { getServerSession, isAdminSession } from "../../lib/server-session";
 
 const classroom =
   "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1400&q=85";
@@ -43,7 +45,7 @@ type NavItem = {
   active?: boolean;
 };
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { label: "Hoy", icon: Home, href: "/app", active: true },
   { label: "Estudiantes", icon: UsersRound, href: "/app/estudiantes" },
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
@@ -153,11 +155,16 @@ const tasks = [
   "Validar ticket de salida para seguimiento semanal",
 ];
 
-export default function EducAiAppPage() {
+export default async function EducAiAppPage() {
+  const showAdmin = isAdminSession(await getServerSession());
+  const navItems = showAdmin
+    ? [...baseNavItems, { label: "Admin", icon: BadgeDollarSign, href: "/app/admin" }]
+    : baseNavItems;
+
   return (
     <main className="min-h-screen bg-[#eef5f3] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
       <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-lg border border-[#d5e1dc] bg-[#f8fbf7] shadow-float lg:grid-cols-[240px_1fr]">
-        <aside className="hidden border-r border-[#d5e1dc] bg-[#11231f] p-4 text-white lg:flex lg:flex-col lg:justify-between">
+        <aside className="hidden border-r border-[#d5e1dc] bg-[#11231f] p-4 text-white lg:sticky lg:top-5 lg:flex lg:max-h-[calc(100vh-40px)] lg:flex-col lg:justify-between lg:overflow-y-auto">
           <div>
             <Link href="/" className="flex items-center gap-3 rounded-lg bg-white/8 p-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8d95c] text-[#11231f]">
@@ -211,7 +218,7 @@ export default function EducAiAppPage() {
         </aside>
 
         <section className="min-w-0">
-          <header className="flex flex-col gap-4 border-b border-[#d5e1dc] bg-white/75 px-4 py-4 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <header className="sticky top-0 z-30 flex flex-col gap-4 border-b border-[#d5e1dc] bg-white/88 px-4 py-4 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               <button
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#d5e1dc] bg-white lg:hidden"
@@ -222,7 +229,7 @@ export default function EducAiAppPage() {
               </button>
               <div>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                  Modo demo - Colegio del Valle
+                  Colegio del Valle
                 </p>
                 <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
                   Centro de produccion pedagogica
@@ -253,7 +260,7 @@ export default function EducAiAppPage() {
             </div>
           </header>
 
-          <nav className="flex gap-2 overflow-x-auto border-b border-[#d5e1dc] bg-white/70 px-4 py-3 sm:px-6 lg:hidden">
+          <nav className="sticky top-[89px] z-20 flex gap-2 overflow-x-auto border-b border-[#d5e1dc] bg-white/88 px-4 py-3 backdrop-blur-xl sm:px-6 lg:hidden">
             {navItems.map((item) => (
               <Link
                 key={item.label}
@@ -274,7 +281,7 @@ export default function EducAiAppPage() {
           <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.24fr_0.76fr]">
             <section className="grid content-start gap-5">
               <div className="relative overflow-hidden rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-float sm:p-6">
-                <Image
+                <VisualImage
                   src={classroom}
                   alt="Aula real con estudiantes trabajando"
                   fill
@@ -488,7 +495,7 @@ export default function EducAiAppPage() {
             <aside className="grid content-start gap-5">
               <div className="overflow-hidden rounded-lg border border-[#d5e1dc] bg-white shadow-whisper">
                 <div className="relative aspect-[16/10]">
-                  <Image
+                  <VisualImage
                     src={student}
                     alt="Estudiante leyendo con acompanamiento"
                     fill
@@ -564,7 +571,7 @@ export default function EducAiAppPage() {
               </div>
 
               <div className="relative overflow-hidden rounded-lg border border-[#d5e1dc] bg-[#172d65] p-5 text-white shadow-whisper">
-                <Image
+                <VisualImage
                   src={workshop}
                   alt="Equipo docente trabajando sobre una mesa"
                   fill

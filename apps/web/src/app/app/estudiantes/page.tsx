@@ -2,6 +2,7 @@ import { Activity, CheckCircle2, MessageCircle, Search, UsersRound } from "lucid
 
 import { Badge, Button } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
+import { getServerSession, isAdminSession } from "../../../lib/server-session";
 
 const students = [
   {
@@ -44,9 +45,11 @@ const groups = [
   ["5C", "24 estudiantes", "2 tickets por revisar"],
 ];
 
-export default function StudentsModulePage() {
+export default async function StudentsModulePage() {
+  const showAdmin = isAdminSession(await getServerSession());
+
   return (
-    <AppShell title="Modulo de estudiantes">
+    <AppShell title="Modulo de estudiantes" showAdmin={showAdmin}>
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.05fr_0.95fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">

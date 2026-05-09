@@ -34,6 +34,16 @@ export class TwilioSignatureGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     if (this.config.get<string>("TWILIO_SKIP_SIGNATURE_VALIDATION") === "true") {
+      const nodeEnv = this.config.get<string>("NODE_ENV") ?? process.env.NODE_ENV;
+      if (nodeEnv === "production") {
+        this.logger.error(
+          { feature: "twilio-signature" },
+          "twilio.signature.skip_blocked_in_production",
+        );
+        throw new Error(
+          "TWILIO_SKIP_SIGNATURE_VALIDATION=true esta prohibido cuando NODE_ENV=production",
+        );
+      }
       this.logger.warn({ feature: "twilio-signature" }, "twilio.signature.skipped_via_env");
       return true;
     }

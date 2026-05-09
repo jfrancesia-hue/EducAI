@@ -14,6 +14,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  BadgeDollarSign,
   UsersRound,
 } from "lucide-react";
 
@@ -25,25 +26,29 @@ const navItems = [
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
   { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
-] satisfies Array<{ label: string; icon: typeof Home; href: string }>;
+  { label: "Admin", icon: BadgeDollarSign, href: "/app/admin", adminOnly: true },
+] satisfies Array<{ label: string; icon: typeof Home; href: Route; adminOnly?: boolean }>;
 
 type AppShellProps = {
   title: string;
   eyebrow?: string;
+  showAdmin?: boolean;
   children: ReactNode;
 };
 
 export function AppShell({
   title,
-  eyebrow = "Modo demo - Colegio del Valle",
+  eyebrow = "Colegio del Valle",
+  showAdmin = false,
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || showAdmin);
 
   return (
     <main className="min-h-screen bg-[#eef5f3] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
       <div className="grid min-h-[calc(100vh-24px)] overflow-hidden rounded-lg border border-[#d5e1dc] bg-[#f8fbf7] shadow-float lg:grid-cols-[240px_1fr]">
-        <aside className="hidden border-r border-[#d5e1dc] bg-[#11231f] p-4 text-white lg:flex lg:flex-col lg:justify-between">
+        <aside className="hidden border-r border-[#d5e1dc] bg-[#11231f] p-4 text-white lg:sticky lg:top-5 lg:flex lg:max-h-[calc(100vh-40px)] lg:flex-col lg:justify-between lg:overflow-y-auto">
           <div>
             <Link href="/" className="flex items-center gap-3 rounded-lg bg-white/8 p-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8d95c] text-[#11231f]">
@@ -60,12 +65,12 @@ export function AppShell({
             </Link>
 
             <nav className="mt-8 grid gap-2">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const active = pathname === item.href;
                 return (
                   <Link
                     key={item.label}
-                    href={item.href as Route}
+                    href={item.href}
                     className={[
                       "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
                       active
@@ -107,7 +112,7 @@ export function AppShell({
         </aside>
 
         <section className="min-w-0">
-          <header className="flex flex-col gap-4 border-b border-[#d5e1dc] bg-white/75 px-4 py-4 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <header className="sticky top-0 z-30 flex flex-col gap-4 border-b border-[#d5e1dc] bg-white/88 px-4 py-4 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
                 {eyebrow}
@@ -140,13 +145,13 @@ export function AppShell({
             </div>
           </header>
 
-          <nav className="flex gap-2 overflow-x-auto border-b border-[#d5e1dc] bg-white/70 px-4 py-3 sm:px-6 lg:hidden">
-            {navItems.map((item) => {
+          <nav className="sticky top-[89px] z-20 flex gap-2 overflow-x-auto border-b border-[#d5e1dc] bg-white/88 px-4 py-3 backdrop-blur-xl sm:px-6 lg:hidden">
+            {visibleNavItems.map((item) => {
               const active = pathname === item.href;
               return (
                 <Link
                   key={item.label}
-                  href={item.href as Route}
+                  href={item.href}
                   className={[
                     "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
                     active

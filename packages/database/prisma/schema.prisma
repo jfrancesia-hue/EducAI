@@ -1,16 +1,20 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["educai"]
 }
 
 enum TenantType {
   SCHOOL
   FAMILY
   MINISTRY
+
+  @@schema("educai")
 }
 
 enum UserRole {
@@ -21,6 +25,8 @@ enum UserRole {
   TEACHER
   PARENT
   STUDENT
+
+  @@schema("educai")
 }
 
 enum SubscriptionPlan {
@@ -28,6 +34,8 @@ enum SubscriptionPlan {
   BASIC
   PREMIUM
   FAMILY
+
+  @@schema("educai")
 }
 
 enum SubscriptionStatus {
@@ -35,6 +43,8 @@ enum SubscriptionStatus {
   CANCELED
   PAST_DUE
   IN_GRACE_PERIOD
+
+  @@schema("educai")
 }
 
 model Tenant {
@@ -55,6 +65,8 @@ model Tenant {
 
   @@index([type])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model User {
@@ -78,10 +90,14 @@ model User {
   auditLogs    AuditLog[]
   posts        CommunityPost[]
   comments     CommunityComment[]
+  parentalConsentsSigned   ParentalConsent[] @relation("ParentalConsentParent")
+  parentalConsentsRevoked  ParentalConsent[] @relation("ParentalConsentRevoker")
 
   @@index([tenantId])
   @@index([role])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Role {
@@ -99,6 +115,8 @@ model Role {
 
   @@unique([tenantId, name])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Permission {
@@ -110,6 +128,8 @@ model Permission {
   deletedAt   DateTime?
 
   roles       RolePermission[]
+
+  @@schema("educai")
 }
 
 model UserRoleAssignment {
@@ -122,6 +142,8 @@ model UserRoleAssignment {
   role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([userId, roleId])
+
+  @@schema("educai")
 }
 
 model RolePermission {
@@ -134,6 +156,8 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([roleId, permissionId])
+
+  @@schema("educai")
 }
 
 model School {
@@ -159,6 +183,8 @@ model School {
 
   @@index([tenantId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Family {
@@ -179,6 +205,8 @@ model Family {
 
   @@index([tenantId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Parent {
@@ -197,6 +225,8 @@ model Parent {
   @@index([tenantId])
   @@index([familyId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Teacher {
@@ -219,6 +249,8 @@ model Teacher {
   @@index([tenantId])
   @@index([schoolId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Student {
@@ -240,11 +272,14 @@ model Student {
   school      School?     @relation(fields: [schoolId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   enrollments Enrollment[]
   profile     StudentProfile?
+  parentalConsents ParentalConsent[]
 
   @@index([tenantId])
   @@index([familyId])
   @@index([schoolId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Classroom {
@@ -267,6 +302,8 @@ model Classroom {
   @@index([schoolId])
   @@index([teacherId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Subject {
@@ -283,6 +320,8 @@ model Subject {
 
   @@unique([tenantId, code])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Enrollment {
@@ -304,6 +343,8 @@ model Enrollment {
 
   @@unique([studentId, classroomId, subjectId])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model StudentProfile {
@@ -331,6 +372,8 @@ model StudentProfile {
   achievements        Achievement[]
 
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Conversation {
@@ -350,6 +393,8 @@ model Conversation {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model Message {
@@ -370,6 +415,8 @@ model Message {
   @@index([tenantId])
   @@index([conversationId])
   @@index([createdAt])
+
+  @@schema("educai")
 }
 
 model LearningSession {
@@ -387,6 +434,8 @@ model LearningSession {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model Achievement {
@@ -402,6 +451,8 @@ model Achievement {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model ParentReport {
@@ -418,6 +469,8 @@ model ParentReport {
 
   @@index([tenantId])
   @@index([familyId])
+
+  @@schema("educai")
 }
 
 model Subscription {
@@ -428,15 +481,47 @@ model Subscription {
   status           SubscriptionStatus @default(ACTIVE)
   provider         String
   providerSubId    String?
+  providerCustomerId String?
+  externalReference String?           @unique
   currentPeriodEnd DateTime
   canceledAt       DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
   family           Family             @relation(fields: [familyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  events           BillingEvent[]
 
   @@index([tenantId])
   @@index([status])
+  @@index([provider, providerSubId])
+
+  @@schema("educai")
+}
+
+/// Eventos de billing recibidos por webhook (MercadoPago, Stripe, etc).
+/// Sirve como log auditable y como idempotencia (eventId PK + provider).
+model BillingEvent {
+  id              String   @id @default(cuid())
+  provider        String
+  providerEventId String
+  eventType       String
+  status          String
+  subscriptionId  String?
+  tenantId        String?
+  payload         Json
+  receivedAt      DateTime @default(now())
+  processedAt     DateTime?
+  outcome         String?
+  errorMessage    String?
+
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([provider, providerEventId])
+  @@index([tenantId])
+  @@index([subscriptionId])
+  @@index([receivedAt])
+
+  @@schema("educai")
 }
 
 model Curriculum {
@@ -460,6 +545,8 @@ model Curriculum {
 
   @@index([tenantId])
   @@index([schoolId])
+
+  @@schema("educai")
 }
 
 model CurriculumGap {
@@ -477,6 +564,8 @@ model CurriculumGap {
 
   @@index([tenantId])
   @@index([curriculumId])
+
+  @@schema("educai")
 }
 
 model LessonPlan {
@@ -506,6 +595,8 @@ model LessonPlan {
 
   @@index([tenantId])
   @@index([teacherId])
+
+  @@schema("educai")
 }
 
 model ContentLibraryItem {
@@ -524,6 +615,8 @@ model ContentLibraryItem {
   verifiedBy  String?
 
   @@index([subjectArea])
+
+  @@schema("educai")
 }
 
 model TeacherCourse {
@@ -539,6 +632,8 @@ model TeacherCourse {
   verified          Boolean  @default(false)
 
   enrollments       TeacherEnrollment[]
+
+  @@schema("educai")
 }
 
 model TeacherEnrollment {
@@ -557,6 +652,8 @@ model TeacherEnrollment {
 
   @@unique([teacherId, courseId])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model CommunityPost {
@@ -577,6 +674,8 @@ model CommunityPost {
 
   @@index([tenantId])
   @@index([schoolId])
+
+  @@schema("educai")
 }
 
 model CommunityComment {
@@ -593,6 +692,8 @@ model CommunityComment {
 
   @@index([tenantId])
   @@index([postId])
+
+  @@schema("educai")
 }
 
 model AuditLog {
@@ -610,5 +711,65 @@ model AuditLog {
   @@index([tenantId])
   @@index([actorId])
   @@index([createdAt])
+
+  @@schema("educai")
+}
+
+/// Consentimiento parental verificable. Requerido por Ley 26.061 (AR),
+/// LGPD art. 14 §1 (BR) y COPPA §312.5 (US) para procesar datos de menores.
+///
+/// Cada fila representa una firma del padre/tutor para un alumno y una
+/// version del documento legal. Es revocable: revokedAt y revocationReason
+/// se setean cuando se ejerce el derecho de retiro.
+///
+/// Multi-tenant via tenantId con RLS. La query "tiene consent activo?"
+/// es: WHERE studentId = X AND revokedAt IS NULL ORDER BY signedAt DESC.
+model ParentalConsent {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  studentId           String
+  parentUserId        String
+  documentVersion     String
+  termsAccepted       Boolean
+  privacyAccepted     Boolean
+  aiProcessingAccepted Boolean
+  signedAt            DateTime @default(now())
+  ipAddress           String
+  userAgent           String   @db.VarChar(512)
+  revokedAt           DateTime?
+  revokedByUserId     String?
+  revocationReason    String?  @db.VarChar(512)
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent              User     @relation("ParentalConsentParent", fields: [parentUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  revokedBy           User?    @relation("ParentalConsentRevoker", fields: [revokedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([studentId, documentVersion, parentUserId])
+  @@index([tenantId])
+  @@index([studentId, revokedAt])
+  @@index([parentUserId])
+
+  @@schema("educai")
+}
+
+/// Tabla de idempotencia para webhooks de Twilio. Twilio reintenta cada
+/// webhook hasta 3 veces si la respuesta tarda >15s, lo que generaria
+/// duplicados de respuesta y doble cobro de tokens Claude.
+/// El messageSid es asignado por Twilio y es unico por mensaje.
+model ProcessedTwilioMessage {
+  messageSid  String   @id
+  receivedAt  DateTime @default(now())
+  completedAt DateTime?
+  outcome     String   @default("received")
+  tenantId    String?
+  studentId   String?
+
+  @@index([receivedAt])
+  @@index([tenantId])
+
+  @@schema("educai")
 }
 

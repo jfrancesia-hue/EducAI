@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import type { PointerEvent } from "react";
 import { useRef } from "react";
 import { BookOpenCheck, Brain, LineChart, ShieldCheck } from "lucide-react";
+import { VisualImage } from "./visual-image";
 
 const classroomImage =
   "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1500&q=85";
@@ -82,7 +82,7 @@ export function ImmersiveShowcase() {
           <div className="immersive-stack mx-auto max-w-3xl overflow-hidden rounded-lg border border-white/15 bg-white/10 p-3 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-4">
             <div className="grid gap-4">
               <div className="relative min-h-[360px] overflow-hidden rounded-lg border border-white/10 bg-slate-900 sm:min-h-[430px]">
-                <Image
+                <VisualImage
                   src={classroomImage}
                   alt="Estudiantes trabajando juntos en una clase"
                   fill
@@ -109,7 +109,7 @@ export function ImmersiveShowcase() {
               <div className="grid gap-4 md:grid-cols-[0.9fr_1fr]">
                 <div className="overflow-hidden rounded-lg border border-white/15 bg-white shadow-float">
                   <div className="relative aspect-[4/3]">
-                    <Image
+                    <VisualImage
                       src={labImage}
                       alt="Material de ciencias para aprendizaje experimental"
                       fill
@@ -131,7 +131,7 @@ export function ImmersiveShowcase() {
                   <div className="overflow-hidden rounded-lg border border-white/15 bg-[#f8d95c] text-slate-950 shadow-float">
                     <div className="grid sm:grid-cols-[0.95fr_1.05fr] md:grid-cols-1 xl:grid-cols-[0.9fr_1.1fr]">
                       <div className="relative min-h-[150px]">
-                        <Image
+                        <VisualImage
                           src={learningImage}
                           alt="Estudiante aprendiendo con computadora"
                           fill
