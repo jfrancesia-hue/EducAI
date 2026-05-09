@@ -1,5 +1,8 @@
--- Storage policies para los 3 buckets creados en 001_initial_rls.sql.
--- Convencion de paths: {tenantId}/{...} para evidencias, portfolios y avatares.
+-- Storage policies para los 3 buckets de EducAI (educai-*).
+-- El proyecto Supabase es compartido con IncluIA: los buckets historicos sin
+-- prefijo (evidencias/portfolios/avatares) quedan reservados para IncluIA u
+-- otro consumidor. EducAI usa exclusivamente los educai-* desde 2026-05-08.
+-- Convencion de paths: {tenantId}/{...} para los 3 buckets.
 -- (storage.foldername(name))[1] = primer segmento del path = tenant_id propietario.
 
 -- Habilitar RLS en storage.objects (Supabase ya lo trae habilitado, pero lo dejamos
@@ -25,12 +28,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_read_evidencias'
+      and policyname = 'tenant_read_educai_evidencias'
   ) then
-    create policy tenant_read_evidencias on storage.objects
+    create policy tenant_read_educai_evidencias on storage.objects
       for select
       using (
-        bucket_id = 'evidencias'
+        bucket_id = 'educai-evidencias'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -41,12 +44,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_write_evidencias'
+      and policyname = 'tenant_write_educai_evidencias'
   ) then
-    create policy tenant_write_evidencias on storage.objects
+    create policy tenant_write_educai_evidencias on storage.objects
       for insert
       with check (
-        bucket_id = 'evidencias'
+        bucket_id = 'educai-evidencias'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -57,19 +60,19 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_update_evidencias'
+      and policyname = 'tenant_update_educai_evidencias'
   ) then
-    create policy tenant_update_evidencias on storage.objects
+    create policy tenant_update_educai_evidencias on storage.objects
       for update
       using (
-        bucket_id = 'evidencias'
+        bucket_id = 'educai-evidencias'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
         )
       )
       with check (
-        bucket_id = 'evidencias'
+        bucket_id = 'educai-evidencias'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -80,12 +83,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_delete_evidencias'
+      and policyname = 'tenant_delete_educai_evidencias'
   ) then
-    create policy tenant_delete_evidencias on storage.objects
+    create policy tenant_delete_educai_evidencias on storage.objects
       for delete
       using (
-        bucket_id = 'evidencias'
+        bucket_id = 'educai-evidencias'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -99,12 +102,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_read_portfolios'
+      and policyname = 'tenant_read_educai_portfolios'
   ) then
-    create policy tenant_read_portfolios on storage.objects
+    create policy tenant_read_educai_portfolios on storage.objects
       for select
       using (
-        bucket_id = 'portfolios'
+        bucket_id = 'educai-portfolios'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -115,12 +118,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_write_portfolios'
+      and policyname = 'tenant_write_educai_portfolios'
   ) then
-    create policy tenant_write_portfolios on storage.objects
+    create policy tenant_write_educai_portfolios on storage.objects
       for insert
       with check (
-        bucket_id = 'portfolios'
+        bucket_id = 'educai-portfolios'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -131,19 +134,19 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_update_portfolios'
+      and policyname = 'tenant_update_educai_portfolios'
   ) then
-    create policy tenant_update_portfolios on storage.objects
+    create policy tenant_update_educai_portfolios on storage.objects
       for update
       using (
-        bucket_id = 'portfolios'
+        bucket_id = 'educai-portfolios'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
         )
       )
       with check (
-        bucket_id = 'portfolios'
+        bucket_id = 'educai-portfolios'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -154,12 +157,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_delete_portfolios'
+      and policyname = 'tenant_delete_educai_portfolios'
   ) then
-    create policy tenant_delete_portfolios on storage.objects
+    create policy tenant_delete_educai_portfolios on storage.objects
       for delete
       using (
-        bucket_id = 'portfolios'
+        bucket_id = 'educai-portfolios'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -173,22 +176,22 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'public_read_avatares'
+      and policyname = 'public_read_educai_avatares'
   ) then
-    create policy public_read_avatares on storage.objects
+    create policy public_read_educai_avatares on storage.objects
       for select
-      using (bucket_id = 'avatares');
+      using (bucket_id = 'educai-avatares');
   end if;
 
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_write_avatares'
+      and policyname = 'tenant_write_educai_avatares'
   ) then
-    create policy tenant_write_avatares on storage.objects
+    create policy tenant_write_educai_avatares on storage.objects
       for insert
       with check (
-        bucket_id = 'avatares'
+        bucket_id = 'educai-avatares'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -199,19 +202,19 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_update_avatares'
+      and policyname = 'tenant_update_educai_avatares'
   ) then
-    create policy tenant_update_avatares on storage.objects
+    create policy tenant_update_educai_avatares on storage.objects
       for update
       using (
-        bucket_id = 'avatares'
+        bucket_id = 'educai-avatares'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
         )
       )
       with check (
-        bucket_id = 'avatares'
+        bucket_id = 'educai-avatares'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()
@@ -222,12 +225,12 @@ begin
   if not exists (
     select 1 from pg_policies
     where schemaname = 'storage' and tablename = 'objects'
-      and policyname = 'tenant_delete_avatares'
+      and policyname = 'tenant_delete_educai_avatares'
   ) then
-    create policy tenant_delete_avatares on storage.objects
+    create policy tenant_delete_educai_avatares on storage.objects
       for delete
       using (
-        bucket_id = 'avatares'
+        bucket_id = 'educai-avatares'
         and (
           public.is_service_role()
           or storage.educai_object_tenant_id(name) = public.current_tenant_id()

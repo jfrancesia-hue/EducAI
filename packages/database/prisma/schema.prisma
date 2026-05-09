@@ -1,16 +1,20 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["educai"]
 }
 
 enum TenantType {
   SCHOOL
   FAMILY
   MINISTRY
+
+  @@schema("educai")
 }
 
 enum UserRole {
@@ -21,6 +25,8 @@ enum UserRole {
   TEACHER
   PARENT
   STUDENT
+
+  @@schema("educai")
 }
 
 enum SubscriptionPlan {
@@ -28,6 +34,8 @@ enum SubscriptionPlan {
   BASIC
   PREMIUM
   FAMILY
+
+  @@schema("educai")
 }
 
 enum SubscriptionStatus {
@@ -35,6 +43,8 @@ enum SubscriptionStatus {
   CANCELED
   PAST_DUE
   IN_GRACE_PERIOD
+
+  @@schema("educai")
 }
 
 model Tenant {
@@ -55,6 +65,8 @@ model Tenant {
 
   @@index([type])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model User {
@@ -84,6 +96,8 @@ model User {
   @@index([tenantId])
   @@index([role])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Role {
@@ -101,6 +115,8 @@ model Role {
 
   @@unique([tenantId, name])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Permission {
@@ -112,6 +128,8 @@ model Permission {
   deletedAt   DateTime?
 
   roles       RolePermission[]
+
+  @@schema("educai")
 }
 
 model UserRoleAssignment {
@@ -124,6 +142,8 @@ model UserRoleAssignment {
   role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([userId, roleId])
+
+  @@schema("educai")
 }
 
 model RolePermission {
@@ -136,6 +156,8 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([roleId, permissionId])
+
+  @@schema("educai")
 }
 
 model School {
@@ -161,6 +183,8 @@ model School {
 
   @@index([tenantId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Family {
@@ -181,6 +205,8 @@ model Family {
 
   @@index([tenantId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Parent {
@@ -199,6 +225,8 @@ model Parent {
   @@index([tenantId])
   @@index([familyId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Teacher {
@@ -221,6 +249,8 @@ model Teacher {
   @@index([tenantId])
   @@index([schoolId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Student {
@@ -248,6 +278,8 @@ model Student {
   @@index([familyId])
   @@index([schoolId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Classroom {
@@ -270,6 +302,8 @@ model Classroom {
   @@index([schoolId])
   @@index([teacherId])
   @@index([deletedAt])
+
+  @@schema("educai")
 }
 
 model Subject {
@@ -286,6 +320,8 @@ model Subject {
 
   @@unique([tenantId, code])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Enrollment {
@@ -307,6 +343,8 @@ model Enrollment {
 
   @@unique([studentId, classroomId, subjectId])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model StudentProfile {
@@ -334,6 +372,8 @@ model StudentProfile {
   achievements        Achievement[]
 
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model Conversation {
@@ -353,6 +393,8 @@ model Conversation {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model Message {
@@ -373,6 +415,8 @@ model Message {
   @@index([tenantId])
   @@index([conversationId])
   @@index([createdAt])
+
+  @@schema("educai")
 }
 
 model LearningSession {
@@ -390,6 +434,8 @@ model LearningSession {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model Achievement {
@@ -405,6 +451,8 @@ model Achievement {
 
   @@index([tenantId])
   @@index([studentProfileId])
+
+  @@schema("educai")
 }
 
 model ParentReport {
@@ -421,6 +469,8 @@ model ParentReport {
 
   @@index([tenantId])
   @@index([familyId])
+
+  @@schema("educai")
 }
 
 model Subscription {
@@ -444,6 +494,8 @@ model Subscription {
   @@index([tenantId])
   @@index([status])
   @@index([provider, providerSubId])
+
+  @@schema("educai")
 }
 
 /// Eventos de billing recibidos por webhook (MercadoPago, Stripe, etc).
@@ -468,6 +520,8 @@ model BillingEvent {
   @@index([tenantId])
   @@index([subscriptionId])
   @@index([receivedAt])
+
+  @@schema("educai")
 }
 
 model Curriculum {
@@ -491,6 +545,8 @@ model Curriculum {
 
   @@index([tenantId])
   @@index([schoolId])
+
+  @@schema("educai")
 }
 
 model CurriculumGap {
@@ -508,6 +564,8 @@ model CurriculumGap {
 
   @@index([tenantId])
   @@index([curriculumId])
+
+  @@schema("educai")
 }
 
 model LessonPlan {
@@ -537,6 +595,8 @@ model LessonPlan {
 
   @@index([tenantId])
   @@index([teacherId])
+
+  @@schema("educai")
 }
 
 model ContentLibraryItem {
@@ -555,6 +615,8 @@ model ContentLibraryItem {
   verifiedBy  String?
 
   @@index([subjectArea])
+
+  @@schema("educai")
 }
 
 model TeacherCourse {
@@ -570,6 +632,8 @@ model TeacherCourse {
   verified          Boolean  @default(false)
 
   enrollments       TeacherEnrollment[]
+
+  @@schema("educai")
 }
 
 model TeacherEnrollment {
@@ -588,6 +652,8 @@ model TeacherEnrollment {
 
   @@unique([teacherId, courseId])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 
 model CommunityPost {
@@ -608,6 +674,8 @@ model CommunityPost {
 
   @@index([tenantId])
   @@index([schoolId])
+
+  @@schema("educai")
 }
 
 model CommunityComment {
@@ -624,6 +692,8 @@ model CommunityComment {
 
   @@index([tenantId])
   @@index([postId])
+
+  @@schema("educai")
 }
 
 model AuditLog {
@@ -641,6 +711,8 @@ model AuditLog {
   @@index([tenantId])
   @@index([actorId])
   @@index([createdAt])
+
+  @@schema("educai")
 }
 
 /// Consentimiento parental verificable. Requerido por Ley 26.061 (AR),
@@ -679,6 +751,8 @@ model ParentalConsent {
   @@index([tenantId])
   @@index([studentId, revokedAt])
   @@index([parentUserId])
+
+  @@schema("educai")
 }
 
 /// Tabla de idempotencia para webhooks de Twilio. Twilio reintenta cada
@@ -695,5 +769,7 @@ model ProcessedTwilioMessage {
 
   @@index([receivedAt])
   @@index([tenantId])
+
+  @@schema("educai")
 }
 

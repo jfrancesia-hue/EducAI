@@ -327,9 +327,11 @@ begin
   end if;
 end $$;
 
+-- Buckets de storage de EducAI con prefijo `educai-` (proyecto Supabase
+-- compartido con IncluIA — los buckets sin prefijo quedan reservados).
 insert into storage.buckets (id, name, public)
 values
-  ('evidencias', 'evidencias', false),
-  ('portfolios', 'portfolios', false),
-  ('avatares', 'avatares', true)
+  ('educai-evidencias', 'educai-evidencias', false),
+  ('educai-portfolios', 'educai-portfolios', false),
+  ('educai-avatares', 'educai-avatares', true)
 on conflict (id) do nothing;

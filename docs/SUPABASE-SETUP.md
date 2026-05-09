@@ -6,6 +6,12 @@ Proyecto Supabase elegido:
 https://mfjpoaipjlimzdxkusav.supabase.co
 ```
 
+**Proyecto compartido con IncluIA**. EducAI vive en el schema dedicado
+`educai` desde 2026-05-08; IncluIA mantiene sus 7 tablas snake_case en
+`public`. Los buckets de Storage usan prefijo `educai-` (`educai-evidencias`,
+`educai-portfolios`, `educai-avatares`) — los nombres sin prefijo quedan
+reservados para IncluIA u otros consumidores.
+
 ## Variables por app
 
 Copiar cada `.env.example` a `.env.local` o `.env` segun la app que vayas a correr. Los archivos reales de entorno estan ignorados por git.
@@ -119,7 +125,10 @@ con un rol `educai_app` NOBYPASSRLS para evitar falsos verdes por superuser.
 - [ ] Migraciones Prisma aplicadas (`pnpm db:deploy`).
 - [ ] `001_initial_rls.sql` y `002_storage_policies.sql` aplicadas.
 - [ ] Smoke test RLS pasa contra dos tenants.
-- [ ] Storage buckets `evidencias`, `portfolios` y `avatares` con policies
-      verificadas en Supabase Dashboard > Storage.
+- [ ] Storage buckets `educai-evidencias`, `educai-portfolios` y
+      `educai-avatares` con policies verificadas en Supabase Dashboard >
+      Storage. (Aplicar `002_storage_policies.sql` desde SQL Editor del
+      Dashboard porque la conexion `postgres` no es owner de
+      `storage.objects`.)
 - [ ] Auth definido (ver `docs/architecture/ADR-003-auth-strategy.md`).
 - [ ] La API en produccion conecta con un rol NOBYPASSRLS (no `postgres` superuser).

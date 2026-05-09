@@ -1,8 +1,9 @@
 # EducAI Production Readiness
 
-Estado auditado: 2026-05-07.
+Estado auditado: 2026-05-07. Actualizado: 2026-05-08.
 
-Proyecto Supabase objetivo: `https://mfjpoaipjlimzdxkusav.supabase.co`.
+Proyecto Supabase objetivo: `https://mfjpoaipjlimzdxkusav.supabase.co`
+(compartido con IncluIA — EducAI vive en schema `educai`, IncluIA en `public`).
 
 Estado Supabase actual:
 
@@ -22,9 +23,27 @@ Estado Supabase actual:
   `DATABASE_URL_APP` apuntando a `educai_app`. Cubre aislamiento de Student,
   Subscription, AuditLog (WITH CHECK), Role y service_role bypass.
 - `supabase/migrations/001_initial_rls.sql` aplicado contra Supabase.
-- `supabase/migrations/002_storage_policies.sql` pendiente: confirmado que
-  requiere admin SQL Editor del Dashboard porque la conexion `postgres` no es
-  owner de `storage.objects` (error `must be owner of table objects`).
+- `supabase/migrations/002_storage_policies.sql` pendiente de aplicar manualmente
+  en SQL Editor del Dashboard (la conexion `postgres` no es owner de
+  `storage.objects`, falla con `must be owner of table objects`). Buckets
+  renombrados a `educai-*` el 2026-05-08; policies actualizadas para apuntar a
+  `educai-evidencias`/`educai-portfolios`/`educai-avatares`.
+
+## Cambios aplicados en la tercera iteracion (2026-05-08)
+
+- **Schema dedicado `educai`**: las 33 tablas + 4 enums + 3 funciones helper
+  (`current_tenant_id`, `current_user_id`, `is_service_role`) movidas de
+  `public` a `educai` en una transaccion. IncluIA queda intacta en `public`
+  con sus 7 tablas snake_case.
+- **Migration**: `20260508000000_move_to_educai_schema/migration.sql`
+  (registrada en `educai._prisma_migrations`).
+- **schema.prisma**: actualizado a multi-schema con
+  `previewFeatures = ["multiSchema"]`, `schemas = ["educai"]` y
+  `@@schema("educai")` en cada modelo y enum.
+- **Buckets storage** renombrados a `educai-*` (los `evidencias`/`portfolios`/
+  `avatares` originales quedan disponibles para IncluIA).
+- **Smoke RLS verificado contra Supabase**: 8/8 pasa con `DATABASE_URL_APP`
+  apuntando al rol `educai_app` NOBYPASSRLS.
 
 ## Veredicto
 
@@ -134,7 +153,7 @@ Este hallazgo se promueve a P0 antes de cualquier piloto con datos reales.
 1. ~~Agregar smoke test RLS real con dos tenants y claims distintos.~~ **HECHO** (`packages/database/test/rls-smoke.spec.ts`).
 2. ~~Migrar auth a Supabase Auth o, si se posterga, definir explicitamente que el JWT HS256 actual es solo para piloto local.~~ **HECHO** (`docs/architecture/ADR-003-auth-strategy.md`).
 3. ~~Cambiar la `DATABASE_URL` de la API a un rol NOBYPASSRLS (ver hallazgo de superuser bypass arriba).~~ **HECHO localmente** con `DATABASE_URL_APP`; falta replicarlo en hosting/CI.
-4. Aplicar/verificar `002_storage_policies.sql` al proyecto Supabase real desde SQL Editor/admin.
+4. Aplicar/verificar `002_storage_policies.sql` (buckets `educai-*`) al proyecto Supabase real desde SQL Editor/admin del Dashboard. PENDIENTE.
 5. Escribir `AuditLog` desde guards/servicios de acceso a estudiantes, conversaciones, mensajes y reportes.
 6. Persistir consentimiento parental: version legal, actor, estudiante, IP, user agent y timestamp.
 7. Hacer que Stripe webhook falle si falta `STRIPE_WEBHOOK_SECRET` en entorno no local.
