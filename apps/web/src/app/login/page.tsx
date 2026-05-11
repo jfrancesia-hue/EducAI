@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "@educai/ui";
@@ -76,15 +77,15 @@ export default function LoginPage() {
                 size="lg"
                 className="mt-6 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] hover:bg-[#ea6508]"
               >
-                <Link href="/app/agente">
+                <Link href={"/login/enter" as Route}>
                   Entrar a demo
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                Por ahora no valida credenciales. Es un acceso directo para probar la experiencia de
-                producto.
+                Por ahora no valida credenciales reales. Crea una sesion demo local para recorrer la
+                experiencia de producto.
               </p>
             </div>
           </div>
