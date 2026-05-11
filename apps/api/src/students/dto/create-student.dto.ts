@@ -6,10 +6,6 @@ export class CreateStudentDto {
   @IsString()
   tenantId!: string;
 
-  @ApiProperty({ example: "family_demo" })
-  @IsString()
-  familyId!: string;
-
   @ApiProperty({ example: "Mateo" })
   @IsString()
   firstName!: string;
@@ -34,4 +30,3 @@ export class CreateStudentDto {
   @IsString()
   whatsappPhone?: string;
 }
-

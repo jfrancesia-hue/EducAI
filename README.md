@@ -64,6 +64,7 @@ Ver [`docs/DEPLOY.md`](docs/DEPLOY.md) para la configuracion de deploy productiv
 Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) para la salida operativa a produccion.
 Ver [`docs/AUTH_READINESS.md`](docs/AUTH_READINESS.md) para el estado real de auth y tenants.
 Ver [`docs/SECRETS_MATRIX.md`](docs/SECRETS_MATRIX.md) para el mapa de variables por destino.
+Ver [`docs/PRODUCTION_NEXT_STEPS.md`](docs/PRODUCTION_NEXT_STEPS.md) para el orden de cierre hacia usuarios reales.
 
 ## Desarrollo local
 

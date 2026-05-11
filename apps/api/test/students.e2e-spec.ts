@@ -53,7 +53,7 @@ describe("Students API (e2e)", () => {
     const response = await request(app.getHttpServer())
       .post("/students")
       .set("x-family-id", "fam_1")
-      .send({ familyId: "fam_1", firstName: "X", lastName: "Y", grade: 99 });
+      .send({ firstName: "X", lastName: "Y", grade: 99 });
 
     expect(response.status).toBe(400);
   });
@@ -70,7 +70,6 @@ describe("Students API (e2e)", () => {
       .set("x-family-id", "fam_1")
       .send({
         tenantId: "tnt_1",
-        familyId: "fam_1",
         firstName: "Mateo",
         lastName: "Demo",
         grade: 6,

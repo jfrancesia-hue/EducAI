@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
@@ -20,8 +20,8 @@ export class StudentController {
 
   @Post()
   @ApiCreatedResponse({ description: "Perfil de estudiante creado" })
-  create(@Body() dto: CreateStudentDto) {
-    return this.students.create(dto);
+  create(@Body() dto: CreateStudentDto, @Headers("x-family-id") familyId: string) {
+    return this.students.create(dto, familyId);
   }
 
   @Get(":id")
