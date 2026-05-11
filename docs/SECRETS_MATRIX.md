@@ -14,6 +14,8 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ## Vercel `apps/web`
 
+Hoy estas variables estan documentadas pero la app todavia no las consume en codigo.
+
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -23,6 +25,8 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ## Vercel `apps/gov-dashboard`
 
+Hoy estas variables estan documentadas pero la app todavia no las consume en codigo.
+
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -31,6 +35,15 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ## Render `apps/api`
+
+### Minimo real hoy
+
+- `NODE_ENV=production`
+- `PORT`
+- `DATABASE_URL`
+- `ALLOWED_ORIGINS`
+
+### Reservadas para fases siguientes o integraciones parciales
 
 - `NODE_ENV=production`
 - `PORT`
@@ -55,6 +68,22 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ## Render `apps/whatsapp-agent`
 
+### Minimo real hoy
+
+- `NODE_ENV=production`
+- `PORT`
+- `DATABASE_URL`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM`
+- `TWILIO_PUBLIC_WEBHOOK_URL`
+- `TWILIO_FORCE_PROTOCOL=https`
+- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
+- `TWILIO_DRY_RUN=false`
+- `ANTHROPIC_API_KEY`
+
+### Reservadas para fases siguientes o integraciones parciales
+
 - `NODE_ENV=production`
 - `PORT`
 - `DATABASE_URL`
@@ -73,6 +102,14 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 - `SENTRY_DSN`
 
 ## Render `apps/worker`
+
+### Minimo real hoy
+
+- `NODE_ENV=production`
+- `PORT`
+- `REDIS_URL`
+
+### Reservadas para fases siguientes o integraciones parciales
 
 - `NODE_ENV=production`
 - `PORT`

@@ -38,8 +38,14 @@ export class LessonPlanService {
     return { data: { id: created.id, plan } };
   }
 
-  async findOne(id: string) {
-    const lessonPlan = await this.prisma.lessonPlan.findUnique({ where: { id } });
+  async findOne(id: string, access: { tenantId: string; teacherId: string }) {
+    const lessonPlan = await this.prisma.lessonPlan.findFirst({
+      where: {
+        id,
+        tenantId: access.tenantId,
+        teacherId: access.teacherId,
+      },
+    });
 
     if (!lessonPlan) {
       throw new NotFoundException("Lesson plan not found");
@@ -48,4 +54,3 @@ export class LessonPlanService {
     return { data: lessonPlan };
   }
 }
-

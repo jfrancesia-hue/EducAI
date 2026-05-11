@@ -8,7 +8,14 @@ export class CurriculumService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(input: { tenantId: string; schoolId: string; name: string; grade: number; subject: string; content: unknown }) {
+  async create(input: {
+    tenantId: string;
+    schoolId: string;
+    name: string;
+    grade: number;
+    subject: string;
+    content: unknown;
+  }) {
     const curriculum = await this.prisma.curriculum.create({
       data: {
         tenantId: input.tenantId,
@@ -24,8 +31,14 @@ export class CurriculumService {
     return { data: curriculum };
   }
 
-  async analyze(id: string) {
-    const curriculum = await this.prisma.curriculum.findUnique({ where: { id } });
+  async analyze(id: string, access: { tenantId: string; schoolId: string }) {
+    const curriculum = await this.prisma.curriculum.findFirst({
+      where: {
+        id,
+        tenantId: access.tenantId,
+        schoolId: access.schoolId,
+      },
+    });
 
     if (!curriculum) {
       throw new NotFoundException("Curriculum not found");
@@ -47,8 +60,24 @@ export class CurriculumService {
     return { data: { created: gaps.length, gaps } };
   }
 
-  async gaps(id: string) {
-    return { data: await this.prisma.curriculumGap.findMany({ where: { curriculumId: id } }) };
+  async gaps(id: string, access: { tenantId: string; schoolId: string }) {
+    const curriculum = await this.prisma.curriculum.findFirst({
+      where: {
+        id,
+        tenantId: access.tenantId,
+        schoolId: access.schoolId,
+      },
+      select: { id: true },
+    });
+
+    if (!curriculum) {
+      throw new NotFoundException("Curriculum not found");
+    }
+
+    return {
+      data: await this.prisma.curriculumGap.findMany({
+        where: { curriculumId: id, tenantId: access.tenantId },
+      }),
+    };
   }
 }
-

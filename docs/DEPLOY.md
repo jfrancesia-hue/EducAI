@@ -24,7 +24,20 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 
 ## Variables de entorno productivas
 
+Las listas de abajo incluyen:
+
+- variables requeridas hoy para que el servicio arranque o cumpla su flujo actual
+- variables reservadas para fases siguientes o integraciones todavia parciales
+
 ### `apps/api`
+
+Requeridas hoy para boot:
+
+- `NODE_ENV=production`
+- `DATABASE_URL`
+- `ALLOWED_ORIGINS`
+
+Reservadas para fases siguientes o integraciones parciales:
 
 - `NODE_ENV=production`
 - `PUBLIC_APP_URL`
@@ -48,6 +61,8 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 
 ### `apps/web`
 
+Hoy estas variables siguen documentadas, pero la app todavia no las consume en codigo productivo.
+
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -57,6 +72,8 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 
 ### `apps/gov-dashboard`
 
+Hoy estas variables siguen documentadas, pero la app todavia no las consume en codigo productivo.
+
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -65,6 +82,21 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ### `apps/whatsapp-agent`
+
+Requeridas hoy para boot y flujo actual:
+
+- `NODE_ENV=production`
+- `DATABASE_URL`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_FROM`
+- `TWILIO_PUBLIC_WEBHOOK_URL`
+- `TWILIO_FORCE_PROTOCOL`
+- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
+- `TWILIO_DRY_RUN=false`
+- `ANTHROPIC_API_KEY`
+
+Reservadas para fases siguientes o integraciones parciales:
 
 - `NODE_ENV=production`
 - `DATABASE_URL`
@@ -83,6 +115,13 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 - `SENTRY_DSN`
 
 ### `apps/worker`
+
+Requeridas hoy para boot:
+
+- `NODE_ENV=production`
+- `REDIS_URL`
+
+Reservadas para fases siguientes o integraciones parciales:
 
 - `NODE_ENV=production`
 - `DATABASE_URL`

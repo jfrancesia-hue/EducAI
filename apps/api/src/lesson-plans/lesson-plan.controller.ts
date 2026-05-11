@@ -35,7 +35,14 @@ export class LessonPlanController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.lessonPlans.findOne(id);
+  findOne(
+    @Param("id") id: string,
+    @Headers("x-tenant-id") tenantId: string,
+    @Headers("x-teacher-id") teacherId: string,
+  ) {
+    return this.lessonPlans.findOne(id, {
+      tenantId: requireHeader(tenantId, "x-tenant-id"),
+      teacherId: requireHeader(teacherId, "x-teacher-id"),
+    });
   }
 }

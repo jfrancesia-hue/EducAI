@@ -35,12 +35,26 @@ export class CurriculumController {
   }
 
   @Post(":id/analyze")
-  analyze(@Param("id") id: string) {
-    return this.curricula.analyze(id);
+  analyze(
+    @Param("id") id: string,
+    @Headers("x-tenant-id") tenantId: string,
+    @Headers("x-school-id") schoolId: string,
+  ) {
+    return this.curricula.analyze(id, {
+      tenantId: requireHeader(tenantId, "x-tenant-id"),
+      schoolId: requireHeader(schoolId, "x-school-id"),
+    });
   }
 
   @Get(":id/gaps")
-  gaps(@Param("id") id: string) {
-    return this.curricula.gaps(id);
+  gaps(
+    @Param("id") id: string,
+    @Headers("x-tenant-id") tenantId: string,
+    @Headers("x-school-id") schoolId: string,
+  ) {
+    return this.curricula.gaps(id, {
+      tenantId: requireHeader(tenantId, "x-tenant-id"),
+      schoolId: requireHeader(schoolId, "x-school-id"),
+    });
   }
 }

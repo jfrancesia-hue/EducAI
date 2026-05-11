@@ -21,6 +21,7 @@ const prismaMock = {
   curriculum: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
   },
   curriculumGap: {
     deleteMany: vi.fn(),
@@ -30,6 +31,7 @@ const prismaMock = {
   lessonPlan: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
   },
   learningSession: {
     count: vi.fn().mockResolvedValue(0),
@@ -247,6 +249,17 @@ describe("Students API (e2e)", () => {
     );
   });
 
+  it("POST /curricula/:id/analyze con tenant o school incorrectos devuelve 404", async () => {
+    prismaMock.curriculum.findFirst.mockResolvedValueOnce(null);
+
+    const response = await request(app.getHttpServer())
+      .post("/curricula/cur_404/analyze")
+      .set("x-tenant-id", "tnt_school_1")
+      .set("x-school-id", "sch_intruder");
+
+    expect(response.status).toBe(404);
+  });
+
   it("POST /lesson-plans/generate sin x-teacher-id devuelve 400", async () => {
     const response = await request(app.getHttpServer())
       .post("/lesson-plans/generate")
@@ -292,5 +305,16 @@ describe("Students API (e2e)", () => {
       }),
     );
     expect(response.body.data.id).toBe("plan_1");
+  });
+
+  it("GET /lesson-plans/:id con tenant o teacher incorrectos devuelve 404", async () => {
+    prismaMock.lessonPlan.findFirst.mockResolvedValueOnce(null);
+
+    const response = await request(app.getHttpServer())
+      .get("/lesson-plans/plan_404")
+      .set("x-tenant-id", "tnt_school_1")
+      .set("x-teacher-id", "tea_intruder");
+
+    expect(response.status).toBe(404);
   });
 });
