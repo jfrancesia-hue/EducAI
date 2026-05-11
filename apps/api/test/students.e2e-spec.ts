@@ -18,6 +18,19 @@ const prismaMock = {
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  curriculum: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+  },
+  curriculumGap: {
+    deleteMany: vi.fn(),
+    createMany: vi.fn(),
+    findMany: vi.fn(),
+  },
+  lessonPlan: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+  },
   learningSession: {
     count: vi.fn().mockResolvedValue(0),
     aggregate: vi.fn().mockResolvedValue({ _sum: { durationMinutes: 0 } }),
@@ -151,5 +164,96 @@ describe("Students API (e2e)", () => {
       opportunities: ["matematica"],
       diagnosticCompleted: true,
     });
+  });
+
+  it("POST /curricula sin x-school-id devuelve 400", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/curricula")
+      .set("x-tenant-id", "tnt_school_1")
+      .send({
+        name: "Matematica 7A",
+        grade: 7,
+        subject: "matematica",
+        content: { unit: "proporcionalidad" },
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("x-school-id");
+  });
+
+  it("POST /curricula crea curriculo con contexto institucional por headers", async () => {
+    prismaMock.curriculum.create.mockResolvedValueOnce({
+      id: "cur_1",
+      tenantId: "tnt_school_1",
+      schoolId: "sch_1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/curricula")
+      .set("x-tenant-id", "tnt_school_1")
+      .set("x-school-id", "sch_1")
+      .send({
+        name: "Matematica 7A",
+        grade: 7,
+        subject: "matematica",
+        content: { unit: "proporcionalidad" },
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.curriculum.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tnt_school_1",
+          schoolId: "sch_1",
+        }),
+      }),
+    );
+  });
+
+  it("POST /lesson-plans/generate sin x-teacher-id devuelve 400", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("x-tenant-id", "tnt_school_1")
+      .send({
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("x-teacher-id");
+  });
+
+  it("POST /lesson-plans/generate crea plan con contexto docente por headers", async () => {
+    prismaMock.lessonPlan.create.mockResolvedValueOnce({
+      id: "plan_1",
+      tenantId: "tnt_school_1",
+      teacherId: "tea_1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("x-tenant-id", "tnt_school_1")
+      .set("x-teacher-id", "tea_1")
+      .send({
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.lessonPlan.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tnt_school_1",
+          teacherId: "tea_1",
+        }),
+      }),
+    );
+    expect(response.body.data.id).toBe("plan_1");
   });
 });
