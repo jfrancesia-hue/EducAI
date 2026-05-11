@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+import { requireHeader } from "../common/http/required-header.js";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import { UpdateStudentDto } from "./dto/update-student.dto.js";
@@ -13,6 +14,12 @@ import { StudentService } from "./student.service.js";
     "Identificador de la familia solicitante. Provisorio hasta que el módulo de auth lo provea por JWT.",
   required: true,
 })
+@ApiHeader({
+  name: "x-tenant-id",
+  description:
+    "Identificador del tenant. Provisorio hasta que el contexto multi-tenant salga del JWT.",
+  required: true,
+})
 @Controller("students")
 @UseGuards(FamilyScopeGuard)
 export class StudentController {
@@ -20,8 +27,15 @@ export class StudentController {
 
   @Post()
   @ApiCreatedResponse({ description: "Perfil de estudiante creado" })
-  create(@Body() dto: CreateStudentDto, @Headers("x-family-id") familyId: string) {
-    return this.students.create(dto, familyId);
+  create(
+    @Body() dto: CreateStudentDto,
+    @Headers("x-family-id") familyId: string,
+    @Headers("x-tenant-id") tenantId: string,
+  ) {
+    return this.students.create(dto, {
+      familyId: requireHeader(familyId, "x-family-id"),
+      tenantId: requireHeader(tenantId, "x-tenant-id"),
+    });
   }
 
   @Get(":id")

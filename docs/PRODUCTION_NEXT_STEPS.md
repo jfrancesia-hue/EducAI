@@ -14,7 +14,7 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 - autenticacion real en `web`
 - proteccion de rutas y sesiones
 - RBAC por rol y tenant
-- derivacion de `tenantId` desde token en vez de body o header manual
+- derivacion de `tenantId` desde token en vez de header manual
 - apertura a usuarios reales sin riesgo de cruce multi-tenant
 
 ## Hallazgos concretos
@@ -23,8 +23,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 - [`apps/web/src/app/app/page.tsx`](../apps/web/src/app/app/page.tsx) y [`apps/web/src/app/app/_components/app-shell.tsx`](../apps/web/src/app/app/_components/app-shell.tsx) muestran claramente superficie demo
 - [`apps/api/src/students/guards/family-scope.guard.ts`](../apps/api/src/students/guards/family-scope.guard.ts) usa `x-family-id`
 - [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) documenta ese header como transitorio
-- [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) recibe `tenantId` por body
-- [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) recibe `tenantId` por body
+- [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) usa `x-tenant-id` y `x-school-id` de forma transitoria
+- [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) usa `x-tenant-id` y `x-teacher-id` de forma transitoria
 
 ## Orden recomendado
 
@@ -46,7 +46,7 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 - definir claims minimos: `userId`, `tenantId`, `tenantType`, `role`
 - propagar claims al backend
 - reemplazar `x-family-id` por identidad derivada del token
-- dejar de aceptar `tenantId` sensible desde body cuando corresponda
+- reemplazar headers provisorios por identidad derivada de sesion o token
 
 ### 4. RBAC
 

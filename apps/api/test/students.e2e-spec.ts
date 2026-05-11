@@ -49,10 +49,11 @@ describe("Students API (e2e)", () => {
     await app?.close();
   });
 
-  it("POST /students rechaza body invalido (sin tenantId, grade fuera de rango)", async () => {
+  it("POST /students rechaza body invalido (sin tenant context, grade fuera de rango)", async () => {
     const response = await request(app.getHttpServer())
       .post("/students")
       .set("x-family-id", "fam_1")
+      .set("x-tenant-id", "tnt_1")
       .send({ firstName: "X", lastName: "Y", grade: 99 });
 
     expect(response.status).toBe(400);
@@ -68,15 +69,37 @@ describe("Students API (e2e)", () => {
     const response = await request(app.getHttpServer())
       .post("/students")
       .set("x-family-id", "fam_1")
+      .set("x-tenant-id", "tnt_1")
       .send({
-        tenantId: "tnt_1",
         firstName: "Mateo",
         lastName: "Demo",
         grade: 6,
       });
 
+    expect(prismaMock.student.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tnt_1",
+          familyId: "fam_1",
+        }),
+      }),
+    );
     expect(response.status).toBe(201);
     expect(response.body.data.id).toBe("stu_new");
+  });
+
+  it("POST /students sin x-tenant-id devuelve 400", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/students")
+      .set("x-family-id", "fam_1")
+      .send({
+        firstName: "Mateo",
+        lastName: "Demo",
+        grade: 6,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("x-tenant-id");
   });
 
   it("GET /students/:id sin x-family-id devuelve 403", async () => {

@@ -131,12 +131,11 @@ describe("StudentService", () => {
 
       const result = await service.create(
         {
-          tenantId: "tnt_1",
           firstName: "Mateo",
           lastName: "Demo",
           grade: 6,
         },
-        "fam_1",
+        { tenantId: "tnt_1", familyId: "fam_1" },
       );
 
       expect(prisma.student.create).toHaveBeenCalledWith(

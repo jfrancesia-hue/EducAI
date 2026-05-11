@@ -21,17 +21,17 @@ export class StudentService {
     this.log = logger.child({ component: "StudentService" });
   }
 
-  async create(dto: CreateStudentDto, familyId: string) {
+  async create(dto: CreateStudentDto, context: { tenantId: string; familyId: string }) {
     const student = await this.prisma.student.create({
       data: {
-        tenantId: dto.tenantId,
-        familyId,
+        tenantId: context.tenantId,
+        familyId: context.familyId,
         firstName: dto.firstName,
         lastName: dto.lastName,
         grade: dto.grade,
         profile: {
           create: {
-            tenantId: dto.tenantId,
+            tenantId: context.tenantId,
             grade: dto.grade,
             country: "AR",
             curriculum: dto.curriculum ?? "AR-NOA",
@@ -44,7 +44,15 @@ export class StudentService {
       include: { profile: true },
     });
 
-    this.log.info({ studentId: student.id, familyId, grade: dto.grade }, "student.created");
+    this.log.info(
+      {
+        studentId: student.id,
+        familyId: context.familyId,
+        tenantId: context.tenantId,
+        grade: dto.grade,
+      },
+      "student.created",
+    );
 
     return { data: student };
   }
