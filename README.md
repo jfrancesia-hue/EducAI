@@ -63,6 +63,7 @@ Ver [`CLAUDE.md`](CLAUDE.md) para el contexto completo de la IA de desarrollo.
 Ver [`docs/DEPLOY.md`](docs/DEPLOY.md) para la configuracion de deploy productivo por hooks.
 Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) para la salida operativa a produccion.
 Ver [`docs/AUTH_READINESS.md`](docs/AUTH_READINESS.md) para el estado real de auth y tenants.
+Ver [`docs/SECRETS_MATRIX.md`](docs/SECRETS_MATRIX.md) para el mapa de variables por destino.
 
 ## Desarrollo local
 

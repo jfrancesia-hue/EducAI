@@ -49,6 +49,7 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 - `apps/web` builda y sirve rutas estaticas sin errores
 - `apps/gov-dashboard` builda y tiene tenant publico correcto
 - `apps/whatsapp-agent` tiene webhook y credenciales Twilio validas
+- `apps/whatsapp-agent` valida firma Twilio con URL publica correcta
 
 ## 7. Compliance y revision humana
 
