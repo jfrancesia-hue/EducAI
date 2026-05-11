@@ -6,7 +6,7 @@ Estado actual del frente de autenticacion, roles y contexto de tenant antes de a
 
 - `apps/web` todavia expone un acceso demo en `/login`
 - no hay proveedor de identidad real conectado en web
-- la web usa una sesion demo local con cookie y middleware, no identidad real
+- la web usa una sesion demo local con cookie, middleware y salida manual, no identidad real
 - no hay RBAC efectivo conectado a pantallas o endpoints
 - varios endpoints backend siguen usando headers provisorios para identidad y contexto de tenant
 

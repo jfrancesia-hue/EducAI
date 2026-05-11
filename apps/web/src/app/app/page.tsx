@@ -39,7 +39,7 @@ const workshop =
 type NavItem = {
   label: string;
   icon: typeof Home;
-  href: string;
+  href: Route;
   active?: boolean;
 };
 
@@ -177,7 +177,7 @@ export default function EducAiAppPage() {
               {navItems.map((item) => (
                 <Link
                   key={item.label}
-                  href={item.href as Route}
+                  href={item.href}
                   className={[
                     "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
                     item.active
@@ -200,13 +200,12 @@ export default function EducAiAppPage() {
             <p className="mt-2 text-[13px] leading-5 text-white/70">
               Monitoreando planificaciones, recursos y pendientes docentes.
             </p>
-            <button
+            <Link
+              href="/login/salir"
               className="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-white/10 text-white/72 transition hover:bg-white/15 hover:text-white"
-              type="button"
-              title="Configuracion"
             >
               <Settings className="h-4 w-4" aria-hidden="true" />
-            </button>
+            </Link>
           </div>
         </aside>
 
@@ -257,7 +256,7 @@ export default function EducAiAppPage() {
             {navItems.map((item) => (
               <Link
                 key={item.label}
-                href={item.href as Route}
+                href={item.href}
                 className={[
                   "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
                   item.active

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Route } from "next";
 import { ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "@educai/ui";
@@ -24,10 +23,10 @@ export default function LoginPage() {
               Acceso demo
             </p>
             <h1 className="mt-5 font-display text-5xl font-bold leading-tight tracking-tight">
-              Entrá a la app, sin esperar autenticación real.
+              Entra a la app sin esperar autenticacion real.
             </h1>
             <p className="mt-5 text-lg leading-8 text-white/70">
-              Esta puerta simula el ingreso para que puedas recorrer la sala pedagógica y validar
+              Esta puerta simula el ingreso para que puedas recorrer la sala pedagogica y validar
               producto mientras cerramos auth, roles y permisos.
             </p>
           </div>
@@ -64,10 +63,10 @@ export default function LoginPage() {
                   </span>
                 </label>
                 <label className="block">
-                  <span className="text-sm font-medium text-[#5f5647]">Contraseña</span>
+                  <span className="text-sm font-medium text-[#5f5647]">Contrasena</span>
                   <span className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-[#ded6c7] bg-[#fbfaf5] px-3 text-[#7b725f]">
                     <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                    ••••••••••••
+                    ************
                   </span>
                 </label>
               </div>
@@ -77,7 +76,7 @@ export default function LoginPage() {
                 size="lg"
                 className="mt-6 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] hover:bg-[#ea6508]"
               >
-                <Link href={"/login/enter" as Route}>
+                <Link href="/login/enter">
                   Entrar a demo
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
