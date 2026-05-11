@@ -5,43 +5,97 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy-web:
     name: Deploy apps/web (Vercel)
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
+    env:
+      DEPLOY_HOOK_URL: ${{ secrets.VERCEL_WEB_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Placeholder — configurar Vercel token + project id en Fase 1"
+      - name: Validate hook
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing production secret: VERCEL_WEB_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
 
   deploy-gov-dashboard:
     name: Deploy apps/gov-dashboard (Vercel)
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
+    env:
+      DEPLOY_HOOK_URL: ${{ secrets.VERCEL_GOV_DASHBOARD_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Placeholder — configurar Vercel token + project id en Fase 4 (B2G)"
+      - name: Validate hook
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing production secret: VERCEL_GOV_DASHBOARD_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
 
   deploy-api:
-    name: Deploy apps/api (Render/Railway)
+    name: Deploy apps/api (Render)
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
+    env:
+      DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Placeholder — configurar deploy hook Render/Railway en Fase 1"
+      - name: Validate hook
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing production secret: RENDER_API_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
 
   deploy-whatsapp-agent:
-    name: Deploy apps/whatsapp-agent (Render/Railway)
+    name: Deploy apps/whatsapp-agent (Render)
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
+    env:
+      DEPLOY_HOOK_URL: ${{ secrets.RENDER_WHATSAPP_AGENT_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Placeholder — configurar deploy hook + ALLOWED_ORIGIN Twilio en Fase 1"
+      - name: Validate hook
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing production secret: RENDER_WHATSAPP_AGENT_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
 
   deploy-worker:
-    name: Deploy apps/worker (Render/Railway)
+    name: Deploy apps/worker (Render)
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 10
+    env:
+      DEPLOY_HOOK_URL: ${{ secrets.RENDER_WORKER_DEPLOY_HOOK_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Placeholder — configurar deploy hook + REDIS_URL managed en Fase 1"
+      - name: Validate hook
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing production secret: RENDER_WORKER_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+
+      - name: Trigger deploy
+        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"

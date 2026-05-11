@@ -2,11 +2,15 @@ import "reflect-metadata";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { requireApiProductionEnv } from "./env/require-production-env.js";
 import { AppModule } from "./app.module.js";
 
 async function bootstrap() {
+  requireApiProductionEnv(process.env);
   const app = await NestFactory.create(AppModule);
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3100")
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3100"
+  )
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean);
@@ -39,4 +43,3 @@ bootstrap().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

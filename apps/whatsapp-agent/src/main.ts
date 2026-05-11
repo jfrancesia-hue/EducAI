@@ -4,8 +4,10 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { json, urlencoded } from "express";
 import { AppModule } from "./app.module.js";
+import { requireWhatsappProductionEnv } from "./env/require-production-env.js";
 
 async function bootstrap() {
+  requireWhatsappProductionEnv(process.env);
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     cors: false,
   });
