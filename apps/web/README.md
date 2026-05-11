@@ -1,17 +1,14 @@
 # @educai/web
 
-Portal web de ApoyoAI (padres) y de colegios EducAI. Next.js 14 App Router + Tailwind + shadcn
-(via `@educai/ui`).
+Frontend principal de EducAI. Next.js 14 App Router + Tailwind + `@educai/ui`.
 
-## Secciones
+## Estado actual
 
-- `/` — landing pública ApoyoAI (conversión padres).
-- `/onboarding` — multi-step post-registro (padre → hijo → consentimiento → WhatsApp → diagnóstico).
-- `/panel` — dashboard del padre (progreso del hijo, reportes, conversaciones resumidas).
-- `/colegios` — landing institucional EducAI.
-- `/admin/colegio/*` — dashboard del colegio (Fase 2).
-
-Fase 0 tiene el stub del home con branding. Fases 1 y 2 implementan los flujos.
+- `/` expone la landing publica.
+- `/colegios`, `/contacto`, `/privacidad` y `/seguridad` cubren la superficie institucional.
+- `/login` abre un acceso demo local.
+- `/app/*` contiene la experiencia interna demo para docentes con middleware y cookie de sesion.
+- aun no hay proveedor de identidad real ni RBAC conectado.
 
 ## Arranque local
 
@@ -21,8 +18,8 @@ pnpm --filter @educai/web dev
 
 `http://localhost:3000` sirve el portal.
 
-## Switch de identidad visual
+## Notas operativas
 
-El layout raíz setea `<html data-brand="apoyoai">`. Para vistas institucionales EducAI, usar un
-sub-layout con `data-brand="educai"`. El CSS de `@educai/ui/styles/globals.css` cambia los
-tokens (`--primary`, `--accent`, `--ring`) automáticamente.
+- El acceso demo crea una cookie local `educai_demo_session`.
+- Las rutas `/app/*` redirigen a `/login` cuando no existe esa sesion.
+- El script `typecheck` usa `next build` porque `typedRoutes` depende de tipos generados por Next.

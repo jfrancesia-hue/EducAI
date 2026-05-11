@@ -1,29 +1,29 @@
 # @educai/worker
 
-Procesador de jobs asíncronos. NestJS 10 + BullMQ + Redis.
+Procesador de jobs asincronos de EducAI. NestJS 10 + BullMQ + Redis.
 
-## Queues
+## Estado actual
 
-- **`weekly-report`** — genera el reporte semanal de ApoyoAI para familias Premium/Familiar.
-  Corre todos los domingos a las 20:00 AR. Agrega datos de `LearningSession`, `Message`,
-  `Achievement`; genera resumen narrativo con Claude; guarda en `ParentReport`; envía por email
-  (React Email + Resend) y WhatsApp.
-
-- **`diagnostic-analysis`** — procesa el diagnóstico adaptativo al finalizar la evaluación
-  inicial. Analiza respuestas, genera informe narrativo con Claude, escribe
-  `StudentProfile.diagnosticScore`, notifica al padre.
-
-Fase 0 tiene el scaffold con los stubs. Fase 1 implementa la lógica completa.
+- registra las colas `weekly-report` y `diagnostic-analysis`;
+- expone `GET /health`;
+- valida variables criticas en `production`;
+- los processors todavia conservan implementacion parcial y logging base.
 
 ## Arranque local
 
 ```bash
-pnpm docker:up      # levanta redis
 pnpm --filter @educai/worker dev
 ```
 
-`http://localhost:4200/health` → `{ status: "ok" }`.
+`http://localhost:4200/health` debe responder `{"status":"ok"}`.
 
-## Variables de entorno
+## Variables importantes
 
-Ver `.env.example`. `REDIS_URL` y `ANTHROPIC_API_KEY` son obligatorias para Fase 1.
+- `REDIS_URL`
+- `DATABASE_URL`
+- `ANTHROPIC_API_KEY`
+
+## Notas operativas
+
+- `weekly-report` y `diagnostic-analysis` ya tienen contrato de job y processor registrado.
+- la logica completa de agregacion, persistencia y entrega sigue pendiente.
