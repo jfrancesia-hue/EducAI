@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Conventional Commits validator (liviano, sin commitlint extra).
 commit_msg_file="$1"
 commit_msg=$(head -n1 "$commit_msg_file")
