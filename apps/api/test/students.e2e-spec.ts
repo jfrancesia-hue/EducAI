@@ -101,7 +101,7 @@ describe("Students API (e2e)", () => {
     expect(response.body.data.id).toBe("stu_new");
   });
 
-  it("POST /students sin x-tenant-id devuelve 400", async () => {
+  it("POST /students sin x-tenant-id devuelve 403", async () => {
     const response = await request(app.getHttpServer())
       .post("/students")
       .set("x-family-id", "fam_1")
@@ -111,8 +111,8 @@ describe("Students API (e2e)", () => {
         grade: 6,
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("x-tenant-id");
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("TENANT_CONTEXT_MISSING");
   });
 
   it("GET /students/:id sin x-family-id devuelve 403", async () => {
@@ -122,15 +122,45 @@ describe("Students API (e2e)", () => {
     expect(response.body.code).toBe("FAMILY_CONTEXT_MISSING");
   });
 
+  it("GET /students/:id sin x-tenant-id devuelve 403", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/students/stu_1")
+      .set("x-family-id", "fam_1");
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("TENANT_CONTEXT_MISSING");
+  });
+
   it("GET /students/:id con familia distinta devuelve 403", async () => {
-    prismaMock.student.findFirst.mockResolvedValueOnce({ id: "stu_1", familyId: "fam_owner" });
+    prismaMock.student.findFirst.mockResolvedValueOnce({
+      id: "stu_1",
+      familyId: "fam_owner",
+      tenantId: "tnt_1",
+    });
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_1")
-      .set("x-family-id", "fam_intruder");
+      .set("x-family-id", "fam_intruder")
+      .set("x-tenant-id", "tnt_1");
 
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("FAMILY_ACCESS_DENIED");
+  });
+
+  it("GET /students/:id con tenant distinto devuelve 403", async () => {
+    prismaMock.student.findFirst.mockResolvedValueOnce({
+      id: "stu_1",
+      familyId: "fam_1",
+      tenantId: "tnt_owner",
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/students/stu_1")
+      .set("x-family-id", "fam_1")
+      .set("x-tenant-id", "tnt_intruder");
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("TENANT_ACCESS_DENIED");
   });
 
   it("GET /students/:id devuelve 404 cuando no existe", async () => {
@@ -138,14 +168,20 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_404")
-      .set("x-family-id", "fam_1");
+      .set("x-family-id", "fam_1")
+      .set("x-tenant-id", "tnt_1");
 
     expect(response.status).toBe(404);
     expect(response.body.code).toBe("STUDENT_NOT_FOUND");
   });
 
   it("GET /students/:id/progress devuelve agregados", async () => {
-    prismaMock.student.findFirst.mockResolvedValue({ id: "stu_1", familyId: "fam_1", grade: 6 });
+    prismaMock.student.findFirst.mockResolvedValue({
+      id: "stu_1",
+      familyId: "fam_1",
+      tenantId: "tnt_1",
+      grade: 6,
+    });
     prismaMock.studentProfile.findUnique.mockResolvedValue({
       id: "prof_1",
       strongSubjects: ["ciencias"],
@@ -155,7 +191,8 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_1/progress")
-      .set("x-family-id", "fam_1");
+      .set("x-family-id", "fam_1")
+      .set("x-tenant-id", "tnt_1");
 
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({

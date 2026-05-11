@@ -4,9 +4,12 @@ import {
   FamilyAccessDeniedError,
   FamilyContextMissingError,
   StudentNotFoundError,
+  TenantAccessDeniedError,
+  TenantContextMissingError,
 } from "../errors/student.errors.js";
 
 const FAMILY_HEADER = "x-family-id";
+const TENANT_HEADER = "x-tenant-id";
 
 interface ScopedRequest {
   headers: Record<string, string | string[] | undefined>;
@@ -26,9 +29,13 @@ export class FamilyScopeGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<ScopedRequest>();
     const familyId = this.extractFamilyId(request);
+    const tenantId = this.extractTenantId(request);
 
     if (!familyId) {
       throw new FamilyContextMissingError();
+    }
+    if (!tenantId) {
+      throw new TenantContextMissingError();
     }
 
     const studentId = request.params?.id;
@@ -38,7 +45,7 @@ export class FamilyScopeGuard implements CanActivate {
 
     const student = await this.prisma.student.findFirst({
       where: { id: studentId, deletedAt: null },
-      select: { id: true, familyId: true },
+      select: { id: true, familyId: true, tenantId: true },
     });
 
     if (!student) {
@@ -48,12 +55,23 @@ export class FamilyScopeGuard implements CanActivate {
     if (student.familyId !== familyId) {
       throw new FamilyAccessDeniedError(studentId, familyId);
     }
+    if (student.tenantId !== tenantId) {
+      throw new TenantAccessDeniedError(studentId, tenantId);
+    }
 
     return true;
   }
 
   private extractFamilyId(request: ScopedRequest): string | undefined {
     const raw = request.headers[FAMILY_HEADER];
+    if (Array.isArray(raw)) {
+      return raw[0]?.trim() || undefined;
+    }
+    return raw?.trim() || undefined;
+  }
+
+  private extractTenantId(request: ScopedRequest): string | undefined {
+    const raw = request.headers[TENANT_HEADER];
     if (Array.isArray(raw)) {
       return raw[0]?.trim() || undefined;
     }

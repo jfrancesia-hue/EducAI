@@ -39,3 +39,23 @@ export class FamilyContextMissingError extends ForbiddenException {
     });
   }
 }
+
+export class TenantAccessDeniedError extends ForbiddenException {
+  constructor(studentId: string, tenantId: string) {
+    super({
+      code: "TENANT_ACCESS_DENIED",
+      message: `El tenant ${tenantId} no tiene acceso al estudiante ${studentId}`,
+      studentId,
+      tenantId,
+    });
+  }
+}
+
+export class TenantContextMissingError extends ForbiddenException {
+  constructor() {
+    super({
+      code: "TENANT_CONTEXT_MISSING",
+      message: "Falta el header x-tenant-id que identifica el tenant solicitante",
+    });
+  }
+}
