@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@educai/ui";
 
 const kpis = [
@@ -41,13 +43,21 @@ export default function GovDashboardHome() {
   return (
     <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3 border-b border-border pb-6">
-        <Badge variant="outline">Panel provincial - Catamarca</Badge>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Badge variant="outline">Panel provincial - Catamarca</Badge>
+          <Link
+            href="/login/salir"
+            className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          >
+            Cerrar sesion
+          </Link>
+        </div>
         <h1 className="font-display text-4xl font-bold tracking-tight">
           Estado operativo del sistema educativo provincial.
         </h1>
         <p className="text-sm text-muted-foreground">
           Ultima sincronizacion hace 12 min - 842 colegios - 187.432 alumnos - 12.854 docentes -
-          vista institucional de demostracion al 23 de abril de 2026.
+          vista institucional autenticada al 23 de abril de 2026.
         </p>
       </header>
 

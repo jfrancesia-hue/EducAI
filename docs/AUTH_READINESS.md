@@ -5,7 +5,9 @@ Estado actual del frente de autenticacion, roles y contexto de tenant antes de a
 ## Estado hoy
 
 - `apps/web` ya autentica contra Supabase Auth en `/login`
+- `apps/gov-dashboard` ya autentica contra Supabase Auth en `/login`
 - la web ya protege `/app/*` con sesion SSR, login real y logout real
+- `gov-dashboard` ya protege `/` con sesion SSR, login real y logout real
 - no hay RBAC efectivo conectado a pantallas o endpoints
 - backend principal ya valida sesion real, pero todavia falta RBAC y estandarizar claims por rol
 
@@ -13,6 +15,8 @@ Estado actual del frente de autenticacion, roles y contexto de tenant antes de a
 
 - [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya exige credenciales reales de Supabase Auth
 - [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege `/app/*` y evita acceso sin sesion
+- [`apps/gov-dashboard/src/app/login/page.tsx`](../apps/gov-dashboard/src/app/login/page.tsx) ya exige credenciales reales de Supabase Auth
+- [`apps/gov-dashboard/middleware.ts`](../apps/gov-dashboard/middleware.ts) protege `/` y evita acceso sin sesion
 - [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) ya exige `Authorization: Bearer <token>`
 - [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) valida la sesion contra Supabase Auth y extrae claims desde metadata
 - [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) ya consume `tenantId` y `schoolId` desde claims
@@ -25,7 +29,6 @@ a usuarios institucionales o familias sin cerrar claims, RBAC y contexto de tena
 
 ## Minimo para un primer deploy real
 
-- extender auth real a `gov-dashboard`
 - emitir JWT con claims suficientes para tenant y rol
 - unificar el contrato de claims por rol (`PARENT`, `TEACHER`, `SCHOOL_ADMIN`, `MINISTRY`)
 - remover cualquier header provisorio residual fuera del backend principal
