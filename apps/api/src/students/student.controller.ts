@@ -3,6 +3,8 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nest
 
 import { CurrentUser } from "../auth/current-user.decorator.js";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
+import { RolesGuard } from "../auth/roles.guard.js";
+import { Roles } from "../auth/roles.decorator.js";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
@@ -13,7 +15,8 @@ import { StudentService } from "./student.service.js";
 @ApiTags("students")
 @ApiBearerAuth()
 @Controller("students")
-@UseGuards(SupabaseAuthGuard, FamilyScopeGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard, FamilyScopeGuard)
+@Roles("PARENT", "SUPER_ADMIN")
 export class StudentController {
   constructor(private readonly students: StudentService) {}
 

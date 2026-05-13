@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
 
 import { hasSupabaseEnv } from "./env";
 
@@ -10,11 +11,14 @@ type CookieToSet = {
   options: CookieOptions;
 };
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: NextRequest): Promise<{
+  response: NextResponse;
+  user: User | null;
+}> {
   const response = NextResponse.next({ request });
 
   if (!hasSupabaseEnv()) {
-    return response;
+    return { response, user: null };
   }
 
   const supabase = createServerClient(
@@ -35,7 +39,9 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  return { response, user };
 }

@@ -68,6 +68,7 @@ export class SupabaseAuthService {
     const role = this.extractString(appMetadata, userMetadata, "role");
 
     switch (role) {
+      case "SUPER_ADMIN":
       case "MINISTRY":
       case "SCHOOL_ADMIN":
       case "TEACHER":

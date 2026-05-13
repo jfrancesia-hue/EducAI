@@ -1,4 +1,4 @@
-export type EducAiRole = "MINISTRY" | "SCHOOL_ADMIN" | "TEACHER" | "PARENT";
+export type EducAiRole = "SUPER_ADMIN" | "MINISTRY" | "SCHOOL_ADMIN" | "TEACHER" | "PARENT";
 
 export interface AuthenticatedUser {
   id: string;

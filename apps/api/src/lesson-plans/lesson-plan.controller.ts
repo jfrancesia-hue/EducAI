@@ -4,6 +4,8 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../auth/current-user.decorator.js";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { requireUserClaim } from "../auth/require-user-claim.js";
+import { Roles } from "../auth/roles.decorator.js";
+import { RolesGuard } from "../auth/roles.guard.js";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { GenerateLessonPlanDto } from "./dto/generate-lesson-plan.dto.js";
 import { LessonPlanService } from "./lesson-plan.service.js";
@@ -11,7 +13,8 @@ import { LessonPlanService } from "./lesson-plan.service.js";
 @ApiTags("lesson-plans")
 @ApiBearerAuth()
 @Controller("lesson-plans")
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard)
+@Roles("TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN")
 export class LessonPlanController {
   constructor(private readonly lessonPlans: LessonPlanService) {}
 

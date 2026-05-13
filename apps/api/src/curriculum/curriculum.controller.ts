@@ -4,6 +4,8 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../auth/current-user.decorator.js";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { requireUserClaim } from "../auth/require-user-claim.js";
+import { Roles } from "../auth/roles.decorator.js";
+import { RolesGuard } from "../auth/roles.guard.js";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { CreateCurriculumDto } from "./dto/create-curriculum.dto.js";
 import { CurriculumService } from "./curriculum.service.js";
@@ -11,7 +13,8 @@ import { CurriculumService } from "./curriculum.service.js";
 @ApiTags("curricula")
 @ApiBearerAuth()
 @Controller("curricula")
-@UseGuards(SupabaseAuthGuard)
+@UseGuards(SupabaseAuthGuard, RolesGuard)
+@Roles("SCHOOL_ADMIN", "MINISTRY", "SUPER_ADMIN")
 export class CurriculumController {
   constructor(private readonly curricula: CurriculumService) {}
 

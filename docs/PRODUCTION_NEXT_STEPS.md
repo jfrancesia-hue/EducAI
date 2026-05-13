@@ -11,20 +11,20 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 ## Lo que no resuelven las secrets
 
-- claims y tenant context en `web`
-- proteccion de rutas y sesiones
-- RBAC por rol y tenant
+- claims y tenant context definitivos en `web`
+- claims y tenant context definitivos en `gov-dashboard`
+- usuarios reales con metadata correcta en Supabase Auth
 - derivacion de `tenantId` desde token en vez de header manual
 - apertura a usuarios reales sin riesgo de cruce multi-tenant
 
 ## Hallazgos concretos
 
 - [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya autentica con Supabase Auth, pero todavia no resuelve claims de rol o tenant
-- [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege sesion en UI, pero no alcanza para RBAC ni aislamiento de datos
+- [`apps/web/middleware.ts`](../apps/web/middleware.ts) ya protege sesion y rol base, pero depende de claims bien cargados en Supabase
 - [`apps/gov-dashboard/src/app/login/page.tsx`](../apps/gov-dashboard/src/app/login/page.tsx) ya autentica con Supabase Auth, pero todavia no resuelve claims ministeriales ni segmentacion por jurisdiccion
-- [`apps/gov-dashboard/middleware.ts`](../apps/gov-dashboard/middleware.ts) protege sesion en UI, pero no alcanza para RBAC ni tenant ministerial
+- [`apps/gov-dashboard/middleware.ts`](../apps/gov-dashboard/middleware.ts) ya protege sesion y rol base, pero depende de claims ministeriales correctos
 - [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) ya usa sesion real y `req.user` para familias
-- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) ya resuelve auth real para los tres modulos principales, pero falta endurecer RBAC
+- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) ya resuelve auth real y RBAC base para los tres modulos principales
 - [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) ya usa claims de tenant y school
 - [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) ya usa claims de tenant y teacher
 
@@ -38,7 +38,6 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 ### 2. Auth base
 
-- elegir proveedor real de auth para web y gov-dashboard
 - completar claims y segmentacion real por rol sobre la sesion ya integrada
 - endurecer middleware y UX ante sesion expirada
 
@@ -51,9 +50,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 ### 4. RBAC
 
-- proteger rutas UI por rol
-- proteger endpoints backend por rol y tenant
-- mapear `MINISTRY`, `SCHOOL_ADMIN`, `TEACHER`, `PARENT`
+- validar el mapeo actual de roles por superficie con usuarios reales
+- agregar casos de excepcion si necesitás que un rol cruce de superficie
 
 ### 5. Validacion final con Supabase compartido
 
