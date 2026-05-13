@@ -1,4 +1,9 @@
-const REQUIRED_PRODUCTION_ENV = ["DATABASE_URL", "ALLOWED_ORIGINS"] as const;
+const REQUIRED_PRODUCTION_ENV = [
+  "DATABASE_URL",
+  "ALLOWED_ORIGINS",
+  "SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+] as const;
 
 export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
   requireProductionEnv("api", REQUIRED_PRODUCTION_ENV, env);

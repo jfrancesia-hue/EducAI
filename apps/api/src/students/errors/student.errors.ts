@@ -35,7 +35,7 @@ export class FamilyContextMissingError extends ForbiddenException {
   constructor() {
     super({
       code: "FAMILY_CONTEXT_MISSING",
-      message: "Falta el header x-family-id que identifica a la familia solicitante",
+      message: "Falta el claim familyId en la sesion autenticada",
     });
   }
 }
@@ -55,7 +55,7 @@ export class TenantContextMissingError extends ForbiddenException {
   constructor() {
     super({
       code: "TENANT_CONTEXT_MISSING",
-      message: "Falta el header x-tenant-id que identifica el tenant solicitante",
+      message: "Falta el claim tenantId en la sesion autenticada",
     });
   }
 }

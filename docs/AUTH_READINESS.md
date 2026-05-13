@@ -13,8 +13,8 @@ Estado actual del frente de autenticacion, roles y contexto de tenant antes de a
 
 - [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya exige credenciales reales de Supabase Auth
 - [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege `/app/*` y evita acceso sin sesion
-- [`apps/api/src/students/guards/family-scope.guard.ts`](../apps/api/src/students/guards/family-scope.guard.ts) usa `x-family-id` como mecanismo transitorio
-- [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) usa `x-family-id` y `x-tenant-id` como reemplazo temporal de JWT real
+- [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) ya exige `Authorization: Bearer <token>`
+- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) valida la sesion contra Supabase Auth y extrae claims desde metadata
 - [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) usa `x-tenant-id` y `x-school-id` como contexto institucional transitorio
 - [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) usa `x-tenant-id` y `x-teacher-id` como contexto docente transitorio
 
@@ -27,7 +27,7 @@ a usuarios institucionales o familias sin cerrar claims, RBAC y contexto de tena
 
 - extender auth real a `gov-dashboard`
 - emitir JWT con claims suficientes para tenant y rol
-- reemplazar `x-family-id` por `req.user`
-- reemplazar headers provisorios por `req.user` o contexto derivado del token
+- extender el mismo patron de `req.user` a `curriculum` y `lesson-plans`
+- reemplazar los headers provisorios restantes por `req.user` o contexto derivado del token
 - proteger rutas UI y endpoints backend por autenticacion y rol
 - validar que el tenant derivado del token no pueda cruzarse con recursos de IncluAI

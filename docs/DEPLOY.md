@@ -36,6 +36,8 @@ Requeridas hoy para boot:
 - `NODE_ENV=production`
 - `DATABASE_URL`
 - `ALLOWED_ORIGINS`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 Reservadas para fases siguientes o integraciones parciales:
 

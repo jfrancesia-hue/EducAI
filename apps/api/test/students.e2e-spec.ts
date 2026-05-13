@@ -1,8 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { Test } from "@nestjs/testing";
 import { ValidationPipe } from "@nestjs/common";
-import type { INestApplication } from "@nestjs/common";
+import type { ExecutionContext, INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import request from "supertest";
+
+import type { AuthenticatedRequest, AuthenticatedUser } from "../src/auth/authenticated-user.js";
+import { SupabaseAuthGuard } from "../src/auth/supabase-auth.guard.js";
 import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/prisma/prisma.service.js";
 
@@ -42,6 +45,64 @@ const prismaMock = {
   },
 };
 
+const authFixtures: Record<string, AuthenticatedUser> = {
+  "token:family-1": {
+    id: "usr_parent_1",
+    email: "familia1@educai.local",
+    role: "PARENT",
+    familyId: "fam_1",
+    tenantId: "tnt_1",
+  },
+  "token:family-missing-tenant": {
+    id: "usr_parent_2",
+    email: "familia2@educai.local",
+    role: "PARENT",
+    familyId: "fam_1",
+  },
+  "token:family-missing-family": {
+    id: "usr_parent_3",
+    email: "familia3@educai.local",
+    role: "PARENT",
+    tenantId: "tnt_1",
+  },
+  "token:family-intruder": {
+    id: "usr_intruder",
+    email: "intrusa@educai.local",
+    role: "PARENT",
+    familyId: "fam_intruder",
+    tenantId: "tnt_1",
+  },
+  "token:tenant-intruder": {
+    id: "usr_tenant_intruder",
+    email: "tenant@educai.local",
+    role: "PARENT",
+    familyId: "fam_1",
+    tenantId: "tnt_intruder",
+  },
+};
+
+const supabaseAuthGuardMock = {
+  canActivate(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const raw = request.headers.authorization;
+    const header = Array.isArray(raw) ? raw[0] : raw;
+
+    if (!header || !header.startsWith("Bearer ")) {
+      return false;
+    }
+
+    const token = header.slice("Bearer ".length);
+    const user = authFixtures[token];
+
+    if (!user) {
+      return false;
+    }
+
+    request.user = user;
+    return true;
+  },
+};
+
 describe("Students API (e2e)", () => {
   let app: INestApplication;
 
@@ -51,6 +112,8 @@ describe("Students API (e2e)", () => {
     })
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
+      .overrideGuard(SupabaseAuthGuard)
+      .useValue(supabaseAuthGuardMock)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -67,8 +130,7 @@ describe("Students API (e2e)", () => {
   it("POST /students rechaza body invalido (sin tenant context, grade fuera de rango)", async () => {
     const response = await request(app.getHttpServer())
       .post("/students")
-      .set("x-family-id", "fam_1")
-      .set("x-tenant-id", "tnt_1")
+      .set("Authorization", "Bearer token:family-1")
       .send({ firstName: "X", lastName: "Y", grade: 99 });
 
     expect(response.status).toBe(400);
@@ -83,8 +145,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .post("/students")
-      .set("x-family-id", "fam_1")
-      .set("x-tenant-id", "tnt_1")
+      .set("Authorization", "Bearer token:family-1")
       .send({
         firstName: "Mateo",
         lastName: "Demo",
@@ -103,10 +164,10 @@ describe("Students API (e2e)", () => {
     expect(response.body.data.id).toBe("stu_new");
   });
 
-  it("POST /students sin x-tenant-id devuelve 403", async () => {
+  it("POST /students sin tenantId en claims devuelve 403", async () => {
     const response = await request(app.getHttpServer())
       .post("/students")
-      .set("x-family-id", "fam_1")
+      .set("Authorization", "Bearer token:family-missing-tenant")
       .send({
         firstName: "Mateo",
         lastName: "Demo",
@@ -117,17 +178,19 @@ describe("Students API (e2e)", () => {
     expect(response.body.code).toBe("TENANT_CONTEXT_MISSING");
   });
 
-  it("GET /students/:id sin x-family-id devuelve 403", async () => {
-    const response = await request(app.getHttpServer()).get("/students/stu_1");
+  it("GET /students/:id sin familyId en claims devuelve 403", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/students/stu_1")
+      .set("Authorization", "Bearer token:family-missing-family");
 
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("FAMILY_CONTEXT_MISSING");
   });
 
-  it("GET /students/:id sin x-tenant-id devuelve 403", async () => {
+  it("GET /students/:id sin tenantId en claims devuelve 403", async () => {
     const response = await request(app.getHttpServer())
       .get("/students/stu_1")
-      .set("x-family-id", "fam_1");
+      .set("Authorization", "Bearer token:family-missing-tenant");
 
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("TENANT_CONTEXT_MISSING");
@@ -142,8 +205,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_1")
-      .set("x-family-id", "fam_intruder")
-      .set("x-tenant-id", "tnt_1");
+      .set("Authorization", "Bearer token:family-intruder");
 
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("FAMILY_ACCESS_DENIED");
@@ -158,8 +220,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_1")
-      .set("x-family-id", "fam_1")
-      .set("x-tenant-id", "tnt_intruder");
+      .set("Authorization", "Bearer token:tenant-intruder");
 
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("TENANT_ACCESS_DENIED");
@@ -170,8 +231,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_404")
-      .set("x-family-id", "fam_1")
-      .set("x-tenant-id", "tnt_1");
+      .set("Authorization", "Bearer token:family-1");
 
     expect(response.status).toBe(404);
     expect(response.body.code).toBe("STUDENT_NOT_FOUND");
@@ -193,8 +253,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/students/stu_1/progress")
-      .set("x-family-id", "fam_1")
-      .set("x-tenant-id", "tnt_1");
+      .set("Authorization", "Bearer token:family-1");
 
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({

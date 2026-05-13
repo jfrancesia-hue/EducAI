@@ -22,8 +22,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 - [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya autentica con Supabase Auth, pero todavia no resuelve claims de rol o tenant
 - [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege sesion en UI, pero no alcanza para RBAC ni aislamiento de datos
-- [`apps/api/src/students/guards/family-scope.guard.ts`](../apps/api/src/students/guards/family-scope.guard.ts) usa `x-family-id`
-- [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) documenta ese header como transitorio
+- [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) ya usa sesion real y `req.user` para familias
+- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) ya resuelve auth real, pero solo esta aplicado al modulo `students`
 - [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) usa `x-tenant-id` y `x-school-id` de forma transitoria
 - [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) usa `x-tenant-id` y `x-teacher-id` de forma transitoria
 
@@ -46,8 +46,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 - definir claims minimos: `userId`, `tenantId`, `tenantType`, `role`
 - propagar claims al backend
-- reemplazar `x-family-id` por identidad derivada del token
-- reemplazar headers provisorios por identidad derivada de sesion o token
+- extender `req.user` a `curriculum` y `lesson-plans`
+- reemplazar los headers provisorios restantes por identidad derivada de sesion o token
 
 ### 4. RBAC
 

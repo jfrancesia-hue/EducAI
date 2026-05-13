@@ -13,8 +13,8 @@ API principal de EducAI. NestJS 10 + Prisma + PostgreSQL.
 ## Estado actual
 
 - la API builda, testea y documenta endpoints via Swagger;
-- varios endpoints sensibles ya no aceptan identidad arbitraria en body;
-- el contexto sensible sigue siendo provisorio en headers hasta integrar auth real.
+- `students` ya valida sesion real via `Authorization: Bearer <token>` contra Supabase Auth;
+- `curriculum` y `lesson-plans` todavia mantienen contexto sensible provisorio en headers.
 
 Swagger disponible en `http://localhost:4000/docs`.
 

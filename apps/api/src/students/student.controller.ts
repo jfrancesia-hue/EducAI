@@ -1,6 +1,9 @@
-import { Body, Controller, Get, Headers, Param, Patch, Post, UseGuards } from "@nestjs/common";
-import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from "@nestjs/swagger";
-import { requireHeader } from "../common/http/required-header.js";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
+
+import { CurrentUser } from "../auth/current-user.decorator.js";
+import type { AuthenticatedUser } from "../auth/authenticated-user.js";
+import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import { UpdateStudentDto } from "./dto/update-student.dto.js";
@@ -8,33 +11,18 @@ import { FamilyScopeGuard } from "./guards/family-scope.guard.js";
 import { StudentService } from "./student.service.js";
 
 @ApiTags("students")
-@ApiHeader({
-  name: "x-family-id",
-  description:
-    "Identificador de la familia solicitante. Provisorio hasta que el módulo de auth lo provea por JWT.",
-  required: true,
-})
-@ApiHeader({
-  name: "x-tenant-id",
-  description:
-    "Identificador del tenant. Provisorio hasta que el contexto multi-tenant salga del JWT.",
-  required: true,
-})
+@ApiBearerAuth()
 @Controller("students")
-@UseGuards(FamilyScopeGuard)
+@UseGuards(SupabaseAuthGuard, FamilyScopeGuard)
 export class StudentController {
   constructor(private readonly students: StudentService) {}
 
   @Post()
   @ApiCreatedResponse({ description: "Perfil de estudiante creado" })
-  create(
-    @Body() dto: CreateStudentDto,
-    @Headers("x-family-id") familyId: string,
-    @Headers("x-tenant-id") tenantId: string,
-  ) {
+  create(@Body() dto: CreateStudentDto, @CurrentUser() user: AuthenticatedUser) {
     return this.students.create(dto, {
-      familyId: requireHeader(familyId, "x-family-id"),
-      tenantId: requireHeader(tenantId, "x-tenant-id"),
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
     });
   }
 
