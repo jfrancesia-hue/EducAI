@@ -23,9 +23,9 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 - [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya autentica con Supabase Auth, pero todavia no resuelve claims de rol o tenant
 - [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege sesion en UI, pero no alcanza para RBAC ni aislamiento de datos
 - [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) ya usa sesion real y `req.user` para familias
-- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) ya resuelve auth real, pero solo esta aplicado al modulo `students`
-- [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) usa `x-tenant-id` y `x-school-id` de forma transitoria
-- [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) usa `x-tenant-id` y `x-teacher-id` de forma transitoria
+- [`apps/api/src/auth/supabase-auth.service.ts`](../apps/api/src/auth/supabase-auth.service.ts) ya resuelve auth real para los tres modulos principales, pero falta endurecer RBAC
+- [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) ya usa claims de tenant y school
+- [`apps/api/src/lesson-plans/lesson-plan.controller.ts`](../apps/api/src/lesson-plans/lesson-plan.controller.ts) ya usa claims de tenant y teacher
 
 ## Orden recomendado
 
@@ -46,8 +46,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 - definir claims minimos: `userId`, `tenantId`, `tenantType`, `role`
 - propagar claims al backend
-- extender `req.user` a `curriculum` y `lesson-plans`
-- reemplazar los headers provisorios restantes por identidad derivada de sesion o token
+- endurecer y documentar los claims requeridos por cada rol
+- reemplazar cualquier header provisorio restante por identidad derivada de sesion o token
 
 ### 4. RBAC
 

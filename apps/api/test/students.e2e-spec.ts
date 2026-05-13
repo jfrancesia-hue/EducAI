@@ -79,6 +79,46 @@ const authFixtures: Record<string, AuthenticatedUser> = {
     familyId: "fam_1",
     tenantId: "tnt_intruder",
   },
+  "token:school-1": {
+    id: "usr_school_1",
+    email: "escuela1@educai.local",
+    role: "SCHOOL_ADMIN",
+    tenantId: "tnt_school_1",
+    schoolId: "sch_1",
+  },
+  "token:school-missing-school": {
+    id: "usr_school_missing",
+    email: "escuela-missing@educai.local",
+    role: "SCHOOL_ADMIN",
+    tenantId: "tnt_school_1",
+  },
+  "token:school-intruder": {
+    id: "usr_school_intruder",
+    email: "escuela-intrusa@educai.local",
+    role: "SCHOOL_ADMIN",
+    tenantId: "tnt_school_1",
+    schoolId: "sch_intruder",
+  },
+  "token:teacher-1": {
+    id: "usr_teacher_1",
+    email: "docente1@educai.local",
+    role: "TEACHER",
+    tenantId: "tnt_school_1",
+    teacherId: "tea_1",
+  },
+  "token:teacher-missing-teacher": {
+    id: "usr_teacher_missing",
+    email: "docente-missing@educai.local",
+    role: "TEACHER",
+    tenantId: "tnt_school_1",
+  },
+  "token:teacher-intruder": {
+    id: "usr_teacher_intruder",
+    email: "docente-intruso@educai.local",
+    role: "TEACHER",
+    tenantId: "tnt_school_1",
+    teacherId: "tea_intruder",
+  },
 };
 
 const supabaseAuthGuardMock = {
@@ -264,10 +304,10 @@ describe("Students API (e2e)", () => {
     });
   });
 
-  it("POST /curricula sin x-school-id devuelve 400", async () => {
+  it("POST /curricula sin schoolId en claims devuelve 403", async () => {
     const response = await request(app.getHttpServer())
       .post("/curricula")
-      .set("x-tenant-id", "tnt_school_1")
+      .set("Authorization", "Bearer token:school-missing-school")
       .send({
         name: "Matematica 7A",
         grade: 7,
@@ -275,11 +315,11 @@ describe("Students API (e2e)", () => {
         content: { unit: "proporcionalidad" },
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("x-school-id");
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("SCHOOLID_CONTEXT_MISSING");
   });
 
-  it("POST /curricula crea curriculo con contexto institucional por headers", async () => {
+  it("POST /curricula crea curriculo con contexto institucional por claims", async () => {
     prismaMock.curriculum.create.mockResolvedValueOnce({
       id: "cur_1",
       tenantId: "tnt_school_1",
@@ -288,8 +328,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .post("/curricula")
-      .set("x-tenant-id", "tnt_school_1")
-      .set("x-school-id", "sch_1")
+      .set("Authorization", "Bearer token:school-1")
       .send({
         name: "Matematica 7A",
         grade: 7,
@@ -313,16 +352,15 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .post("/curricula/cur_404/analyze")
-      .set("x-tenant-id", "tnt_school_1")
-      .set("x-school-id", "sch_intruder");
+      .set("Authorization", "Bearer token:school-intruder");
 
     expect(response.status).toBe(404);
   });
 
-  it("POST /lesson-plans/generate sin x-teacher-id devuelve 400", async () => {
+  it("POST /lesson-plans/generate sin teacherId en claims devuelve 403", async () => {
     const response = await request(app.getHttpServer())
       .post("/lesson-plans/generate")
-      .set("x-tenant-id", "tnt_school_1")
+      .set("Authorization", "Bearer token:teacher-missing-teacher")
       .send({
         grade: 7,
         subject: "matematica",
@@ -331,11 +369,11 @@ describe("Students API (e2e)", () => {
         totalDurationMinutes: 80,
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("x-teacher-id");
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("TEACHERID_CONTEXT_MISSING");
   });
 
-  it("POST /lesson-plans/generate crea plan con contexto docente por headers", async () => {
+  it("POST /lesson-plans/generate crea plan con contexto docente por claims", async () => {
     prismaMock.lessonPlan.create.mockResolvedValueOnce({
       id: "plan_1",
       tenantId: "tnt_school_1",
@@ -344,8 +382,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .post("/lesson-plans/generate")
-      .set("x-tenant-id", "tnt_school_1")
-      .set("x-teacher-id", "tea_1")
+      .set("Authorization", "Bearer token:teacher-1")
       .send({
         grade: 7,
         subject: "matematica",
@@ -371,8 +408,7 @@ describe("Students API (e2e)", () => {
 
     const response = await request(app.getHttpServer())
       .get("/lesson-plans/plan_404")
-      .set("x-tenant-id", "tnt_school_1")
-      .set("x-teacher-id", "tea_intruder");
+      .set("Authorization", "Bearer token:teacher-intruder");
 
     expect(response.status).toBe(404);
   });

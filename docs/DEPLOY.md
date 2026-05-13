@@ -45,9 +45,7 @@ Reservadas para fases siguientes o integraciones parciales:
 - `PUBLIC_APP_URL`
 - `ALLOWED_ORIGINS`
 - `DATABASE_URL`
-- `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `ANTHROPIC_API_KEY`
 - `OPENAI_API_KEY`
 - `TWILIO_ACCOUNT_SID`
