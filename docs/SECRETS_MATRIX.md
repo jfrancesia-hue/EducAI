@@ -43,7 +43,7 @@ Hoy estas variables estan documentadas pero la app todavia no las consume en cod
 - `DATABASE_URL`
 - `ALLOWED_ORIGINS`
 - `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`
 
 ### Reservadas para fases siguientes o integraciones parciales
 
@@ -53,6 +53,7 @@ Hoy estas variables estan documentadas pero la app todavia no las consume en cod
 - `ALLOWED_ORIGINS`
 - `DATABASE_URL`
 - `SUPABASE_ANON_KEY`
+- `SUPABASE_SECRET_KEY`
 - `ANTHROPIC_API_KEY`
 - `OPENAI_API_KEY`
 - `TWILIO_ACCOUNT_SID`

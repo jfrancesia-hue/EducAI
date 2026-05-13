@@ -37,7 +37,7 @@ Requeridas hoy para boot:
 - `DATABASE_URL`
 - `ALLOWED_ORIGINS`
 - `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`
 
 Reservadas para fases siguientes o integraciones parciales:
 
@@ -46,6 +46,7 @@ Reservadas para fases siguientes o integraciones parciales:
 - `ALLOWED_ORIGINS`
 - `DATABASE_URL`
 - `SUPABASE_ANON_KEY`
+- `SUPABASE_SECRET_KEY`
 - `ANTHROPIC_API_KEY`
 - `OPENAI_API_KEY`
 - `TWILIO_ACCOUNT_SID`

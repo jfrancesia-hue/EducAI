@@ -1,0 +1,12 @@
+[
+  {
+    "email": "admin@educai.test",
+    "password": "EducAI-Test-2026!",
+    "emailConfirm": true,
+    "appMetadata": {
+      "role": "SCHOOL_ADMIN",
+      "tenantId": "tnt_school_1",
+      "schoolId": "sch_1"
+    }
+  }
+]

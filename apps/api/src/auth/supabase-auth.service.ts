@@ -24,15 +24,15 @@ export class SupabaseAuthService {
     }
 
     const url = process.env.SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const secretKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!url || !serviceRoleKey) {
+    if (!url || !secretKey) {
       throw new ServiceUnavailableException(
-        "Supabase auth no esta configurado en el API (faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY)",
+        "Supabase auth no esta configurado en el API (faltan SUPABASE_URL y una key elevada: SUPABASE_SECRET_KEY o SUPABASE_SERVICE_ROLE_KEY)",
       );
     }
 
-    this.client = createClient(url, serviceRoleKey, {
+    this.client = createClient(url, secretKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

@@ -3,6 +3,9 @@ import base from "@educai/config/eslint/base";
 export default [
   ...base,
   {
+    ignores: ["scripts/**/*.mjs"],
+  },
+  {
     files: ["**/*.spec.ts", "**/*.test.ts", "test/**/*.ts"],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",

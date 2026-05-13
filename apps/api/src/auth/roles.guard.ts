@@ -1,10 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  type Type,
-} from "@nestjs/common";
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
 import type { AuthenticatedRequest, EducAiRole } from "./authenticated-user.js";
@@ -16,8 +10,8 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const roles = this.reflector.getAllAndOverride<EducAiRole[]>(ROLES_KEY, [
-      context.getHandler() as Type<unknown>,
-      context.getClass() as Type<unknown>,
+      context.getHandler(),
+      context.getClass(),
     ]);
 
     if (!roles?.length) {

@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "lint": "eslint .",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "auth:sync-users": "node ./scripts/sync-auth-users.mjs"
   },
   "dependencies": {
     "@educai/ai": "workspace:*",

@@ -30,6 +30,17 @@ pnpm --filter @educai/api dev
 - `ANTHROPIC_API_KEY`
 - `REDIS_URL`
 - `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Ver `docs/DEPLOY.md`, `docs/SECRETS_MATRIX.md` y `docs/AUTH_READINESS.md`.
+
+## Provision de usuarios de Auth
+
+Para crear o actualizar usuarios de Supabase Auth desde el repo:
+
+1. Copiar `scripts/auth-users.example.json`
+2. Ajustar emails, password y claims
+3. Ejecutar `pnpm auth:sync-users <ruta-al-json>`
+
+El script usa `SUPABASE_URL` y `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`.
