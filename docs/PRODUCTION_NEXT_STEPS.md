@@ -11,7 +11,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 ## Lo que no resuelven las secrets
 
-- autenticacion real en `web`
+- claims y tenant context en `web`
+- autenticacion real en `gov-dashboard`
 - proteccion de rutas y sesiones
 - RBAC por rol y tenant
 - derivacion de `tenantId` desde token en vez de header manual
@@ -19,8 +20,8 @@ Estado real despues de dejar CI, build y deploy listos del lado repo.
 
 ## Hallazgos concretos
 
-- [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) sigue siendo acceso demo
-- [`apps/web/src/app/app/page.tsx`](../apps/web/src/app/app/page.tsx) y [`apps/web/src/app/app/_components/app-shell.tsx`](../apps/web/src/app/app/_components/app-shell.tsx) muestran claramente superficie demo
+- [`apps/web/src/app/login/page.tsx`](../apps/web/src/app/login/page.tsx) ya autentica con Supabase Auth, pero todavia no resuelve claims de rol o tenant
+- [`apps/web/middleware.ts`](../apps/web/middleware.ts) protege sesion en UI, pero no alcanza para RBAC ni aislamiento de datos
 - [`apps/api/src/students/guards/family-scope.guard.ts`](../apps/api/src/students/guards/family-scope.guard.ts) usa `x-family-id`
 - [`apps/api/src/students/student.controller.ts`](../apps/api/src/students/student.controller.ts) documenta ese header como transitorio
 - [`apps/api/src/curriculum/curriculum.controller.ts`](../apps/api/src/curriculum/curriculum.controller.ts) usa `x-tenant-id` y `x-school-id` de forma transitoria

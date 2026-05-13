@@ -1,21 +1,24 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const DEMO_SESSION_COOKIE = "educai_demo_session";
+import { updateSession } from "./src/lib/supabase/middleware";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1";
+  const response = await updateSession(request);
+  const hasSession = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token"));
 
-  if (pathname.startsWith("/app") && !hasDemoSession) {
+  if (pathname.startsWith("/app") && !hasSession) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (pathname === "/login" && hasDemoSession) {
+  if (pathname === "/login" && hasSession) {
     return NextResponse.redirect(new URL("/app", request.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

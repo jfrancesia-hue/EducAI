@@ -6,9 +6,9 @@ Frontend principal de EducAI. Next.js 14 App Router + Tailwind + `@educai/ui`.
 
 - `/` expone la landing publica.
 - `/colegios`, `/contacto`, `/privacidad` y `/seguridad` cubren la superficie institucional.
-- `/login` abre un acceso demo local.
-- `/app/*` contiene la experiencia interna demo para docentes con middleware y cookie de sesion.
-- aun no hay proveedor de identidad real ni RBAC conectado.
+- `/login` autentica contra Supabase Auth.
+- `/app/*` queda protegido por middleware y sesion SSR.
+- aun no hay RBAC ni claims de tenant conectados en la UI.
 
 ## Arranque local
 
@@ -20,6 +20,6 @@ pnpm --filter @educai/web dev
 
 ## Notas operativas
 
-- El acceso demo crea una cookie local `educai_demo_session`.
-- Las rutas `/app/*` redirigen a `/login` cuando no existe esa sesion.
+- La sesion web depende de `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Las rutas `/app/*` redirigen a `/login` cuando no existe una sesion valida.
 - El script `typecheck` usa `next build` porque `typedRoutes` depende de tipos generados por Next.

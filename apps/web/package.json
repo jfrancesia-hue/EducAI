@@ -11,6 +11,8 @@
     "typecheck": "next build"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.8",
     "@educai/types": "workspace:*",
     "@educai/ui": "workspace:*",
     "@educai/i18n": "workspace:*",

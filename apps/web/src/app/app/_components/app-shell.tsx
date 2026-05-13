@@ -35,7 +35,7 @@ type AppShellProps = {
 
 export function AppShell({
   title,
-  eyebrow = "Modo demo - Colegio del Valle",
+  eyebrow = "Colegio del Valle - Sesion institucional",
   children,
 }: AppShellProps) {
   const pathname = usePathname();

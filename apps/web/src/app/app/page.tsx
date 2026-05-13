@@ -221,7 +221,7 @@ export default function EducAiAppPage() {
               </button>
               <div>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                  Modo demo - Colegio del Valle
+                  Colegio del Valle - Sesion institucional
                 </p>
                 <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
                   Centro de produccion pedagogica
