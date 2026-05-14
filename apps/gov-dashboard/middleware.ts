@@ -5,6 +5,7 @@ import { updateSession } from "./src/lib/supabase/middleware";
 import { extractRoleFromMetadata } from "./src/lib/supabase/roles";
 
 const GOV_ALLOWED_ROLES = new Set(["SUPER_ADMIN", "MINISTRY"]);
+const PUBLIC_PATHS = new Set(["/login", "/login/enter", "/login/salir", "/acceso-denegado"]);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -12,12 +13,13 @@ export async function middleware(request: NextRequest) {
   const hasSession = Boolean(user);
   const role =
     extractRoleFromMetadata(user?.app_metadata) ?? extractRoleFromMetadata(user?.user_metadata);
+  const isPublicPath = PUBLIC_PATHS.has(pathname);
 
-  if (pathname === "/" && !hasSession) {
+  if (!isPublicPath && !hasSession) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (pathname === "/" && hasSession && (!role || !GOV_ALLOWED_ROLES.has(role))) {
+  if (!isPublicPath && hasSession && (!role || !GOV_ALLOWED_ROLES.has(role))) {
     return NextResponse.redirect(new URL("/acceso-denegado", request.url));
   }
 
@@ -29,5 +31,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/login", "/acceso-denegado"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
 };
