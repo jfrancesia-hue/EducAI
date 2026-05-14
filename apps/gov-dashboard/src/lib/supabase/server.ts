@@ -19,7 +19,11 @@ export function createSupabaseServerClient() {
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
+          try {
+            cookieStore.set(name, value, options);
+          } catch {
+            // In read-only server component contexts Next.js can reject cookie writes.
+          }
         });
       },
     },

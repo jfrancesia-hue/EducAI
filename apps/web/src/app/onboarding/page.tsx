@@ -9,7 +9,8 @@ export default function OnboardingPage() {
       title="Armemos una experiencia piloto docente, cuidada y medible."
       description="La plataforma queda lista para capturar interes sin prometer magia: docentes, equipos pedagogicos y escuelas pueden entrar por un flujo de piloto con seguridad, produccion de recursos y metricas claras."
       icon={Sparkles}
-      primaryLabel="Volver al inicio"
+      primaryLabel="Ir a ingresar"
+      primaryHref="/login"
     />
   );
 }

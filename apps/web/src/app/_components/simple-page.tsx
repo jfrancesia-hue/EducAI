@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -10,6 +11,7 @@ interface SimplePageProps {
   description: string;
   icon: LucideIcon;
   primaryLabel?: string;
+  primaryHref?: Route;
 }
 
 export function SimplePage({
@@ -18,6 +20,7 @@ export function SimplePage({
   description,
   icon: Icon,
   primaryLabel = "Volver a la plataforma",
+  primaryHref = "/",
 }: SimplePageProps) {
   return (
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -50,7 +53,7 @@ export function SimplePage({
           <p className="mt-6 text-lg leading-8 text-slate-600">{description}</p>
           <div className="mt-8">
             <Button asChild size="lg" pill>
-              <Link href="/">
+              <Link href={primaryHref}>
                 {primaryLabel}
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Link>

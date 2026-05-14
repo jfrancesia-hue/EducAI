@@ -144,7 +144,15 @@ export default async function GovDashboardHome() {
     );
   }
 
-  const handoffs = await fetchOpenHandoffs();
+  let handoffs: HandoffRecord[] = [];
+  let handoffLoadError: string | null = null;
+
+  try {
+    handoffs = await fetchOpenHandoffs();
+  } catch (error) {
+    handoffLoadError = error instanceof Error ? error.message : "No se pudo cargar la cola.";
+  }
+
   const sources = summarizeBySource(handoffs);
   const academicCount = sources.academic ?? 0;
   const institutionalCount = sources.institutional ?? 0;
@@ -194,6 +202,14 @@ export default async function GovDashboardHome() {
       </section>
 
       <section className="grid gap-4">
+        {handoffLoadError ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No se pudo cargar la cola</CardTitle>
+              <CardDescription>{handoffLoadError}</CardDescription>
+            </CardHeader>
+          </Card>
+        ) : null}
         {handoffs.length === 0 ? (
           <Card>
             <CardHeader>
