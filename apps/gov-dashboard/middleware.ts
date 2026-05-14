@@ -9,9 +9,7 @@ const GOV_ALLOWED_ROLES = new Set(["SUPER_ADMIN", "MINISTRY"]);
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, user } = await updateSession(request);
-  const hasSession = request.cookies
-    .getAll()
-    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token"));
+  const hasSession = Boolean(user);
   const role =
     extractRoleFromMetadata(user?.app_metadata) ?? extractRoleFromMetadata(user?.user_metadata);
 
@@ -23,7 +21,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/acceso-denegado", request.url));
   }
 
-  if (pathname === "/login" && hasSession) {
+  if (pathname === "/login" && hasSession && role && GOV_ALLOWED_ROLES.has(role)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
