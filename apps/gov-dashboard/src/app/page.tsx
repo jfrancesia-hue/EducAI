@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { Activity, Building2, GraduationCap, Inbox, School, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@educai/ui";
+import { GovShell } from "./_components/gov-shell";
 import { HandoffList, type HandoffRecord } from "./_components/handoff-list";
+import { KpiCard } from "./_components/kpi-card";
+import { PageHeader } from "./_components/page-header";
 import { getApiBaseUrl, hasApiBaseUrl } from "../lib/api";
+import type { GovRole } from "../lib/nav";
 import { hasSupabaseEnv } from "../lib/supabase/env";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 
@@ -48,7 +53,7 @@ async function closeHandoff(formData: FormData) {
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error("La sesión expiró antes de cerrar el handoff.");
+    throw new Error("La sesion expiro antes de cerrar el handoff.");
   }
 
   const response = await fetch(`${getApiBaseUrl()}/handoffs/${handoffId}/close`, {
@@ -77,6 +82,15 @@ function summarizeBySource(handoffs: HandoffRecord[]) {
   }, {});
 }
 
+function getMetadataString(metadata: unknown, key: string) {
+  if (!metadata || typeof metadata !== "object") {
+    return undefined;
+  }
+
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
+}
+
 export default async function GovDashboardHome() {
   const authReady = hasSupabaseEnv();
   const apiReady = hasApiBaseUrl();
@@ -86,7 +100,7 @@ export default async function GovDashboardHome() {
       <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-6 py-12">
         <header className="flex items-center justify-between gap-3 border-b border-border pb-6">
           <div>
-            <Badge variant="outline">Panel provincial - Configuración pendiente</Badge>
+            <Badge variant="outline">Panel provincial - Configuracion pendiente</Badge>
             <h1 className="mt-3 font-display text-4xl font-bold tracking-tight">
               Faltan variables para operar el panel.
             </h1>
@@ -95,7 +109,7 @@ export default async function GovDashboardHome() {
             href="/login/salir"
             className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
-            Cerrar sesión
+            Cerrar sesion
           </Link>
         </header>
         <Card>
@@ -128,55 +142,86 @@ export default async function GovDashboardHome() {
   const academicCount = sources.academic ?? 0;
   const institutionalCount = sources.institutional ?? 0;
 
-  return (
-    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-12">
-      <header className="flex flex-col gap-3 border-b border-border pb-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Badge variant="outline">Panel provincial - Operación de handoffs</Badge>
-          <Link
-            href="/login/salir"
-            className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
-          >
-            Cerrar sesión
-          </Link>
-        </div>
-        <h1 className="font-display text-4xl font-bold tracking-tight">
-          Cola operativa de derivaciones humanas.
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Vista autenticada con datos reales del API. Cada caso sale de la cola al cerrarlo desde
-          este panel.
-        </p>
-      </header>
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const appMetadata = session?.user?.app_metadata as unknown;
+  const metadataRole = getMetadataString(appMetadata, "role");
+  const userRole: GovRole = metadataRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : "MINISTRY";
+  const tenantName = getMetadataString(appMetadata, "tenantName");
 
-      <section aria-label="Resumen" className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="shadow-whisper">
-          <CardHeader>
-            <CardDescription>Handoffs abiertos</CardDescription>
-            <CardTitle className="font-display text-3xl tabular-nums">{handoffs.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="shadow-whisper">
-          <CardHeader>
-            <CardDescription>Origen académico</CardDescription>
-            <CardTitle className="font-display text-3xl tabular-nums">{academicCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="shadow-whisper">
-          <CardHeader>
-            <CardDescription>Origen institucional</CardDescription>
-            <CardTitle className="font-display text-3xl tabular-nums">
-              {institutionalCount}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+  return (
+    <GovShell userEmail={session?.user?.email ?? ""} userRole={userRole} tenantName={tenantName}>
+      <PageHeader
+        eyebrow="PANEL OPERATIVO"
+        title={
+          <>
+            Cola operativa de <span className="gov-gradient-text">derivaciones humanas</span>
+          </>
+        }
+        subtitle="Vista autenticada con datos reales del API. Cada caso sale de la cola al cerrarlo desde este panel."
+      />
+
+      <section aria-label="Resumen KPI" className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <KpiCard icon={Inbox} label="Handoffs abiertos" value={handoffs.length} status="live" />
+        <KpiCard
+          icon={GraduationCap}
+          label="Origen academico"
+          value={academicCount}
+          status="live"
+        />
+        <KpiCard
+          icon={Building2}
+          label="Origen institucional"
+          value={institutionalCount}
+          status="live"
+        />
+      </section>
+
+      <section
+        aria-label="Indicadores ministeriales"
+        className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3"
+      >
+        <KpiCard
+          icon={School}
+          label="Colegios conectados"
+          value={
+            <span
+              className="gov-skeleton inline-block h-8 w-16"
+              role="status"
+              aria-label="Cargando"
+            />
+          }
+          status="placeholder"
+        />
+        <KpiCard
+          icon={Users}
+          label="Alumnos impactados"
+          value={
+            <span
+              className="gov-skeleton inline-block h-8 w-20"
+              role="status"
+              aria-label="Cargando"
+            />
+          }
+          status="placeholder"
+        />
+        <KpiCard
+          icon={Activity}
+          label="Cobertura curricular"
+          value={
+            <span
+              className="gov-skeleton inline-block h-8 w-14"
+              role="status"
+              aria-label="Cargando"
+            />
+          }
+          status="placeholder"
+        />
       </section>
 
       <HandoffList handoffs={handoffs} onClose={closeHandoff} loadError={handoffLoadError} />
-
-      <footer className="border-t border-border pt-6 text-xs text-muted-foreground">
-        EducAI Gov - cola mínima operativa de handoffs humanos
-      </footer>
-    </main>
+    </GovShell>
   );
 }
