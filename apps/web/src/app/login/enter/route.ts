@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   const { url, anonKey } = getSupabaseEnv();
   const redirectUrl = new URL("/app", request.url);
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl, { status: 303 });
   const requestCookies = parseCookies(request);
   const supabase = createServerClient(url, anonKey, {
     cookies: {
