@@ -146,6 +146,11 @@ export function GovSidebar({ items, userRole }: GovSidebarProps) {
       <aside
         id={drawerId}
         data-no-print
+        role="dialog"
+        aria-label="Navegacion principal"
+        aria-modal="true"
+        aria-hidden={!open}
+        inert={open ? undefined : true}
         className={[
           "fixed left-0 top-0 z-50 h-screen w-72 max-w-[86vw] border-r border-white/10 bg-[hsl(var(--gov-sidebar-bg))] p-4 text-[hsl(var(--gov-sidebar-text))] shadow-2xl transition-transform duration-300 lg:hidden",
           open ? "translate-x-0" : "-translate-x-full",

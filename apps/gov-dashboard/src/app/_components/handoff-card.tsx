@@ -96,12 +96,13 @@ export function HandoffCard({ handoff, onClose }: HandoffCardProps) {
           <textarea
             name="resolutionNote"
             rows={3}
+            aria-label="Nota opcional de resolucion o seguimiento"
             placeholder="Nota opcional de resolucion o seguimiento"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-foreground"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
           />
           <button
             type="submit"
-            className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:opacity-90"
+            className="min-h-11 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background outline-none transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
           >
             Cerrar handoff
           </button>
