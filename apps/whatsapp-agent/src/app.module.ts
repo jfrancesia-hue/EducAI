@@ -10,6 +10,7 @@ import {
 } from "@educai/ai";
 import { WHATSAPP_AGENT_LLM } from "./agent/agent-llm.token.js";
 import { InstitutionalAgentService } from "./agent/institutional-agent.service.js";
+import { HumanHandoffService } from "./agent/human-handoff.service.js";
 import { InstitutionalIntentService } from "./agent/institutional-intent.service.js";
 import { InstitutionalToolsService } from "./agent/institutional-tools.service.js";
 import { OpenAiLlmClient } from "./agent/providers/openai-llm.client.js";
@@ -41,6 +42,7 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
     InstitutionalIntentService,
     InstitutionalToolsService,
     InstitutionalAgentService,
+    HumanHandoffService,
     {
       provide: OcrService,
       useFactory: () => new OcrService({ apiKey: process.env.ANTHROPIC_API_KEY }),

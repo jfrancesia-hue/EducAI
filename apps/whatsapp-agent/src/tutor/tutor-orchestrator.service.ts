@@ -8,6 +8,7 @@ import {
 } from "@educai/ai";
 import type { Logger } from "pino";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
+import { HumanHandoffService } from "../agent/human-handoff.service.js";
 import { InstitutionalAgentService } from "../agent/institutional-agent.service.js";
 import { InstitutionalIntentService } from "../agent/institutional-intent.service.js";
 import { AppLogger } from "../common/logger/app-logger.service.js";
@@ -74,6 +75,7 @@ export class TutorOrchestratorService {
     private readonly prisma: PrismaService,
     private readonly institutionalIntent: InstitutionalIntentService,
     private readonly institutionalAgent: InstitutionalAgentService,
+    private readonly humanHandoff: HumanHandoffService,
     logger: AppLogger,
   ) {
     this.tutor = new TutorAgent(this.llm);
@@ -395,6 +397,22 @@ export class TutorOrchestratorService {
       body: tutorResponse.content,
     });
 
+    if (tutorResponse.safety.status === "escalate") {
+      await this.humanHandoff.create({
+        student,
+        conversationId: stored.conversationId,
+        source: "academic",
+        reason: tutorResponse.recommendedAction ?? "safety_escalation",
+        inboundMessage: inboundBody,
+        outboundMessage: tutorResponse.content,
+        metadata: {
+          safetyStatus: tutorResponse.safety.status,
+          safetySignals: tutorResponse.safety.signals,
+          crisisSeverity: tutorResponse.safety.crisisAlert?.severity,
+        },
+      });
+    }
+
     this.logTutorResponse(student, tutorResponse, send.messageSid);
 
     return {
@@ -438,6 +456,20 @@ export class TutorOrchestratorService {
       toWhatsappPhone: student.whatsappPhone,
       body: agentResponse.replyText,
     });
+
+    if (agentResponse.shouldEscalate) {
+      await this.humanHandoff.create({
+        student,
+        conversationId: stored.conversationId,
+        source: "institutional",
+        reason: "human_request",
+        inboundMessage: inboundBody,
+        outboundMessage: agentResponse.replyText,
+        metadata: {
+          toolEvents: agentResponse.toolEvents,
+        },
+      });
+    }
 
     this.log.info(
       {

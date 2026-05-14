@@ -8,6 +8,7 @@ Agente de WhatsApp para EducAI. NestJS 10 + Twilio + Prisma.
 - valida firma de Twilio con `TwilioSignatureGuard`;
 - resuelve estudiante, aplica rate limiting y enruta entre tutor académico y agente institucional;
 - persiste conversaciones y mensajes;
+- persiste handoffs humanos como `AuditLog` con accion `human_handoff.requested`;
 - incluye flujo diagnostico conversacional;
 - permite elegir cerebro `Anthropic` u `OpenAI` por variable de entorno;
 - todavia depende de credenciales e integraciones reales para operar en produccion.

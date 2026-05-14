@@ -54,6 +54,7 @@ interface Mocks {
   };
   institutionalIntent: { detect: ReturnType<typeof vi.fn> };
   institutionalAgent: { respond: ReturnType<typeof vi.fn> };
+  humanHandoff: { create: ReturnType<typeof vi.fn> };
 }
 
 function buildMocks(): Mocks {
@@ -133,6 +134,9 @@ function buildMocks(): Mocks {
         toolEvents: [{ tool: "student_summary", ok: true, summary: "ok" }],
       }),
     },
+    humanHandoff: {
+      create: vi.fn().mockResolvedValue({ id: "log_1" }),
+    },
   };
 }
 
@@ -142,7 +146,7 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[12];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[13];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const resolver = m.resolver as unknown as ConstructorParameters<
@@ -171,6 +175,9 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const institutionalAgent = m.institutionalAgent as unknown as ConstructorParameters<
     typeof TutorOrchestratorService
   >[11];
+  const humanHandoff = m.humanHandoff as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[12];
 
   return new TutorOrchestratorService(
     resolver,
@@ -185,6 +192,7 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     prisma,
     institutionalIntent,
     institutionalAgent,
+    humanHandoff,
     loggerStub,
   );
 }
@@ -242,6 +250,7 @@ describe("TutorOrchestratorService", () => {
     expect(outcome.channel).toBe("institutional");
     expect(m.institutionalAgent.respond).toHaveBeenCalledTimes(1);
     expect(m.llm.generate).not.toHaveBeenCalled();
+    expect(m.humanHandoff.create).not.toHaveBeenCalled();
     const inboundArg = m.conversation.appendInboundMessage.mock.calls[0]?.[0] as {
       subject: string;
     };
@@ -264,9 +273,36 @@ describe("TutorOrchestratorService", () => {
     expect(outcome.safetyStatus).toBe("escalate");
     expect(m.llm.generate).not.toHaveBeenCalled();
     expect(m.sender.send).toHaveBeenCalled();
+    expect(m.humanHandoff.create).toHaveBeenCalledTimes(1);
     const sendArg = m.sender.send.mock.calls[0]?.[0] as { body: string };
     expect(sendArg.body).toContain("102");
     expect(sendArg.body).toContain("Mateo");
+  });
+
+  it("consulta institucional sensible crea handoff humano", async () => {
+    const m = buildMocks();
+    m.institutionalIntent.detect.mockReturnValue({
+      channel: "institutional",
+      confidence: "high",
+      reasons: ["institutional_pattern_5"],
+    });
+    m.institutionalAgent.respond.mockResolvedValue({
+      replyText: "Lo dejo listo para seguimiento humano.",
+      modelUsed: "policy-escalation",
+      tokensUsed: 0,
+      shouldEscalate: true,
+      toolEvents: [{ tool: "human_handoff", ok: true, summary: "Se activó derivación a humano." }],
+    });
+    const orchestrator = buildOrchestrator(m);
+
+    await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_in_inst_2",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "Necesito hablar urgente con una persona",
+    });
+
+    expect(m.humanHandoff.create).toHaveBeenCalledTimes(1);
   });
 
   it("comando /ayuda se maneja sin llamar al LLM", async () => {
