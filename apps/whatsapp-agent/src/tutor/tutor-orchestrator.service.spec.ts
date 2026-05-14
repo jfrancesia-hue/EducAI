@@ -52,6 +52,8 @@ interface Mocks {
       findUnique: ReturnType<typeof vi.fn>;
     };
   };
+  institutionalIntent: { detect: ReturnType<typeof vi.fn> };
+  institutionalAgent: { respond: ReturnType<typeof vi.fn> };
 }
 
 function buildMocks(): Mocks {
@@ -115,6 +117,22 @@ function buildMocks(): Mocks {
         findUnique: vi.fn().mockResolvedValue({ diagnosticState: null }),
       },
     },
+    institutionalIntent: {
+      detect: vi.fn().mockReturnValue({
+        channel: "academic",
+        confidence: "low",
+        reasons: ["default_academic"],
+      }),
+    },
+    institutionalAgent: {
+      respond: vi.fn().mockResolvedValue({
+        replyText: "Respuesta institucional",
+        modelUsed: "gpt-4o-mini",
+        tokensUsed: 32,
+        shouldEscalate: false,
+        toolEvents: [{ tool: "student_summary", ok: true, summary: "ok" }],
+      }),
+    },
   };
 }
 
@@ -124,20 +142,49 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[10];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[12];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
+  const resolver = m.resolver as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[0];
+  const rateLimiter = m.rateLimiter as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[1];
+  const commands = m.commands as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[2];
+  const conversation = m.conversation as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[3];
+  const sender = m.sender as unknown as ConstructorParameters<typeof TutorOrchestratorService>[4];
+  const ocr = m.ocr as unknown as ConstructorParameters<typeof TutorOrchestratorService>[5];
+  const audio = m.audio as unknown as ConstructorParameters<typeof TutorOrchestratorService>[6];
+  const llm = m.llm as unknown as ConstructorParameters<typeof TutorOrchestratorService>[7];
+  const diagnosticHandler = m.diagnosticHandler as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[8];
+  const prisma = m.prisma as unknown as ConstructorParameters<typeof TutorOrchestratorService>[9];
+  const institutionalIntent = m.institutionalIntent as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[10];
+  const institutionalAgent = m.institutionalAgent as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[11];
+
   return new TutorOrchestratorService(
-    m.resolver as never,
-    m.rateLimiter as never,
-    m.commands,
-    m.conversation as never,
-    m.sender as never,
-    m.ocr as never,
-    m.audio as never,
-    m.llm as never,
-    m.diagnosticHandler as never,
-    m.prisma as never,
+    resolver,
+    rateLimiter,
+    commands,
+    conversation,
+    sender,
+    ocr,
+    audio,
+    llm,
+    diagnosticHandler,
+    prisma,
+    institutionalIntent,
+    institutionalAgent,
     loggerStub,
   );
 }
@@ -172,6 +219,33 @@ describe("TutorOrchestratorService", () => {
     expect(m.sender.send).toHaveBeenCalledWith(
       expect.objectContaining({ toWhatsappPhone: "+5493815550202" }),
     );
+    expect(outcome.channel).toBe("academic");
+  });
+
+  it("consulta institucional deriva al agente institucional", async () => {
+    const m = buildMocks();
+    m.institutionalIntent.detect.mockReturnValue({
+      channel: "institutional",
+      confidence: "high",
+      reasons: ["institutional_pattern_1"],
+    });
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_in_inst_1",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "Quiero saber si la cuota está al día",
+    });
+
+    expect(outcome.status).toBe("answered");
+    expect(outcome.channel).toBe("institutional");
+    expect(m.institutionalAgent.respond).toHaveBeenCalledTimes(1);
+    expect(m.llm.generate).not.toHaveBeenCalled();
+    const inboundArg = m.conversation.appendInboundMessage.mock.calls[0]?.[0] as {
+      subject: string;
+    };
+    expect(inboundArg.subject).toBe("institucional");
   });
 
   it("crisis: bypassea LLM y envía template de derivación", async () => {

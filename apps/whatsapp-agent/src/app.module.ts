@@ -8,6 +8,11 @@ import {
   type LlmClient,
   OcrService,
 } from "@educai/ai";
+import { WHATSAPP_AGENT_LLM } from "./agent/agent-llm.token.js";
+import { InstitutionalAgentService } from "./agent/institutional-agent.service.js";
+import { InstitutionalIntentService } from "./agent/institutional-intent.service.js";
+import { InstitutionalToolsService } from "./agent/institutional-tools.service.js";
+import { OpenAiLlmClient } from "./agent/providers/openai-llm.client.js";
 import { LoggerModule } from "./common/logger/logger.module.js";
 import { HealthController } from "./health.controller.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
@@ -33,6 +38,9 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
     TwilioSenderService,
     TwilioSignatureGuard,
     TutorOrchestratorService,
+    InstitutionalIntentService,
+    InstitutionalToolsService,
+    InstitutionalAgentService,
     {
       provide: OcrService,
       useFactory: () => new OcrService({ apiKey: process.env.ANTHROPIC_API_KEY }),
@@ -42,17 +50,37 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
       useFactory: () => new AudioService({ apiKey: process.env.OPENAI_API_KEY }),
     },
     {
-      provide: AnthropicLlmClient,
-      useFactory: () => new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY }),
+      provide: WHATSAPP_AGENT_LLM,
+      useFactory: (): LlmClient => {
+        const provider = process.env.EDUCAI_AGENT_PROVIDER?.trim().toLowerCase();
+
+        if (provider === "openai") {
+          return new OpenAiLlmClient({
+            apiKey: process.env.OPENAI_API_KEY,
+            model: process.env.EDUCAI_AGENT_MODEL,
+          });
+        }
+
+        if (process.env.ANTHROPIC_API_KEY?.trim()) {
+          return new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY });
+        }
+
+        if (process.env.OPENAI_API_KEY?.trim()) {
+          return new OpenAiLlmClient({
+            apiKey: process.env.OPENAI_API_KEY,
+            model: process.env.EDUCAI_AGENT_MODEL,
+          });
+        }
+
+        return new DeterministicLlmClient();
+      },
     },
     {
       provide: DiagnosticService,
-      useFactory: (): DiagnosticService => {
-        const llm: LlmClient = process.env.ANTHROPIC_API_KEY
-          ? new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY })
-          : new DeterministicLlmClient();
+      useFactory: (llm: LlmClient): DiagnosticService => {
         return new DiagnosticService({ llm });
       },
+      inject: [WHATSAPP_AGENT_LLM],
     },
   ],
 })

@@ -1,12 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
-  AnthropicLlmClient,
   AudioService,
+  type LlmClient,
   OcrService,
   TutorAgent,
   type TutorAgentResponse,
 } from "@educai/ai";
 import type { Logger } from "pino";
+import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
+import { InstitutionalAgentService } from "../agent/institutional-agent.service.js";
+import { InstitutionalIntentService } from "../agent/institutional-intent.service.js";
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { CommandHandlerService, type SlashCommand } from "./command-handler.service.js";
 import { ConversationStoreService } from "./conversation-store.service.js";
@@ -33,6 +36,7 @@ export interface OrchestratorOutcome {
   safetyStatus?: string;
   reply?: string;
   diagnosticAction?: string;
+  channel?: "academic" | "institutional";
 }
 
 const DEFAULT_SUBJECT = "general";
@@ -65,9 +69,11 @@ export class TutorOrchestratorService {
     private readonly sender: TwilioSenderService,
     private readonly ocr: OcrService,
     private readonly audio: AudioService,
-    private readonly llm: AnthropicLlmClient,
+    @Inject(WHATSAPP_AGENT_LLM) private readonly llm: LlmClient,
     private readonly diagnosticHandler: DiagnosticHandlerService,
     private readonly prisma: PrismaService,
+    private readonly institutionalIntent: InstitutionalIntentService,
+    private readonly institutionalAgent: InstitutionalAgentService,
     logger: AppLogger,
   ) {
     this.tutor = new TutorAgent(this.llm);
@@ -117,6 +123,11 @@ export class TutorOrchestratorService {
     const inDiagnostic = await this.isInDiagnostic(student);
     if (inDiagnostic) {
       return this.handleDiagnosticAnswer(student, message, inboundBody);
+    }
+
+    const intent = this.institutionalIntent.detect(inboundBody);
+    if (intent.channel === "institutional") {
+      return this.handleInstitutionalConversation(student, message, inboundBody);
     }
 
     return this.handleConversation(student, message, inboundBody, subject);
@@ -393,6 +404,58 @@ export class TutorOrchestratorService {
       bypassedLlm: tutorResponse.bypassedLlm,
       safetyStatus: tutorResponse.safety.status,
       reply: tutorResponse.content,
+      channel: "academic",
+    };
+  }
+
+  private async handleInstitutionalConversation(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+  ): Promise<OrchestratorOutcome> {
+    const agentResponse = await this.institutionalAgent.respond(student, inboundBody);
+
+    const stored = await this.conversation.appendInboundMessage({
+      student,
+      subject: "institucional",
+      body: inboundBody,
+      mediaUrl: message.mediaUrl,
+      mediaType: message.mediaType,
+      twilioMessageSid: message.messageSid,
+      safetyStatus: agentResponse.shouldEscalate ? "escalate" : "safe",
+    });
+
+    await this.conversation.appendOutboundMessage({
+      conversationId: stored.conversationId,
+      tenantId: student.tenantId,
+      body: agentResponse.replyText,
+      modelUsed: agentResponse.modelUsed,
+      tokensUsed: agentResponse.tokensUsed,
+      safetyStatus: agentResponse.shouldEscalate ? "escalate" : "safe",
+    });
+
+    const send = await this.sender.send({
+      toWhatsappPhone: student.whatsappPhone,
+      body: agentResponse.replyText,
+    });
+
+    this.log.info(
+      {
+        studentId: student.studentId,
+        outboundSid: send.messageSid,
+        shouldEscalate: agentResponse.shouldEscalate,
+        toolEvents: agentResponse.toolEvents,
+      },
+      "orchestrator.institutional_responded",
+    );
+
+    return {
+      status: "answered",
+      conversationId: stored.conversationId,
+      outboundSid: send.messageSid,
+      safetyStatus: agentResponse.shouldEscalate ? "escalate" : "safe",
+      reply: agentResponse.replyText,
+      channel: "institutional",
     };
   }
 
