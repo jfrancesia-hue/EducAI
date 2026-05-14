@@ -25,13 +25,16 @@ Hoy estas variables estan documentadas pero la app todavia no las consume en cod
 
 ## Vercel `apps/gov-dashboard`
 
-Hoy estas variables estan documentadas pero la app todavia no las consume en codigo.
+### Minimo real hoy
 
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_TENANT`
+
+### Reservadas para fases siguientes o integraciones parciales
+
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ## Render `apps/api`

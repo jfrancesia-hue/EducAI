@@ -73,13 +73,16 @@ Hoy estas variables siguen documentadas, pero la app todavia no las consume en c
 
 ### `apps/gov-dashboard`
 
-Hoy estas variables siguen documentadas, pero la app todavia no las consume en codigo productivo.
+Requeridas hoy para login SSR y operacion del panel:
 
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_TENANT`
+
+Reservadas para fases siguientes o integraciones parciales:
+
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ### `apps/whatsapp-agent`
