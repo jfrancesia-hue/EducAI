@@ -34,7 +34,7 @@ Las listas de abajo incluyen:
 Requeridas hoy para boot:
 
 - `NODE_ENV=production`
-- `DATABASE_URL`
+- `DATABASE_URL` con rol app sin `BYPASSRLS` (`educai_app` directo o `educai_app.<project-ref>` por pooler)
 - `ALLOWED_ORIGINS`
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`
@@ -62,12 +62,15 @@ Reservadas para fases siguientes o integraciones parciales:
 
 ### `apps/web`
 
-Hoy estas variables siguen documentadas, pero la app todavia no las consume en codigo productivo.
+Requeridas hoy para login SSR y operacion del portal:
 
 - `NEXT_PUBLIC_APP_NAME`
-- `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Reservadas para fases siguientes o integraciones parciales:
+
+- `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
@@ -79,10 +82,10 @@ Requeridas hoy para login SSR y operacion del panel:
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_TENANT`
 
 Reservadas para fases siguientes o integraciones parciales:
 
+- `NEXT_PUBLIC_TENANT`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ### `apps/whatsapp-agent`

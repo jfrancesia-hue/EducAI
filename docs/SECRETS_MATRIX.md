@@ -14,12 +14,15 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ## Vercel `apps/web`
 
-Hoy estas variables estan documentadas pero la app todavia no las consume en codigo.
+### Minimo real hoy
 
 - `NEXT_PUBLIC_APP_NAME`
-- `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### Reservadas para fases siguientes o integraciones parciales
+
+- `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
@@ -31,10 +34,10 @@ Hoy estas variables estan documentadas pero la app todavia no las consume en cod
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_TENANT`
 
 ### Reservadas para fases siguientes o integraciones parciales
 
+- `NEXT_PUBLIC_TENANT`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
 ## Render `apps/api`
@@ -43,7 +46,7 @@ Hoy estas variables estan documentadas pero la app todavia no las consume en cod
 
 - `NODE_ENV=production`
 - `PORT`
-- `DATABASE_URL`
+- `DATABASE_URL` con rol app sin `BYPASSRLS` (`educai_app` directo o `educai_app.<project-ref>` por pooler)
 - `ALLOWED_ORIGINS`
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`

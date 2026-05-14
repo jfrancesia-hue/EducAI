@@ -30,7 +30,7 @@ function readFormValue(formData: FormData, field: string) {
 
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.redirect(new URL("/login?error=config", request.url));
+    return NextResponse.redirect(new URL("/login?error=config", request.url), { status: 303 });
   }
 
   const formData = await request.formData();
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const password = readFormValue(formData, "password");
 
   if (!email || !password) {
-    return NextResponse.redirect(new URL("/login?error=missing", request.url));
+    return NextResponse.redirect(new URL("/login?error=missing", request.url), { status: 303 });
   }
 
   const { url, anonKey } = getSupabaseEnv();
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return NextResponse.redirect(new URL("/login?error=invalid", request.url));
+    return NextResponse.redirect(new URL("/login?error=invalid", request.url), { status: 303 });
   }
 
   return response;
