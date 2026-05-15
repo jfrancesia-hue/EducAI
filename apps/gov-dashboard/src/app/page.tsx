@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Activity, Building2, GraduationCap, Inbox, School, Users } from "lucide-react";
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@educai/ui";
@@ -10,6 +11,7 @@ import { PageHeader } from "./_components/page-header";
 import { getApiBaseUrl, hasApiBaseUrl } from "../lib/api";
 import type { GovRole } from "../lib/nav";
 import { hasSupabaseEnv } from "../lib/supabase/env";
+import { extractRoleFromMetadata } from "../lib/supabase/roles";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -131,6 +133,23 @@ export default async function GovDashboardHome() {
     );
   }
 
+  const supabase = createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role =
+    extractRoleFromMetadata(session.user.app_metadata) ??
+    extractRoleFromMetadata(session.user.user_metadata);
+
+  if (!role || (role !== "SUPER_ADMIN" && role !== "MINISTRY")) {
+    redirect("/acceso-denegado");
+  }
+
   let handoffs: HandoffRecord[] = [];
   let handoffLoadError: string | null = null;
 
@@ -144,13 +163,8 @@ export default async function GovDashboardHome() {
   const academicCount = sources.academic ?? 0;
   const institutionalCount = sources.institutional ?? 0;
 
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
   const appMetadata = session?.user?.app_metadata as unknown;
-  const metadataRole = getMetadataString(appMetadata, "role");
-  const userRole: GovRole = metadataRole === "SUPER_ADMIN" ? "SUPER_ADMIN" : "MINISTRY";
+  const userRole: GovRole = role;
   const tenantName = getMetadataString(appMetadata, "tenantName");
 
   return (
