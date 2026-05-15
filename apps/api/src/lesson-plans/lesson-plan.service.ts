@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { PlanGeneratorAgent } from "@educai/ai";
+import { AnthropicLlmClient, PlanGeneratorAgent } from "@educai/ai";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 @Injectable()
 export class LessonPlanService {
-  private readonly generator = new PlanGeneratorAgent();
+  private readonly generator: PlanGeneratorAgent;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {
+    this.generator = process.env.ANTHROPIC_API_KEY?.trim()
+      ? new PlanGeneratorAgent(new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY }))
+      : new PlanGeneratorAgent();
+  }
 
   async generate(input: {
     tenantId: string;

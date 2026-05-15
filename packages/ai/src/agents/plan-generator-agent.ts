@@ -48,14 +48,15 @@ export class PlanGeneratorAgent {
   constructor(private readonly llm: LlmClient = new DeterministicLlmClient()) {}
 
   async generate(input: PlanGeneratorInput): Promise<LessonPlanOutput> {
-    await this.llm.generate({
+    const result = await this.llm.generate({
       model: "claude-3-5-sonnet-latest",
       responseFormat: "json",
+      maxTokens: 2200,
       messages: [
         {
           role: "system",
           content:
-            "Genera planificaciones docentes realistas para Argentina. Devolve JSON valido y actividades concretas.",
+            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
         },
         {
           role: "user",
@@ -64,6 +65,23 @@ export class PlanGeneratorAgent {
       ],
     });
 
+    const parsed = this.tryParseLlmPlan(result.content);
+    if (parsed) {
+      return parsed;
+    }
+
+    return this.buildFallbackPlan(input);
+  }
+
+  private tryParseLlmPlan(content: string): LessonPlanOutput | null {
+    try {
+      return lessonPlanSchema.parse(JSON.parse(content));
+    } catch {
+      return null;
+    }
+  }
+
+  private buildFallbackPlan(input: PlanGeneratorInput): LessonPlanOutput {
     return lessonPlanSchema.parse({
       overview: `Secuencia sobre ${input.topic} para ${input.subject}.`,
       objectives: [`Comprender y aplicar ${input.topic} en situaciones cercanas.`],
@@ -72,9 +90,21 @@ export class PlanGeneratorAgent {
         number: index + 1,
         duration: Math.round(input.totalDurationMinutes / input.sessionCount),
         phases: [
-          { name: "Apertura", duration: 10, activities: ["Recuperar saberes previos con una pregunta disparadora."] },
-          { name: "Desarrollo", duration: 40, activities: ["Resolver un desafio en grupos y comparar estrategias."] },
-          { name: "Cierre", duration: 10, activities: ["Registrar una idea clave y una duda para la proxima clase."] },
+          {
+            name: "Apertura",
+            duration: 10,
+            activities: ["Recuperar saberes previos con una pregunta disparadora."],
+          },
+          {
+            name: "Desarrollo",
+            duration: 40,
+            activities: ["Resolver un desafio en grupos y comparar estrategias."],
+          },
+          {
+            name: "Cierre",
+            duration: 10,
+            activities: ["Registrar una idea clave y una duda para la proxima clase."],
+          },
         ],
         resources: ["Pizarron", "Tarjetas imprimibles", "Cuaderno"],
         differentiation: {
@@ -87,8 +117,9 @@ export class PlanGeneratorAgent {
         rubric: ["Identifica el concepto", "Explica el procedimiento", "Aplica en contexto"],
         instruments: ["Lista de cotejo", "Produccion grupal"],
       },
-      printables: [{ name: "Guia de practica", prompt: `Ejercicios graduados sobre ${input.topic}` }],
+      printables: [
+        { name: "Guia de practica", prompt: `Ejercicios graduados sobre ${input.topic}` },
+      ],
     });
   }
 }
-

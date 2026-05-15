@@ -322,7 +322,7 @@ export default function EducAiAppPage() {
                           </Link>
                         </Button>
                         <Button asChild className="bg-white text-[#11231f] hover:bg-white/90">
-                          <Link href="/app/protocolo">
+                          <Link href="/app/planificar">
                             Crear plan de clase
                             <Brain className="h-4 w-4" aria-hidden="true" />
                           </Link>

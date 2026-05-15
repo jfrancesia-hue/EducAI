@@ -99,9 +99,11 @@ export default function ProtocolPage() {
               </h1>
             </div>
           </div>
-          <Button className="bg-[#11231f] text-white hover:bg-[#1b342e]">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            Generar clase
+          <Button asChild className="bg-[#11231f] text-white hover:bg-[#1b342e]">
+            <Link href="/app/planificar">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Generar clase
+            </Link>
           </Button>
         </header>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -158,9 +159,14 @@ export function AgentWorkspace() {
                 estructura la clase y deja cada salida lista para editar antes de usar.
               </p>
             </div>
-            <Button className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]">
-              Ejecutar Agente IA
-              <Sparkles className="h-5 w-5" aria-hidden="true" />
+            <Button
+              asChild
+              className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
+            >
+              <Link href="/app/planificar">
+                Ejecutar Agente IA
+                <Sparkles className="h-5 w-5" aria-hidden="true" />
+              </Link>
             </Button>
           </div>
 

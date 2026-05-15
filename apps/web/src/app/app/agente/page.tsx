@@ -116,9 +116,14 @@ export default function AgentPage() {
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button className="min-h-14 bg-[#ff7a1a] px-8 text-base font-bold text-white shadow-[0_18px_42px_rgba(255,122,26,0.38)] hover:bg-[#ea6508]">
-                    Ejecutar Agente IA
-                    <Sparkles className="h-5 w-5" aria-hidden="true" />
+                  <Button
+                    asChild
+                    className="min-h-14 bg-[#ff7a1a] px-8 text-base font-bold text-white shadow-[0_18px_42px_rgba(255,122,26,0.38)] hover:bg-[#ea6508]"
+                  >
+                    <Link href="/app/planificar">
+                      Ejecutar Agente IA
+                      <Sparkles className="h-5 w-5" aria-hidden="true" />
+                    </Link>
                   </Button>
                   <Button
                     asChild
@@ -177,9 +182,14 @@ export default function AgentPage() {
                     Recurso pedagogico listo para editar antes de usar en clase.
                   </p>
                 </div>
-                <Button className="mt-4 min-h-12 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]">
-                  Ejecutar guia ahora
-                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <Button
+                  asChild
+                  className="mt-4 min-h-12 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
+                >
+                  <Link href="/app/planificar">
+                    Ejecutar guia ahora
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  </Link>
                 </Button>
               </div>
             </div>
