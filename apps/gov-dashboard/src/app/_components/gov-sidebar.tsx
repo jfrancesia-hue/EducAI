@@ -6,10 +6,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Building2, Menu, X } from "lucide-react";
 
-import type { GovRole, NavItem } from "../../lib/nav";
+import { NAV_ITEMS, type GovRole, type NavItem } from "../../lib/nav";
 
 interface GovSidebarProps {
-  items: NavItem[];
   userRole: GovRole;
 }
 
@@ -18,6 +17,7 @@ function NavContent({
   userRole,
   onNavigate,
 }: GovSidebarProps & {
+  items: NavItem[];
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -84,7 +84,7 @@ function NavContent({
   );
 }
 
-export function GovSidebar({ items, userRole }: GovSidebarProps) {
+export function GovSidebar({ userRole }: GovSidebarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
@@ -130,7 +130,7 @@ export function GovSidebar({ items, userRole }: GovSidebarProps) {
         data-no-print
         className="fixed left-0 top-0 z-40 hidden h-screen w-60 border-r border-white/10 bg-[hsl(var(--gov-sidebar-bg))] p-4 text-[hsl(var(--gov-sidebar-text))] lg:block"
       >
-        <NavContent items={items} userRole={userRole} />
+        <NavContent items={NAV_ITEMS} userRole={userRole} />
       </aside>
 
       <div
@@ -156,7 +156,7 @@ export function GovSidebar({ items, userRole }: GovSidebarProps) {
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
       >
-        <NavContent items={items} userRole={userRole} onNavigate={() => setOpen(false)} />
+        <NavContent items={NAV_ITEMS} userRole={userRole} onNavigate={() => setOpen(false)} />
       </aside>
     </>
   );

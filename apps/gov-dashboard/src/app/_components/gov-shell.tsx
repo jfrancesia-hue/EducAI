@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { NAV_ITEMS, type GovRole } from "../../lib/nav";
+import type { GovRole } from "../../lib/nav";
 import { GovHeader } from "./gov-header";
 import { GovSidebar } from "./gov-sidebar";
 
@@ -40,7 +40,7 @@ export function GovShell({ children, userEmail, userRole, tenantName }: GovShell
         }}
       />
 
-      <GovSidebar items={NAV_ITEMS} userRole={userRole} />
+      <GovSidebar userRole={userRole} />
 
       <div className="lg:pl-60">
         <GovHeader userEmail={userEmail} userRole={userRole} tenantName={tenantName} />
