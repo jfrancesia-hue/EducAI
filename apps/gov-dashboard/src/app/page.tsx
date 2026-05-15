@@ -12,6 +12,8 @@ import type { GovRole } from "../lib/nav";
 import { hasSupabaseEnv } from "../lib/supabase/env";
 import { createSupabaseServerClient } from "../lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 async function fetchOpenHandoffs(): Promise<HandoffRecord[]> {
   const supabase = createSupabaseServerClient();
   const {
