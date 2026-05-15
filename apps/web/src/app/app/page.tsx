@@ -25,6 +25,7 @@ import {
   Sparkles,
   Target,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
   { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
+  { label: "Planes", icon: WalletCards, href: "/app/planes" },
 ];
 
 const metrics = [

@@ -15,6 +15,7 @@ import {
   Settings,
   Sparkles,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 
 import { Button } from "@educai/ui";
@@ -25,6 +26,7 @@ const navItems = [
   { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
   { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
+  { label: "Planes", icon: WalletCards, href: "/app/planes" },
 ] satisfies Array<{ label: string; icon: typeof Home; href: Route }>;
 
 type AppShellProps = {
