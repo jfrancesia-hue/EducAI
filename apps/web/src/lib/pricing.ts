@@ -1,3 +1,253 @@
+export type PublicPricingPlan = {
+  id: string;
+  product: "educai" | "apoyoai";
+  name: string;
+  audience: string;
+  price: string;
+  description: string;
+  featured?: boolean;
+  ctaLabel: string;
+  ctaHref: string;
+  includes: string[];
+  excludes?: string[];
+  note?: string;
+};
+
+export const billingCopy = {
+  title: "Cobro mensual por debito automatico",
+  body: "Cobramos por debito automatico cada mes. Si el pago falla, tu cuenta pasa automaticamente al plan Free, sin cancelaciones, sin llamadas, sin drama. Cuando regularizas, volves a tu plan en el momento.",
+  faqs: [
+    {
+      question: "Que pasa si un mes no puedo pagar?",
+      answer:
+        "La cuenta baja al plan Free automaticamente. No se pierden datos ni hace falta llamar para cancelar.",
+    },
+    {
+      question: "Los creditos gratis vencen?",
+      answer: "No. Los creditos Free son unicos de por vida y no vencen.",
+    },
+    {
+      question: "Puedo cambiar de plan?",
+      answer: "Si. Podes subir, bajar o volver al plan Free cuando lo necesites.",
+    },
+    {
+      question: "Hay permanencia minima?",
+      answer: "No. Los planes mensuales no tienen permanencia.",
+    },
+    {
+      question: "Como pagan colegios e instituciones?",
+      answer: "Los planes institucionales pueden coordinarse por transferencia y factura.",
+    },
+  ],
+};
+
+export const schoolPricing = {
+  baseTeachers: 10,
+  basePrice: 180000,
+  additionalTeacherPrice: 18000,
+  exampleTeachers: 15,
+};
+
+export function formatArs(value: number) {
+  return `$${new Intl.NumberFormat("es-AR").format(value)}`;
+}
+
+export function calculateSchoolMonthlyPrice(teachers: number) {
+  const activeTeachers = Math.max(1, Math.floor(teachers));
+  const extraTeachers = Math.max(0, activeTeachers - schoolPricing.baseTeachers);
+  return schoolPricing.basePrice + extraTeachers * schoolPricing.additionalTeacherPrice;
+}
+
+export const educaiPublicPlans: PublicPricingPlan[] = [
+  {
+    id: "free",
+    product: "educai",
+    name: "Free",
+    audience: "Para probar sin tarjeta",
+    price: "$0",
+    description: "Creditos unicos de por vida para conocer el flujo docente.",
+    ctaLabel: "Empezar gratis",
+    ctaHref: "/registro?producto=educai&plan=free",
+    includes: [
+      "2 planificaciones completas",
+      "5 actividades o recursos proximos",
+      "Acceso para siempre",
+    ],
+    excludes: ["PDF y Word", "Rubricas y evaluaciones", "Alineacion jurisdiccional", "Reportes"],
+    note: "Sin tarjeta. Los creditos no vencen.",
+  },
+  {
+    id: "docente-individual",
+    product: "educai",
+    name: "Docente Individual",
+    audience: "Para uso semanal",
+    price: "$9.900/mes",
+    description: "Herramientas esenciales para preparar clases y recursos todos los meses.",
+    ctaLabel: "Elegir Individual",
+    ctaHref: "/registro?producto=educai&plan=docente-individual",
+    includes: [
+      "10 planificaciones por mes",
+      "20 actividades o recursos",
+      "Rubricas y criterios",
+      "Exportacion PDF y Word",
+      "Banco personal de recursos",
+      "Reporte mensual",
+      "Soporte por email",
+    ],
+  },
+  {
+    id: "docente-pro",
+    product: "educai",
+    name: "Docente Pro",
+    audience: "Plan recomendado",
+    price: "$24.900/mes",
+    description:
+      "Produccion docente mas profunda para planificar, evaluar y reutilizar materiales.",
+    featured: true,
+    ctaLabel: "Elegir Docente Pro",
+    ctaHref: "/registro?producto=educai&plan=docente-pro",
+    includes: [
+      "40 planificaciones por mes",
+      "80 actividades o recursos",
+      "Rubricas y evaluaciones",
+      "Secuencias multisemana",
+      "Alineacion a 24 jurisdicciones",
+      "Exportacion PDF y Word",
+      "Banco avanzado de recursos",
+      "Reporte semanal",
+      "Soporte prioritario",
+    ],
+  },
+  {
+    id: "colegio",
+    product: "educai",
+    name: "Colegio",
+    audience: "Equipos docentes",
+    price: "Desde $180.000/mes",
+    description: "Base para 10 docentes activos y crecimiento por uso real del equipo.",
+    ctaLabel: "Consultar colegio",
+    ctaHref: "/contacto?producto=educai&plan=colegio",
+    includes: [
+      "10 docentes activos incluidos",
+      "$18.000/mes por docente activo adicional",
+      "Docente activo: genero al menos 1 planificacion en el mes",
+      "Ejemplo: 15 docentes = $270.000/mes",
+      "Acompanamiento para implementacion",
+    ],
+  },
+  {
+    id: "institucional",
+    product: "educai",
+    name: "Institucional",
+    audience: "Municipios, redes y organizaciones",
+    price: "Desde $2.500/alumno/mes",
+    description: "Propuesta por alumno segun modulos, alcance y acompaniamiento requerido.",
+    ctaLabel: "Hablar con ventas",
+    ctaHref: "/contacto?producto=educai&plan=institucional",
+    includes: [
+      "$2.500 a $4.500 por alumno/mes segun modulos",
+      "Contratacion por transferencia y factura",
+      "Configuracion institucional",
+      "Seguimiento y reportes acordados",
+    ],
+  },
+];
+
+export const apoyoAiPublicPlans: PublicPricingPlan[] = [
+  {
+    id: "free",
+    product: "apoyoai",
+    name: "Free",
+    audience: "Para conocer el tutor",
+    price: "$0",
+    description: "Creditos unicos de por vida para probar apoyo por app.",
+    ctaLabel: "Empezar gratis",
+    ctaHref: "/registro?producto=apoyoai&plan=free",
+    includes: ["10 consultas de tutor por app", "2 fotos de tareas", "1 perfil de hijo"],
+    excludes: ["WhatsApp", "Audio", "Diagnostico adaptativo", "Reportes"],
+    note: "Solo tutor por app. WhatsApp empieza en Basico.",
+  },
+  {
+    id: "basico",
+    product: "apoyoai",
+    name: "Basico",
+    audience: "Acompanamiento inicial",
+    price: "$14.900/mes",
+    description: "Un hijo con apoyo por WhatsApp y app para dudas frecuentes.",
+    ctaLabel: "Elegir Basico",
+    ctaHref: "/registro?producto=apoyoai&plan=basico",
+    includes: [
+      "1 hijo",
+      "WhatsApp texto: 20 mensajes por dia",
+      "Tutor por app con uso generoso",
+      "Perfil personalizado",
+      "1 diagnostico inicial",
+    ],
+    excludes: ["Audio por WhatsApp", "Fotos semanales", "Reporte semanal"],
+  },
+  {
+    id: "plus",
+    product: "apoyoai",
+    name: "Plus",
+    audience: "Plan recomendado",
+    price: "$34.900/mes",
+    description: "Mas canales y reportes para familias que necesitan seguimiento continuo.",
+    featured: true,
+    ctaLabel: "Elegir Plus",
+    ctaHref: "/registro?producto=apoyoai&plan=plus",
+    includes: [
+      "1 hijo",
+      "WhatsApp texto: 60 mensajes por dia",
+      "Tutor por app con uso generoso",
+      "Audio por WhatsApp: 10 por semana",
+      "Fotos de tareas: 5 por semana",
+      "Diagnostico: 1 por mes",
+      "Reporte semanal para familia",
+      "Perfil personalizado",
+    ],
+  },
+  {
+    id: "familiar",
+    product: "apoyoai",
+    name: "Familiar",
+    audience: "Hasta 3 hijos",
+    price: "$69.900/mes",
+    description: "Precio total familiar para acompanamiento sostenido por hijo.",
+    ctaLabel: "Elegir Familiar",
+    ctaHref: "/registro?producto=apoyoai&plan=familiar",
+    includes: [
+      "Hasta 3 hijos",
+      "WhatsApp texto: 25 mensajes por dia por hijo",
+      "Audio: 15 por semana por hijo",
+      "Fotos de tareas: 8 por semana por hijo",
+      "Diagnostico: 1 por mes por hijo",
+      "Reporte semanal por hijo",
+      "Perfil personalizado por hijo",
+    ],
+    note: "El precio mostrado es el total del plan familiar.",
+  },
+  {
+    id: "intensivo",
+    product: "apoyoai",
+    name: "Intensivo",
+    audience: "Alto uso y examenes",
+    price: "$119.900/mes",
+    description: "Mayor intensidad de apoyo y diagnostico semanal por hijo.",
+    ctaLabel: "Elegir Intensivo",
+    ctaHref: "/registro?producto=apoyoai&plan=intensivo",
+    includes: [
+      "Hasta 3 hijos",
+      "WhatsApp texto: 40 mensajes por dia por hijo",
+      "Audio: 20 por semana por hijo",
+      "Fotos de tareas: 12 por semana por hijo",
+      "Diagnostico semanal por hijo",
+      "Reporte semanal por hijo",
+      "Perfil personalizado por hijo",
+    ],
+    note: "La diferencia frente a Familiar es el diagnostico semanal.",
+  },
+];
+
 export type PricingPlan = {
   name: string;
   audience: string;

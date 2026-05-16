@@ -159,7 +159,7 @@ export default function HomePage() {
             <Link href="#ecosistema" className="transition hover:text-white">
               Ecosistema
             </Link>
-            <Link href="/planes" className="transition hover:text-white">
+            <Link href="/precios" className="transition hover:text-white">
               Planes
             </Link>
           </nav>
@@ -230,7 +230,7 @@ export default function HomePage() {
                 variant="outline"
                 className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
               >
-                <Link href="/planes">
+                <Link href="/precios">
                   <Play className="h-5 w-5" aria-hidden="true" />
                   Ver planes
                 </Link>
@@ -510,7 +510,7 @@ export default function HomePage() {
             <Link href="/contacto" className="hover:text-white">
               Contacto
             </Link>
-            <Link href="/planes" className="hover:text-white">
+            <Link href="/precios" className="hover:text-white">
               Planes
             </Link>
           </div>
