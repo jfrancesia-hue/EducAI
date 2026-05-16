@@ -1,13 +1,15 @@
 import "reflect-metadata";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { json, urlencoded } from "express";
 import { requireApiProductionEnv } from "./env/require-production-env.js";
 import { AppModule } from "./app.module.js";
 
 async function bootstrap() {
   requireApiProductionEnv(process.env);
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const allowedOrigins = (
     process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3100"
   )
@@ -18,6 +20,8 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
   });
+  app.use(urlencoded({ extended: false, limit: "1mb" }));
+  app.use(json({ limit: "1mb" }));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

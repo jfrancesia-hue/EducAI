@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { LlmClient } from "../llm/types.js";
 import { DeterministicLlmClient } from "../llm/types.js";
+import { getEducAIModelForPlan } from "../plans.js";
 
 export const curriculumGapSchema = z.object({
   category: z.string(),
@@ -29,7 +30,7 @@ export class CurriculumAnalyzerAgent {
     }
 
     await this.llm.generate({
-      model: "claude-3-5-sonnet-latest",
+      model: getEducAIModelForPlan("institucional"),
       responseFormat: "json",
       messages: [
         {
@@ -48,11 +49,11 @@ export class CurriculumAnalyzerAgent {
       curriculumGapSchema.parse({
         category: "competencia_ausente",
         severity: "medium",
-        description: "Hay oportunidad de explicitar competencias de pensamiento critico y transferencia.",
+        description:
+          "Hay oportunidad de explicitar competencias de pensamiento critico y transferencia.",
         recommendation: "Agregar desempenos observables por unidad y evidencias de aprendizaje.",
         referenceFramework: "UNESCO 2030",
       }),
     ];
   }
 }
-

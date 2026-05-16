@@ -19,7 +19,7 @@ const SAMPLE_RESPONSE = {
   id: "msg_123",
   type: "message",
   role: "assistant",
-  model: "claude-opus-4-7",
+  model: "claude-sonnet-4-6",
   content: [{ type: "text", text: "Buena pregunta. ¿Qué intentaste hasta ahora?" }],
   stop_reason: "end_turn",
   stop_sequence: null,
@@ -37,7 +37,7 @@ describe("AnthropicLlmClient", () => {
     const client = new AnthropicLlmClient({ anthropic });
 
     await client.generate({
-      model: "claude-opus-4-7",
+      model: "claude-sonnet-4-6",
       maxTokens: 700,
       system: [
         { type: "text", text: "STATIC PEDAGOGICAL RULES", cacheable: true },
@@ -48,7 +48,7 @@ describe("AnthropicLlmClient", () => {
 
     expect(create).toHaveBeenCalledTimes(1);
     const arg = create.mock.calls[0]?.[0] as any;
-    expect(arg.model).toBe("claude-opus-4-7");
+    expect(arg.model).toBe("claude-sonnet-4-6");
     expect(arg.max_tokens).toBe(700);
     expect(arg.system).toHaveLength(2);
     expect(arg.system[0]).toEqual({
@@ -68,7 +68,7 @@ describe("AnthropicLlmClient", () => {
     const client = new AnthropicLlmClient({ anthropic });
 
     await client.generate({
-      model: "claude-opus-4-7",
+      model: "claude-sonnet-4-6",
       system: "prompt simple",
       messages: [{ role: "user", content: "hola" }],
     });
@@ -82,7 +82,7 @@ describe("AnthropicLlmClient", () => {
     const client = new AnthropicLlmClient({ anthropic });
 
     const result = await client.generate({
-      model: "claude-opus-4-7",
+      model: "claude-sonnet-4-6",
       messages: [{ role: "user", content: "test" }],
     });
 
@@ -93,7 +93,7 @@ describe("AnthropicLlmClient", () => {
     expect(result.tokensUsed).toBe(145);
     expect(result.inputTokens).toBe(120);
     expect(result.outputTokens).toBe(25);
-    expect(result.modelUsed).toBe("claude-opus-4-7");
+    expect(result.modelUsed).toBe("claude-sonnet-4-6");
     expect(result.stopReason).toBe("end_turn");
   });
 
@@ -102,7 +102,7 @@ describe("AnthropicLlmClient", () => {
     const client = new AnthropicLlmClient({ anthropic });
 
     await client.generate({
-      model: "claude-opus-4-7",
+      model: "claude-sonnet-4-6",
       messages: [
         { role: "system", content: "should be filtered" },
         { role: "user", content: "real user message" },
@@ -124,7 +124,7 @@ describe("AnthropicLlmClient", () => {
     });
 
     const arg = create.mock.calls[0]?.[0] as any;
-    expect(arg.model).toBe("claude-sonnet-4-5");
+    expect(arg.model).toBe("claude-sonnet-4-6");
     expect(arg.max_tokens).toBe(1024);
   });
 
@@ -137,7 +137,7 @@ describe("AnthropicLlmClient", () => {
     const client = new AnthropicLlmClient({ anthropic });
 
     const result = await client.generate({
-      model: "claude-opus-4-7",
+      model: "claude-sonnet-4-6",
       messages: [{ role: "user", content: "test" }],
     });
 

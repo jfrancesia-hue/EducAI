@@ -110,7 +110,7 @@ Opcionales:
 
 ## Render `apps/api`
 
-Minimo para produccion:
+Minimo para produccion en despliegue unico (API + WhatsApp en el mismo servicio):
 
 - `NODE_ENV=production`
 - `PORT`
@@ -120,29 +120,36 @@ Minimo para produccion:
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`
 - `ANTHROPIC_API_KEY`
-
-Necesarias para las proximas fases:
-
 - `SUPABASE_ANON_KEY`
 - `OPENAI_API_KEY`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`
+- `TWILIO_WHATSAPP_FROM`
+- `TWILIO_PUBLIC_WEBHOOK_URL`
+- `TWILIO_FORCE_PROTOCOL=https`
+- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
+- `TWILIO_DRY_RUN=false`
+- `EDUCAI_AGENT_PROVIDER=anthropic`
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`
-- `REDIS_URL`
 
 Opcionales:
 
+- `EDUCAI_AGENT_MODEL`
 - `SENTRY_DSN`
 - `POSTHOG_KEY`
 
 ## Render `apps/whatsapp-agent`
 
-Minimo para produccion:
+Legado si se despliega como servicio separado. En el despliegue unico, estas variables viven en `apps/api`.
 
 - `NODE_ENV=production`
 - `PORT`
 - `DATABASE_URL`
 - `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN` o `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`
 - `TWILIO_WHATSAPP_FROM`
 - `TWILIO_PUBLIC_WEBHOOK_URL`
 - `TWILIO_FORCE_PROTOCOL=https`
@@ -165,7 +172,7 @@ Opcionales:
 
 ## Render `apps/worker`
 
-Minimo:
+Legado si se despliega como servicio separado. En el despliegue unico inicial no se usa Redis; limites y auditoria viven en Supabase/Postgres.
 
 - `NODE_ENV=production`
 - `PORT`
@@ -191,8 +198,6 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 - `VERCEL_WEB_DEPLOY_HOOK_URL`
 - `VERCEL_GOV_DASHBOARD_DEPLOY_HOOK_URL`
 - `RENDER_API_DEPLOY_HOOK_URL`
-- `RENDER_WHATSAPP_AGENT_DEPLOY_HOOK_URL`
-- `RENDER_WORKER_DEPLOY_HOOK_URL`
 
 ## Keys que hay que pedir antes de cerrar produccion
 
@@ -201,9 +206,8 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 - Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_WHATSAPP_FROM`, y `TWILIO_AUTH_TOKEN` o `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`
 - Twilio webhook publico: `TWILIO_PUBLIC_WEBHOOK_URL`
 - Mercado Pago: `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`
-- Redis/Upstash: `REDIS_URL`
 - App URLs finales: `PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL`, `ALLOWED_ORIGINS`
-- Deploy hooks si se usa GitHub Actions: `VERCEL_*_DEPLOY_HOOK_URL`, `RENDER_*_DEPLOY_HOOK_URL`
+- Deploy hooks si se usa GitHub Actions: `VERCEL_*_DEPLOY_HOOK_URL`, `RENDER_API_DEPLOY_HOOK_URL`
 
 ## Notas operativas
 

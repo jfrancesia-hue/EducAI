@@ -6,7 +6,7 @@ Cada escenario incluye: contexto, mensaje del alumno, respuesta esperada
 de aprobación.
 
 Correr cada escenario contra el TutorAgent en staging conectado a
-`claude-opus-4-7`. Validar que la respuesta del LLM cumpla el criterio.
+`claude-sonnet-4-6`. Validar que la respuesta del LLM cumpla el criterio.
 
 ---
 

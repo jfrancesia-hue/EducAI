@@ -11,16 +11,14 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 - `VERCEL_WEB_DEPLOY_HOOK_URL`
 - `VERCEL_GOV_DASHBOARD_DEPLOY_HOOK_URL`
 - `RENDER_API_DEPLOY_HOOK_URL`
-- `RENDER_WHATSAPP_AGENT_DEPLOY_HOOK_URL`
-- `RENDER_WORKER_DEPLOY_HOOK_URL`
 
 ## Destinos esperados
 
 - `apps/web` -> Vercel
 - `apps/gov-dashboard` -> Vercel
-- `apps/api` -> Render
-- `apps/whatsapp-agent` -> Render
-- `apps/worker` -> Render
+- `apps/api` -> Render, despliegue unico para API + webhook WhatsApp
+- `apps/whatsapp-agent` -> legacy/local, no requiere servicio Render separado en produccion unica
+- `apps/worker` -> legacy/local, no requiere servicio Render separado en produccion unica
 
 ## Variables de entorno productivas
 
@@ -31,34 +29,38 @@ Las listas de abajo incluyen:
 
 ### `apps/api`
 
-Requeridas hoy para boot:
+Requeridas hoy para boot y flujo productivo unico:
 
 - `NODE_ENV=production`
 - `DATABASE_URL` con rol app sin `BYPASSRLS` (`educai_app` directo o `educai_app.<project-ref>` por pooler)
 - `ALLOWED_ORIGINS`
+- `PUBLIC_APP_URL`
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`
-
-Reservadas para fases siguientes o integraciones parciales:
-
-- `NODE_ENV=production`
-- `PUBLIC_APP_URL`
-- `ALLOWED_ORIGINS`
-- `DATABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `SUPABASE_SECRET_KEY`
 - `ANTHROPIC_API_KEY`
 - `OPENAI_API_KEY`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
+- `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET`
 - `TWILIO_WHATSAPP_FROM`
+- `TWILIO_PUBLIC_WEBHOOK_URL=https://<api-render-url>/webhooks/twilio`
+- `TWILIO_FORCE_PROTOCOL=https`
+- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
+- `TWILIO_DRY_RUN=false`
+- `EDUCAI_AGENT_PROVIDER=anthropic`
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `REDIS_URL`
+
+Opcionales:
+
+- `EDUCAI_AGENT_MODEL`
 - `SENTRY_DSN`
 - `POSTHOG_KEY`
+
+### Limites y uso
+
+La produccion inicial usa Supabase/Postgres para limites de WhatsApp y auditoria. El rate limit diario por alumno se calcula sobre `Message` del dia, sin Redis.
 
 ### `apps/web`
 
@@ -90,58 +92,11 @@ Reservadas para fases siguientes o integraciones parciales:
 
 ### `apps/whatsapp-agent`
 
-Requeridas hoy para boot y flujo actual:
-
-- `NODE_ENV=production`
-- `DATABASE_URL`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_WHATSAPP_FROM`
-- `TWILIO_PUBLIC_WEBHOOK_URL`
-- `TWILIO_FORCE_PROTOCOL`
-- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
-- `TWILIO_DRY_RUN=false`
-- `ANTHROPIC_API_KEY`
-
-Reservadas para fases siguientes o integraciones parciales:
-
-- `NODE_ENV=production`
-- `DATABASE_URL`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_WHATSAPP_FROM`
-- `TWILIO_PUBLIC_WEBHOOK_URL`
-- `TWILIO_FORCE_PROTOCOL`
-- `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
-- `TWILIO_DRY_RUN=false`
-- `ANTHROPIC_API_KEY`
-- `OPENAI_API_KEY`
-- `EDUCAI_API_URL`
-- `EDUCAI_API_INTERNAL_TOKEN`
-- `REDIS_URL`
-- `SENTRY_DSN`
+Legacy/local. En produccion unica, el webhook Twilio esta montado en `apps/api`.
 
 ### `apps/worker`
 
-Requeridas hoy para boot:
-
-- `NODE_ENV=production`
-- `REDIS_URL`
-
-Reservadas para fases siguientes o integraciones parciales:
-
-- `NODE_ENV=production`
-- `DATABASE_URL`
-- `REDIS_URL`
-- `BULL_QUEUE_PREFIX`
-- `ANTHROPIC_API_KEY`
-- `OPENAI_API_KEY`
-- `RESEND_API_KEY`
-- `REPORTS_FROM_EMAIL`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_WHATSAPP_FROM`
-- `SENTRY_DSN`
+Legacy/local. En produccion unica inicial no se despliega worker ni Redis; los limites y eventos operativos se apoyan en Supabase/Postgres.
 
 ## Nota sobre Supabase compartido
 

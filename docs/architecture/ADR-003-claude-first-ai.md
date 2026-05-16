@@ -19,8 +19,8 @@ planificaciones, análisis de deserción) dependen críticamente de un LLM. Nece
 ## Decisión
 
 - **Claude (Anthropic)** como LLM primario para todas las tareas de razonamiento.
-  - Modelo por defecto: `claude-opus-4-7` para razonamiento pedagógico.
-  - Modelo económico: `claude-haiku-4-5` para clasificación, ruteo, filtros.
+  - Modelo por defecto: `claude-sonnet-4-6` para razonamiento pedagógico.
+  - Modelo económico: `claude-haiku-4-5-20251001` para clasificación, ruteo, filtros.
 - **OpenAI** como LLM secundario para:
   - Embeddings (`text-embedding-3-large`) → pgvector RAG.
   - Generación masiva de ejercicios (`gpt-4o-mini`).
@@ -41,11 +41,13 @@ planificaciones, análisis de deserción) dependen críticamente de un LLM. Nece
 ## Consecuencias
 
 ### Positivas
+
 - Un solo proveedor principal simplifica auditoría, SLA, y facturación.
 - Prompt caching reduce costos ~70% en conversaciones del tutor.
 - Anthropic tiene política explícita de no-training con data de API, clave para datos de menores.
 
 ### Negativas
+
 - Dependencia de proveedor único. Mitigación: `packages/ai/llm/types.ts` abstrae el cliente LLM
   para permitir swap.
 - Cuotas de Anthropic requieren negociar account manager a escala (meta: 10k+ familias).

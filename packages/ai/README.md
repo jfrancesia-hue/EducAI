@@ -19,7 +19,7 @@ OPENAI_API_KEY=sk-...          # Whisper (audio)
 import { TutorAgent, AnthropicLlmClient } from "@educai/ai";
 
 const llm = new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY });
-const agent = new TutorAgent(llm, { model: "claude-opus-4-7", maxTokens: 700 });
+const agent = new TutorAgent(llm, { model: "claude-sonnet-4-6", maxTokens: 700 });
 
 const response = await agent.respond({
   studentName: "Mateo",
@@ -52,7 +52,7 @@ El system prompt del tutor está dividido para maximizar cache hits:
 - **Block estático** (`TUTOR_STATIC_SYSTEM_PROMPT`): identidad, reglas pedagógicas no negociables, límites de seguridad, 7 ejemplos few-shot, formato de respuesta. **Cacheable** con `cache_control: ephemeral`. Mismo para todos los alumnos.
 - **Block dinámico**: nombre del alumno, grado, materia, estilo, historial. **No cacheable** — cambia por sesión.
 
-El mínimo cacheable en `claude-opus-4-7` es 4096 tokens. El block estático supera ese umbral con margen.
+El mínimo cacheable en `claude-sonnet-4-6` es 4096 tokens. El block estático supera ese umbral con margen.
 
 Verificar hits en producción:
 
@@ -157,8 +157,8 @@ Motor adaptativo de evaluación inicial. Genera 15 preguntas, sube/baja dificult
 
 | Componente   | Modelo               | Razón                                                    |
 | ------------ | -------------------- | -------------------------------------------------------- |
-| TutorAgent   | `claude-opus-4-7`    | Mejor razonamiento pedagógico, vision GA, prompt caching |
-| OcrService   | `claude-opus-4-7`    | Vision de alta resolución (hasta 2576px)                 |
+| TutorAgent   | `claude-sonnet-4-6`  | Mejor razonamiento pedagógico, vision GA, prompt caching |
+| OcrService   | `claude-sonnet-4-6`  | Vision de alta resolución (hasta 2576px)                 |
 | AudioService | `whisper-1` (OpenAI) | Whisper sigue siendo el más confiable para es-AR         |
 
 ## Tests

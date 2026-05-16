@@ -9,7 +9,7 @@ function buildMockLlm(content = "Buena pregunta. ¿Qué intentaste hasta ahora?"
   const output: LlmGenerateOutput = {
     content,
     tokensUsed: 100,
-    modelUsed: "claude-opus-4-7",
+    modelUsed: "claude-sonnet-4-6",
     inputTokens: 80,
     outputTokens: 20,
     cache: { cacheCreationInputTokens: 0, cacheReadInputTokens: 4500 },

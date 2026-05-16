@@ -16,7 +16,9 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 - GitHub Actions con secrets del environment `production` cargados
 - Hooks de deploy configurados segun [`docs/DEPLOY.md`](./DEPLOY.md)
 - Servicios productivos creados en Vercel y Render
-- `DATABASE_URL` y `REDIS_URL` apuntando a recursos productivos, no locales
+- `DATABASE_URL` apuntando a un recurso productivo con rol app sin `BYPASSRLS`
+- `TWILIO_PUBLIC_WEBHOOK_URL` apuntando al API Render y firma Twilio activa
+- `MERCADOPAGO_WEBHOOK_SECRET` cargado antes de habilitar pagos reales
 - `SENTRY_DSN` configurado en apps publicas y servicios backend
 - `POSTHOG_KEY` configurado donde corresponda
 
@@ -45,11 +47,10 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 ## 6. Operacion funcional minima
 
 - `apps/api` responde `GET /health`
-- `apps/worker` responde `GET /health`
 - `apps/web` builda y sirve rutas estaticas sin errores
 - `apps/gov-dashboard` builda y tiene tenant publico correcto
-- `apps/whatsapp-agent` tiene webhook y credenciales Twilio validas
-- `apps/whatsapp-agent` valida firma Twilio con URL publica correcta
+- `apps/api` tiene webhook y credenciales Twilio validas
+- `apps/api` valida firma Twilio con URL publica correcta
 
 ## 7. Compliance y revision humana
 

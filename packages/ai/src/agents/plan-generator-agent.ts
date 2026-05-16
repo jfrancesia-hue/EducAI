@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { LlmClient } from "../llm/types.js";
 import { DeterministicLlmClient } from "../llm/types.js";
+import { getEducAIModelForPlan } from "../plans.js";
 
 export const lessonPlanSchema = z.object({
   overview: z.string(),
@@ -49,7 +50,7 @@ export class PlanGeneratorAgent {
 
   async generate(input: PlanGeneratorInput): Promise<LessonPlanOutput> {
     const result = await this.llm.generate({
-      model: "claude-3-5-sonnet-latest",
+      model: getEducAIModelForPlan("pro"),
       responseFormat: "json",
       maxTokens: 2200,
       messages: [

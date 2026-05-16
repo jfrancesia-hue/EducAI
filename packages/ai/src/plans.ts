@@ -2,20 +2,23 @@ export type EducAIPlan = "free" | "individual" | "pro" | "colegio" | "institucio
 export type ApoyoAIPlan = "free" | "basico" | "plus" | "familiar" | "intensivo";
 export type Product = "educai" | "apoyoai";
 
+export const ANTHROPIC_SONNET_MODEL = "claude-sonnet-4-6";
+export const ANTHROPIC_HAIKU_MODEL = "claude-haiku-4-5-20251001";
+
 export const EDUCAI_MODELS: Record<EducAIPlan, string> = {
-  free: "claude-sonnet-4-5",
-  individual: "claude-sonnet-4-5",
-  pro: "claude-sonnet-4-5",
-  colegio: "claude-sonnet-4-5",
-  institucional: "claude-sonnet-4-5",
+  free: ANTHROPIC_SONNET_MODEL,
+  individual: ANTHROPIC_SONNET_MODEL,
+  pro: ANTHROPIC_SONNET_MODEL,
+  colegio: ANTHROPIC_SONNET_MODEL,
+  institucional: ANTHROPIC_SONNET_MODEL,
 };
 
 export const APOYOAI_MODELS: Record<ApoyoAIPlan, string> = {
-  free: "claude-haiku-4-5",
-  basico: "claude-haiku-4-5",
-  plus: "claude-sonnet-4-5",
-  familiar: "claude-sonnet-4-5",
-  intensivo: "claude-sonnet-4-5",
+  free: ANTHROPIC_HAIKU_MODEL,
+  basico: ANTHROPIC_HAIKU_MODEL,
+  plus: ANTHROPIC_SONNET_MODEL,
+  familiar: ANTHROPIC_SONNET_MODEL,
+  intensivo: ANTHROPIC_SONNET_MODEL,
 };
 
 export const OPENAI_AUDIO_TRANSCRIPTION_MODEL = "whisper-1";

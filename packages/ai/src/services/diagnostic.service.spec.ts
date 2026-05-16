@@ -21,7 +21,7 @@ function buildScriptedLlm(): LlmClient {
             narrative: "Tu hijo viene aprendiendo bien y tiene mucho para crecer en matemática.",
           }),
           tokensUsed: 200,
-          modelUsed: "claude-opus-4-7",
+          modelUsed: "claude-sonnet-4-6",
         });
       }
       questionCounter += 1;
@@ -39,7 +39,7 @@ function buildScriptedLlm(): LlmClient {
           expectedCompetence: "comprension",
         }),
         tokensUsed: 150,
-        modelUsed: "claude-opus-4-7",
+        modelUsed: "claude-sonnet-4-6",
       });
     }),
   };
@@ -49,8 +49,18 @@ function buildScriptedLlm(): LlmClient {
  * "Alumno simulado": responde correctamente con la prob. dada. Para perfil bajo
  * raramente acierta, perfil medio mitad, perfil alto casi siempre.
  */
-function simulateStudent(successRate: number, correctAnswer: string): string {
-  return Math.random() < successRate ? correctAnswer : pickWrong(correctAnswer);
+function simulateStudent(
+  successRate: number,
+  correctAnswer: string,
+  questionIndex: number,
+): string {
+  if (successRate >= 0.9) {
+    return (questionIndex + 1) % 10 === 0 ? pickWrong(correctAnswer) : correctAnswer;
+  }
+  if (successRate <= 0.1) {
+    return (questionIndex + 1) % 10 === 0 ? correctAnswer : pickWrong(correctAnswer);
+  }
+  return questionIndex % 2 === 0 ? correctAnswer : pickWrong(correctAnswer);
 }
 
 function pickWrong(correctAnswer: string): string {
@@ -139,7 +149,7 @@ describe("DiagnosticService", () => {
       const question = await service.nextQuestion(state);
       if (!question) break;
       const correct = state.questions[i]?.correctAnswer ?? "A";
-      const answer = simulateStudent(0.9, correct);
+      const answer = simulateStudent(0.9, correct, i);
       state = service.registerAnswer(state, question.id, answer);
     }
 
@@ -157,7 +167,7 @@ describe("DiagnosticService", () => {
       const question = await service.nextQuestion(state);
       if (!question) break;
       const correct = state.questions[i]?.correctAnswer ?? "A";
-      const answer = simulateStudent(0.1, correct);
+      const answer = simulateStudent(0.1, correct, i);
       state = service.registerAnswer(state, question.id, answer);
     }
 
@@ -174,7 +184,7 @@ describe("DiagnosticService", () => {
       const question = await service.nextQuestion(state);
       if (!question) break;
       const correct = state.questions[i]?.correctAnswer ?? "A";
-      const answer = simulateStudent(0.5, correct);
+      const answer = simulateStudent(0.5, correct, i);
       state = service.registerAnswer(state, question.id, answer);
     }
 

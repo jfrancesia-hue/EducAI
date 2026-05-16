@@ -14,6 +14,8 @@ API principal de EducAI. NestJS 10 + Prisma + PostgreSQL.
 
 - la API builda, testea y documenta endpoints via Swagger;
 - `students`, `curriculum` y `lesson-plans` ya validan sesion real via `Authorization: Bearer <token>` contra Supabase Auth;
+- `webhooks/twilio` recibe WhatsApp en el mismo servicio Render de la API;
+- los limites diarios de WhatsApp se calculan con Postgres/Supabase sobre `Message`;
 - el proximo corte es cerrar RBAC y normalizar claims por rol.
 
 Swagger disponible en `http://localhost:4000/docs`.
@@ -28,10 +30,14 @@ pnpm --filter @educai/api dev
 
 - `DATABASE_URL`
 - `ANTHROPIC_API_KEY`
-- `REDIS_URL`
+- `OPENAI_API_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_SECRET_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `TWILIO_PUBLIC_WEBHOOK_URL`
+- `TWILIO_FORCE_PROTOCOL`
+- `TWILIO_SKIP_SIGNATURE_VALIDATION`
+- `TWILIO_DRY_RUN`
 
 Ver `docs/DEPLOY.md`, `docs/SECRETS_MATRIX.md` y `docs/AUTH_READINESS.md`.
 

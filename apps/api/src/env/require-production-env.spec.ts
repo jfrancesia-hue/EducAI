@@ -7,9 +7,18 @@ function productionEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
     NODE_ENV: "production",
     DATABASE_URL: "postgresql://educai_app:secret@db.example.com:5432/postgres",
     ALLOWED_ORIGINS: "https://educ-ai-web.vercel.app,https://educ-ai-gov-dashboard.vercel.app",
+    PUBLIC_APP_URL: "https://educ-ai-web.vercel.app",
     SUPABASE_URL: "https://mfjpoaipjlimzdxkusav.supabase.co",
     SUPABASE_SECRET_KEY: "secret",
     ANTHROPIC_API_KEY: "sk-ant-test",
+    OPENAI_API_KEY: "sk-openai-test",
+    TWILIO_ACCOUNT_SID: "ACtest",
+    TWILIO_AUTH_TOKEN: "twilio-auth-token",
+    TWILIO_WHATSAPP_FROM: "whatsapp:+5493834023867",
+    TWILIO_PUBLIC_WEBHOOK_URL: "https://educai-api-t4gf.onrender.com/webhooks/twilio",
+    TWILIO_FORCE_PROTOCOL: "https",
+    TWILIO_SKIP_SIGNATURE_VALIDATION: "false",
+    TWILIO_DRY_RUN: "false",
     ...overrides,
   };
 }
@@ -69,5 +78,19 @@ describe("requireApiProductionEnv", () => {
     expect(() => requireApiProductionEnv(productionEnv({ ANTHROPIC_API_KEY: "" }))).toThrow(
       /ANTHROPIC_API_KEY/,
     );
+  });
+
+  it("rechaza webhook Twilio local en produccion", () => {
+    expect(() =>
+      requireApiProductionEnv(
+        productionEnv({ TWILIO_PUBLIC_WEBHOOK_URL: "http://localhost:4000/webhooks/twilio" }),
+      ),
+    ).toThrow(/TWILIO_PUBLIC_WEBHOOK_URL/);
+  });
+
+  it("rechaza validacion de firma Twilio desactivada en produccion", () => {
+    expect(() =>
+      requireApiProductionEnv(productionEnv({ TWILIO_SKIP_SIGNATURE_VALIDATION: "true" })),
+    ).toThrow(/TWILIO_SKIP_SIGNATURE_VALIDATION/);
   });
 });

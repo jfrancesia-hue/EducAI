@@ -8,6 +8,7 @@
 ## Alcance del MVP
 
 ### Funcional
+
 - Onboarding del padre (registro, pago, creación del perfil del hijo).
 - Evaluación diagnóstica del alumno (10 min, adaptativa).
 - Tutor IA conversacional por WhatsApp (texto, audio, imagen).
@@ -17,6 +18,7 @@
 - Materias MVP: matemática, lengua, ciencias naturales (4° a 12° grado).
 
 ### No funcional
+
 - Idioma: español argentino como default, español neutro como fallback.
 - Latencia objetivo: respuesta del tutor < 8 segundos.
 - Disponibilidad: 99.5%.
@@ -117,7 +119,7 @@ model Message {
   mediaUrl        String?
   mediaType       String?  // image, audio, text
   tokensUsed      Int?
-  modelUsed       String?  // claude-opus-4-7, gpt-4o, etc
+  modelUsed       String?  // claude-sonnet-4-6, gpt-4o, etc
   createdAt       DateTime @default(now())
 
   conversation    Conversation @relation(fields: [conversationId], references: [id])
@@ -248,7 +250,7 @@ El tutor IA NUNCA da la respuesta directa. Sigue el método socrático:
 
 2. `src/agents/tutor-agent.ts` — clase TutorAgent que:
    - Recibe contexto del alumno + mensaje entrante.
-   - Llama a Claude API (usar claude-opus-4-7 como modelo por defecto, ver product-self-knowledge skill).
+   - Llama a Claude API (usar claude-sonnet-4-6 como modelo por defecto, ver product-self-knowledge skill).
    - Devuelve respuesta + metadata (tokens, competencias ejercitadas, signals emocionales).
    - Detecta si el alumno está frustrado, confundido, o en crisis emocional (derivación a humano).
    - Detecta cuando el alumno "ya entendió" y propone ejercicio de consolidación.
