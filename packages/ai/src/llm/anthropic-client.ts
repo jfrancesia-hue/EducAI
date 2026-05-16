@@ -11,6 +11,7 @@ import type {
   LlmGenerateOutput,
   LlmSystemPrompt,
 } from "./types.js";
+import { getApoyoAIModelForPlan } from "../plans.js";
 
 export interface AnthropicLlmClientOptions {
   apiKey?: string;
@@ -22,7 +23,7 @@ export interface AnthropicLlmClientOptions {
   anthropic?: Anthropic;
 }
 
-const DEFAULT_MODEL = "claude-opus-4-7";
+const DEFAULT_MODEL = getApoyoAIModelForPlan("plus");
 const DEFAULT_MAX_TOKENS = 1024;
 
 /**
@@ -33,7 +34,8 @@ const DEFAULT_MAX_TOKENS = 1024;
  * cache_control ephemeral. La parte dinámica (alumno/grado/historial) va
  * en un segundo bloque sin cache_control.
  *
- * Modelo por defecto: claude-opus-4-7 (mínimo cacheable: 4096 tokens).
+ * Modelo por defecto: Sonnet. Opus queda reservado para informes institucionales
+ * explicitamente habilitados por llamada.
  */
 export class AnthropicLlmClient implements LlmClient {
   private readonly anthropic: Anthropic;

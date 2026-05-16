@@ -7,6 +7,7 @@ import {
 } from "../safety/content-filter.js";
 import { DeterministicLlmClient } from "../llm/types.js";
 import type { LlmClient, LlmGenerateOutput } from "../llm/types.js";
+import { getApoyoAIModelForPlan } from "../plans.js";
 
 export interface TutorAgentInput {
   studentName: string;
@@ -57,7 +58,7 @@ export class TutorAgent {
     private readonly llm: LlmClient = new DeterministicLlmClient(),
     options: TutorAgentOptions = {},
   ) {
-    this.model = options.model ?? "claude-opus-4-7";
+    this.model = options.model ?? getApoyoAIModelForPlan("free");
     this.maxTokens = options.maxTokens ?? 700;
   }
 

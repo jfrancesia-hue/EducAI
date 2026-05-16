@@ -1,6 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
   AudioService,
+  getApoyoAIModelForPlan,
   type LlmClient,
   OcrService,
   TutorAgent,
@@ -59,7 +60,6 @@ const DEFAULT_SUBJECT = "general";
  */
 @Injectable()
 export class TutorOrchestratorService {
-  private readonly tutor: TutorAgent;
   private readonly log: Logger;
 
   constructor(
@@ -78,7 +78,6 @@ export class TutorOrchestratorService {
     private readonly humanHandoff: HumanHandoffService,
     logger: AppLogger,
   ) {
-    this.tutor = new TutorAgent(this.llm);
     this.log = logger.child({ component: "TutorOrchestrator" });
   }
 
@@ -365,7 +364,10 @@ export class TutorOrchestratorService {
     inboundBody: string,
     subject: string,
   ): Promise<OrchestratorOutcome> {
-    const tutorResponse = await this.tutor.respond({
+    const tutor = new TutorAgent(this.llm, {
+      model: getApoyoAIModelForPlan(student.subscription.plan),
+    });
+    const tutorResponse = await tutor.respond({
       studentName: student.studentName,
       grade: student.grade,
       subject,

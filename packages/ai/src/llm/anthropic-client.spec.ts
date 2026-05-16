@@ -124,7 +124,7 @@ describe("AnthropicLlmClient", () => {
     });
 
     const arg = create.mock.calls[0]?.[0] as any;
-    expect(arg.model).toBe("claude-opus-4-7");
+    expect(arg.model).toBe("claude-sonnet-4-5");
     expect(arg.max_tokens).toBe(1024);
   });
 

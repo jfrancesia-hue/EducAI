@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { getApoyoAIModelForPlan } from "../plans.js";
 
 export interface OcrResult {
   text: string;
@@ -17,7 +18,7 @@ export interface OcrServiceOptions {
   anthropic?: Anthropic;
 }
 
-const DEFAULT_MODEL = "claude-opus-4-7";
+const DEFAULT_MODEL = getApoyoAIModelForPlan("plus");
 const DEFAULT_MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 

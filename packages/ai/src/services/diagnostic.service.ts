@@ -1,5 +1,6 @@
 import type { LlmCachedTextBlock, LlmClient, LlmGenerateOutput } from "../llm/types.js";
 import { DeterministicLlmClient } from "../llm/types.js";
+import { getApoyoAIModelForPlan } from "../plans.js";
 
 export type DiagnosticDifficulty = "low" | "medium" | "high";
 export type DiagnosticSubject = "matematica" | "lengua" | "ciencias naturales";
@@ -137,7 +138,7 @@ export class DiagnosticService {
 
   constructor(options: DiagnosticServiceOptions = {}) {
     this.llm = options.llm ?? new DeterministicLlmClient();
-    this.model = options.model ?? "claude-opus-4-7";
+    this.model = options.model ?? getApoyoAIModelForPlan("plus");
     this.maxTokensPerQuestion = options.maxTokensPerQuestion ?? 600;
     this.maxTokensPerReport = options.maxTokensPerReport ?? 900;
   }

@@ -35,48 +35,58 @@ function buildPrisma(messageCount: number) {
 }
 
 describe("RateLimiterService", () => {
-  it("FREE permite hasta 10 mensajes/día", async () => {
+  it("FREE no permite WhatsApp", async () => {
     const prisma = buildPrisma(5);
-    const service = new RateLimiterService(prisma as never);
-
-    const decision = await service.assertCanReceive(buildStudent());
-
-    expect(decision.allowed).toBe(true);
-    expect(decision.dailyLimit).toBe(10);
-    expect(decision.used).toBe(5);
-    expect(decision.remaining).toBe(5);
-  });
-
-  it("FREE rechaza al llegar al límite", async () => {
-    const prisma = buildPrisma(10);
     const service = new RateLimiterService(prisma as never);
 
     await expect(service.assertCanReceive(buildStudent())).rejects.toBeInstanceOf(
       RateLimitExceededError,
     );
+    expect(prisma.message.count).not.toHaveBeenCalled();
   });
 
-  it("BASIC es ilimitado", async () => {
-    const prisma = buildPrisma(9999);
+  it("BASIC permite hasta 20 mensajes por dia por hijo", async () => {
+    const prisma = buildPrisma(5);
     const service = new RateLimiterService(prisma as never);
 
     const decision = await service.assertCanReceive(buildStudent({ plan: "BASIC" }));
 
-    expect(decision.dailyLimit).toBeNull();
-    expect(decision.remaining).toBeNull();
-    expect(prisma.message.count).not.toHaveBeenCalled();
+    expect(decision.allowed).toBe(true);
+    expect(decision.dailyLimit).toBe(20);
+    expect(decision.used).toBe(5);
+    expect(decision.remaining).toBe(15);
   });
 
-  it("PREMIUM es ilimitado", async () => {
-    const prisma = buildPrisma(9999);
+  it("BASIC rechaza al llegar al limite", async () => {
+    const prisma = buildPrisma(20);
+    const service = new RateLimiterService(prisma as never);
+
+    await expect(service.assertCanReceive(buildStudent({ plan: "BASIC" }))).rejects.toBeInstanceOf(
+      RateLimitExceededError,
+    );
+  });
+
+  it("PREMIUM se normaliza a Plus y permite 60 mensajes por dia", async () => {
+    const prisma = buildPrisma(59);
     const service = new RateLimiterService(prisma as never);
 
     const decision = await service.assertCanReceive(buildStudent({ plan: "PREMIUM" }));
 
-    expect(decision.dailyLimit).toBeNull();
+    expect(decision.dailyLimit).toBe(60);
+    expect(decision.remaining).toBe(1);
   });
 
-  it("rechaza si la suscripción está canceled", async () => {
+  it("FAMILY se normaliza a Familiar y permite 25 mensajes por dia", async () => {
+    const prisma = buildPrisma(24);
+    const service = new RateLimiterService(prisma as never);
+
+    const decision = await service.assertCanReceive(buildStudent({ plan: "FAMILY" }));
+
+    expect(decision.dailyLimit).toBe(25);
+    expect(decision.remaining).toBe(1);
+  });
+
+  it("rechaza si la suscripcion esta canceled", async () => {
     const prisma = buildPrisma(0);
     const service = new RateLimiterService(prisma as never);
 
@@ -85,11 +95,13 @@ describe("RateLimiterService", () => {
     ).rejects.toBeInstanceOf(SubscriptionInactiveError);
   });
 
-  it("permite IN_GRACE_PERIOD", async () => {
+  it("permite IN_GRACE_PERIOD en plan pago", async () => {
     const prisma = buildPrisma(2);
     const service = new RateLimiterService(prisma as never);
 
-    const decision = await service.assertCanReceive(buildStudent({ status: "IN_GRACE_PERIOD" }));
+    const decision = await service.assertCanReceive(
+      buildStudent({ plan: "BASIC", status: "IN_GRACE_PERIOD" }),
+    );
 
     expect(decision.allowed).toBe(true);
   });
