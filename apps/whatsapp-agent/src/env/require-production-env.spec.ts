@@ -20,6 +20,30 @@ describe("requireWhatsappProductionEnv", () => {
     expect(() => requireWhatsappProductionEnv(productionEnv())).not.toThrow();
   });
 
+  it("acepta API Key de Twilio en lugar de Auth Token", () => {
+    expect(() =>
+      requireWhatsappProductionEnv(
+        productionEnv({
+          TWILIO_AUTH_TOKEN: "",
+          TWILIO_API_KEY_SID: "SK123",
+          TWILIO_API_KEY_SECRET: "twilio-api-secret",
+        }),
+      ),
+    ).not.toThrow();
+  });
+
+  it("rechaza produccion sin credenciales completas de Twilio", () => {
+    expect(() =>
+      requireWhatsappProductionEnv(
+        productionEnv({
+          TWILIO_AUTH_TOKEN: "",
+          TWILIO_API_KEY_SID: "SK123",
+          TWILIO_API_KEY_SECRET: "",
+        }),
+      ),
+    ).toThrow(/Twilio/);
+  });
+
   it("rechaza produccion sin Anthropic", () => {
     expect(() => requireWhatsappProductionEnv(productionEnv({ ANTHROPIC_API_KEY: "" }))).toThrow(
       /ANTHROPIC_API_KEY/,

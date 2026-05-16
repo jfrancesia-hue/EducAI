@@ -35,10 +35,12 @@ export class TwilioSenderService {
       this.config.get<string>("TWILIO_WHATSAPP_FROM") ?? "",
     );
 
-    const sid = this.config.get<string>("TWILIO_ACCOUNT_SID");
-    const token = this.config.get<string>("TWILIO_AUTH_TOKEN");
+    const accountSid = this.config.get<string>("TWILIO_ACCOUNT_SID");
+    const authToken = this.config.get<string>("TWILIO_AUTH_TOKEN");
+    const apiKeySid = this.config.get<string>("TWILIO_API_KEY_SID");
+    const apiKeySecret = this.config.get<string>("TWILIO_API_KEY_SECRET");
 
-    this.client = !this.dryRun && sid && token ? twilio(sid, token) : null;
+    this.client = this.buildClient({ accountSid, authToken, apiKeySid, apiKeySecret });
   }
 
   async send(input: SendOutboundInput): Promise<SendOutboundResult> {
@@ -72,5 +74,26 @@ export class TwilioSenderService {
       return trimmed;
     }
     return `whatsapp:${trimmed}`;
+  }
+
+  private buildClient(input: {
+    accountSid?: string;
+    authToken?: string;
+    apiKeySid?: string;
+    apiKeySecret?: string;
+  }): Twilio | null {
+    if (this.dryRun) {
+      return null;
+    }
+
+    if (input.accountSid && input.apiKeySid && input.apiKeySecret) {
+      return twilio(input.apiKeySid, input.apiKeySecret, { accountSid: input.accountSid });
+    }
+
+    if (input.accountSid && input.authToken) {
+      return twilio(input.accountSid, input.authToken);
+    }
+
+    return null;
   }
 }

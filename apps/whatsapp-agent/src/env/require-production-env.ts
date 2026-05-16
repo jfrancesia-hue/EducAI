@@ -1,6 +1,5 @@
 const REQUIRED_PRODUCTION_ENV = [
   "DATABASE_URL",
-  "TWILIO_AUTH_TOKEN",
   "TWILIO_ACCOUNT_SID",
   "TWILIO_WHATSAPP_FROM",
   "ANTHROPIC_API_KEY",
@@ -14,7 +13,17 @@ export function requireWhatsappProductionEnv(env: NodeJS.ProcessEnv): void {
     return;
   }
 
-  return;
+  if (env.TWILIO_AUTH_TOKEN?.trim()) {
+    return;
+  }
+
+  if (env.TWILIO_API_KEY_SID?.trim() && env.TWILIO_API_KEY_SECRET?.trim()) {
+    return;
+  }
+
+  throw new Error(
+    "[whatsapp-agent] faltan credenciales de Twilio: TWILIO_AUTH_TOKEN o TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET",
+  );
 }
 
 function requireProductionEnv(
