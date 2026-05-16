@@ -3,6 +3,8 @@ const REQUIRED_PRODUCTION_ENV = [
   "TWILIO_AUTH_TOKEN",
   "TWILIO_ACCOUNT_SID",
   "TWILIO_WHATSAPP_FROM",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
 ] as const;
 
 export function requireWhatsappProductionEnv(env: NodeJS.ProcessEnv): void {
@@ -12,13 +14,7 @@ export function requireWhatsappProductionEnv(env: NodeJS.ProcessEnv): void {
     return;
   }
 
-  if (env.ANTHROPIC_API_KEY?.trim() || env.OPENAI_API_KEY?.trim()) {
-    return;
-  }
-
-  throw new Error(
-    "[whatsapp-agent] faltan variables de entorno obligatorias para produccion: ANTHROPIC_API_KEY o OPENAI_API_KEY",
-  );
+  return;
 }
 
 function requireProductionEnv(

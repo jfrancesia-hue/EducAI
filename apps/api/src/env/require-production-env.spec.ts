@@ -9,6 +9,7 @@ function productionEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
     ALLOWED_ORIGINS: "https://educ-ai-web.vercel.app,https://educ-ai-gov-dashboard.vercel.app",
     SUPABASE_URL: "https://mfjpoaipjlimzdxkusav.supabase.co",
     SUPABASE_SECRET_KEY: "secret",
+    ANTHROPIC_API_KEY: "sk-ant-test",
     ...overrides,
   };
 }
@@ -62,5 +63,11 @@ describe("requireApiProductionEnv", () => {
         }),
       ),
     ).toThrow(/BYPASSRLS/);
+  });
+
+  it("rechaza produccion sin ANTHROPIC_API_KEY", () => {
+    expect(() => requireApiProductionEnv(productionEnv({ ANTHROPIC_API_KEY: "" }))).toThrow(
+      /ANTHROPIC_API_KEY/,
+    );
   });
 });
