@@ -16,7 +16,7 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 - GitHub Actions con secrets del environment `production` cargados
 - Hooks de deploy configurados segun [`docs/DEPLOY.md`](./DEPLOY.md)
 - Servicios productivos creados en Vercel y Render
-- `DATABASE_URL` apuntando a un recurso productivo con rol app sin `BYPASSRLS`
+- `DATABASE_URL` apuntando a un recurso productivo con rol app sin `BYPASSRLS` y `schema=educai`
 - `TWILIO_PUBLIC_WEBHOOK_URL` apuntando al API Render y firma Twilio activa
 - `MERCADOPAGO_WEBHOOK_SECRET` cargado antes de habilitar pagos reales
 - `SENTRY_DSN` configurado en apps publicas y servicios backend
@@ -27,6 +27,7 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 - Confirmar `SUPABASE_URL` del proyecto correcto
 - Confirmar que las keys cargadas pertenecen a EducAI
 - No modificar configuracion, storage, auth ni tenants de IncluAI
+- Validar que el API use schema `educai` y que ningun cambio toque tablas `public`/IncluAI
 - Validar aislamiento por `tenantId` antes de cualquier seed, migration o alta manual
 
 ## 4. Auth y contexto de tenant

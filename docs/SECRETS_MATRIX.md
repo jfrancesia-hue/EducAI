@@ -8,7 +8,7 @@ Estas keys se cargan una sola vez por servicio que las use; no hacen falta nombr
 
 ### Supabase y base de datos
 
-- `DATABASE_URL`: conexion PostgreSQL para Prisma. En produccion debe usar un rol app sin `BYPASSRLS`; no usar `postgres`.
+- `DATABASE_URL`: conexion PostgreSQL para Prisma. En produccion debe usar un rol app sin `BYPASSRLS`, no usar `postgres`, e incluir `schema=educai` para no tocar `public`/IncluAI.
 - `SUPABASE_URL`: URL del proyecto Supabase operativo de EducAI.
 - `SUPABASE_SECRET_KEY`: service role o key elevada para validar usuarios desde backend.
 - `SUPABASE_SERVICE_ROLE_KEY`: fallback legacy si no se usa `SUPABASE_SECRET_KEY`.
@@ -211,7 +211,7 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ## Notas operativas
 
-- `DATABASE_URL` de produccion no debe usar el usuario `postgres`.
+- `DATABASE_URL` de produccion no debe usar el usuario `postgres` y debe incluir `schema=educai`.
 - Las keys publicas (`NEXT_PUBLIC_*`, `EXPO_PUBLIC_*`) pueden vivir en cliente; las demas no.
 - No reutilizar valores de IncluAI salvo que se decida explicitamente compartir infraestructura.
 - `SUPABASE_SECRET_KEY` y `SUPABASE_SERVICE_ROLE_KEY` representan el mismo rol operativo; usar una sola como fuente principal.

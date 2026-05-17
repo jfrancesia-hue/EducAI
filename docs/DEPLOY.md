@@ -32,7 +32,7 @@ Las listas de abajo incluyen:
 Requeridas hoy para boot y flujo productivo unico:
 
 - `NODE_ENV=production`
-- `DATABASE_URL` con rol app sin `BYPASSRLS` (`educai_app` directo o `educai_app.<project-ref>` por pooler)
+- `DATABASE_URL` con rol app sin `BYPASSRLS` (`educai_app` directo o `educai_app.<project-ref>` por pooler) e incluyendo `schema=educai`
 - `ALLOWED_ORIGINS`
 - `PUBLIC_APP_URL`
 - `SUPABASE_URL`
@@ -57,6 +57,12 @@ Opcionales:
 - `EDUCAI_AGENT_MODEL`
 - `SENTRY_DSN`
 - `POSTHOG_KEY`
+
+### Supabase compartido
+
+El proyecto Supabase convive con IncluAI. EducAI debe operar siempre dentro del schema PostgreSQL
+`educai`; `public` queda fuera de alcance. En produccion el API rechaza boot si `DATABASE_URL` no
+incluye `schema=educai`.
 
 ### Limites y uso
 

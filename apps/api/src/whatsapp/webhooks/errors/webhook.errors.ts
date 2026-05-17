@@ -19,12 +19,31 @@ export class TwilioSignatureMismatchError extends ForbiddenException {
 }
 
 export class StudentNotEnrolledError extends NotFoundException {
+  readonly whatsappPhone: string;
+
   constructor(whatsappPhone: string) {
     super({
       code: "STUDENT_NOT_ENROLLED",
-      message: `No hay un alumno registrado con el teléfono ${whatsappPhone}`,
+      message: `No hay un alumno registrado con el telefono ${whatsappPhone}`,
       whatsappPhone,
     });
+    this.whatsappPhone = whatsappPhone;
+  }
+}
+
+export class StudentSelectionRequiredError extends ForbiddenException {
+  readonly whatsappPhone: string;
+  readonly studentNames: string[];
+
+  constructor(whatsappPhone: string, studentNames: string[]) {
+    super({
+      code: "STUDENT_SELECTION_REQUIRED",
+      message: `El telefono ${whatsappPhone} esta asociado a mas de un alumno`,
+      whatsappPhone,
+      studentNames,
+    });
+    this.whatsappPhone = whatsappPhone;
+    this.studentNames = studentNames;
   }
 }
 
@@ -32,7 +51,7 @@ export class SubscriptionInactiveError extends ForbiddenException {
   constructor(familyId: string, status: string) {
     super({
       code: "SUBSCRIPTION_INACTIVE",
-      message: `La familia ${familyId} no tiene suscripción activa (status=${status})`,
+      message: `La familia ${familyId} no tiene suscripcion activa (status=${status})`,
       familyId,
       status,
     });
@@ -43,7 +62,7 @@ export class RateLimitExceededError extends ForbiddenException {
   constructor(plan: string, limit: number) {
     super({
       code: "RATE_LIMIT_EXCEEDED",
-      message: `Límite del plan ${plan} alcanzado (${limit} mensajes por día)`,
+      message: `Limite del plan ${plan} alcanzado (${limit} mensajes por dia)`,
       plan,
       limit,
     });

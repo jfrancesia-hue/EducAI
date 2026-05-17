@@ -20,6 +20,12 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
+import {
+  RateLimitExceededError,
+  StudentNotEnrolledError,
+  StudentSelectionRequiredError,
+  SubscriptionInactiveError,
+} from "../webhooks/errors/webhook.errors.js";
 
 export interface InboundMessage {
   messageSid: string;
@@ -31,7 +37,14 @@ export interface InboundMessage {
 }
 
 export interface OrchestratorOutcome {
-  status: "answered" | "rate_limited" | "not_enrolled" | "error" | "diagnostic";
+  status:
+    | "answered"
+    | "rate_limited"
+    | "not_enrolled"
+    | "selection_required"
+    | "subscription_inactive"
+    | "error"
+    | "diagnostic";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
@@ -85,6 +98,11 @@ export class TutorOrchestratorService {
     try {
       return await this.handle(message);
     } catch (error) {
+      const known = await this.handleKnownOperationalError(error, message);
+      if (known) {
+        return known;
+      }
+
       this.log.error(
         {
           err: error instanceof Error ? error.message : String(error),
@@ -103,7 +121,7 @@ export class TutorOrchestratorService {
   }
 
   private async handle(message: InboundMessage): Promise<OrchestratorOutcome> {
-    const student = await this.resolver.resolveByWhatsapp(message.fromWhatsappPhone);
+    const student = await this.resolver.resolveByWhatsapp(message.fromWhatsappPhone, message.body);
     await this.rateLimiter.assertCanReceive(student);
 
     const inboundBody = await this.materializeBody(message);
@@ -280,7 +298,7 @@ export class TutorOrchestratorService {
     });
 
     const send = await this.sender.send({
-      toWhatsappPhone: student.whatsappPhone,
+      toWhatsappPhone: this.replyPhone(student),
       body: reply,
     });
 
@@ -336,7 +354,7 @@ export class TutorOrchestratorService {
     }
 
     const send = await this.sender.send({
-      toWhatsappPhone: student.whatsappPhone,
+      toWhatsappPhone: this.replyPhone(student),
       body: result.reply,
     });
 
@@ -365,7 +383,7 @@ export class TutorOrchestratorService {
     subject: string,
   ): Promise<OrchestratorOutcome> {
     const tutor = new TutorAgent(this.llm, {
-      model: getApoyoAIModelForPlan(student.subscription.plan),
+      model: getApoyoAIModelForPlan(student.subscription.planCode ?? student.subscription.plan),
     });
     const tutorResponse = await tutor.respond({
       studentName: student.studentName,
@@ -395,7 +413,7 @@ export class TutorOrchestratorService {
     });
 
     const send = await this.sender.send({
-      toWhatsappPhone: student.whatsappPhone,
+      toWhatsappPhone: this.replyPhone(student),
       body: tutorResponse.content,
     });
 
@@ -455,7 +473,7 @@ export class TutorOrchestratorService {
     });
 
     const send = await this.sender.send({
-      toWhatsappPhone: student.whatsappPhone,
+      toWhatsappPhone: this.replyPhone(student),
       body: agentResponse.replyText,
     });
 
@@ -584,5 +602,44 @@ export class TutorOrchestratorService {
         "orchestrator.fallback_send_failed",
       );
     }
+  }
+
+  private replyPhone(student: ResolvedStudent): string {
+    return student.replyWhatsappPhone ?? student.whatsappPhone;
+  }
+
+  private async handleKnownOperationalError(
+    error: unknown,
+    message: InboundMessage,
+  ): Promise<OrchestratorOutcome | null> {
+    if (error instanceof StudentNotEnrolledError) {
+      const reply =
+        "Todavia no encuentro este WhatsApp en ApoyoAI. Para activarlo, el adulto responsable tiene que registrar la familia, cargar el alumno y vincular este numero como telefono del adulto o del hijo.";
+      await this.safeSendFallback(message.fromWhatsappPhone, reply);
+      return { status: "not_enrolled", reply };
+    }
+
+    if (error instanceof StudentSelectionRequiredError) {
+      const names = error.studentNames.join(", ");
+      const reply = `Este WhatsApp esta vinculado a mas de un alumno: ${names}. Mandame el nombre del alumno en el mensaje, por ejemplo: "Mateo, no entiendo fracciones".`;
+      await this.safeSendFallback(message.fromWhatsappPhone, reply);
+      return { status: "selection_required", reply };
+    }
+
+    if (error instanceof SubscriptionInactiveError) {
+      const reply =
+        "La suscripcion de esta familia todavia no esta activa. Cuando el pago quede confirmado, ApoyoAI va a responder por este mismo WhatsApp.";
+      await this.safeSendFallback(message.fromWhatsappPhone, reply);
+      return { status: "subscription_inactive", reply };
+    }
+
+    if (error instanceof RateLimitExceededError) {
+      const reply =
+        "Llegaste al limite de mensajes de tu plan por hoy. Manana se renueva automaticamente; si necesitás mas uso, conviene subir de plan.";
+      await this.safeSendFallback(message.fromWhatsappPhone, reply);
+      return { status: "rate_limited", reply };
+    }
+
+    return null;
   }
 }

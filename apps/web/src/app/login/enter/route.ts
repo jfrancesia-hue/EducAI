@@ -57,11 +57,20 @@ export async function POST(request: Request) {
       },
     },
   });
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return NextResponse.redirect(new URL("/login?error=invalid", request.url), { status: 303 });
   }
+
+  const metadata = {
+    ...(data.user?.user_metadata ?? {}),
+    ...(data.user?.app_metadata ?? {}),
+  } as Record<string, unknown>;
+  if (metadata.role === "PARENT") {
+    redirectUrl.pathname = "/familia";
+  }
+  response.headers.set("location", redirectUrl.toString());
 
   return response;
 }

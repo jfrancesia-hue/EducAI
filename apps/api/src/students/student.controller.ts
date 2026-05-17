@@ -29,6 +29,15 @@ export class StudentController {
     });
   }
 
+  @Get()
+  @ApiOkResponse({ description: "Perfiles de estudiantes de la familia" })
+  findMine(@CurrentUser() user: AuthenticatedUser) {
+    return this.students.findByFamily({
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
+  }
+
   @Get(":id")
   @ApiOkResponse({ description: "Perfil de estudiante" })
   findOne(@Param("id") id: string) {

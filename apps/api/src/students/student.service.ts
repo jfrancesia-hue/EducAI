@@ -22,6 +22,13 @@ export class StudentService {
   }
 
   async create(dto: CreateStudentDto, context: { tenantId: string; familyId: string }) {
+    const studentContacts = this.buildWhatsappContacts({
+      tenantId: context.tenantId,
+      studentPhone: dto.whatsappPhone,
+      parentPhone: dto.parentWhatsappPhone,
+      studentName: dto.firstName,
+    });
+
     const student = await this.prisma.student.create({
       data: {
         tenantId: context.tenantId,
@@ -38,6 +45,11 @@ export class StudentService {
             strongSubjects: [],
             weakSubjects: [],
             whatsappPhone: dto.whatsappPhone,
+            whatsappContacts: studentContacts.length
+              ? {
+                  create: studentContacts,
+                }
+              : undefined,
           },
         },
       },
@@ -55,6 +67,29 @@ export class StudentService {
     );
 
     return { data: student };
+  }
+
+  async findByFamily(context: { tenantId: string; familyId: string }) {
+    const students = await this.prisma.student.findMany({
+      where: {
+        tenantId: context.tenantId,
+        familyId: context.familyId,
+        deletedAt: null,
+      },
+      include: {
+        profile: {
+          include: {
+            whatsappContacts: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return { data: students };
   }
 
   async findOne(id: string) {
@@ -262,5 +297,46 @@ export class StudentService {
         diagnosticState: state as unknown as Prisma.InputJsonValue,
       },
     });
+  }
+
+  private buildWhatsappContacts(input: {
+    tenantId: string;
+    studentPhone?: string;
+    parentPhone?: string;
+    studentName: string;
+  }) {
+    const contacts: Array<{
+      tenantId: string;
+      role: "STUDENT" | "PARENT";
+      phone: string;
+      displayName: string;
+    }> = [];
+
+    const studentPhone = this.normalizePhone(input.studentPhone);
+    if (studentPhone) {
+      contacts.push({
+        tenantId: input.tenantId,
+        role: "STUDENT",
+        phone: studentPhone,
+        displayName: input.studentName,
+      });
+    }
+
+    const parentPhone = this.normalizePhone(input.parentPhone);
+    if (parentPhone && parentPhone !== studentPhone) {
+      contacts.push({
+        tenantId: input.tenantId,
+        role: "PARENT",
+        phone: parentPhone,
+        displayName: "Adulto responsable",
+      });
+    }
+
+    return contacts;
+  }
+
+  private normalizePhone(phone?: string): string | undefined {
+    const normalized = phone?.trim().replace(/^whatsapp:/i, "");
+    return normalized || undefined;
   }
 }

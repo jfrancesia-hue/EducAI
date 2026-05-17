@@ -23,6 +23,7 @@ export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
   assertNoLocalhostUrl("PUBLIC_APP_URL", env.PUBLIC_APP_URL);
   assertNoLocalhostUrl("TWILIO_PUBLIC_WEBHOOK_URL", env.TWILIO_PUBLIC_WEBHOOK_URL);
   assertDatabaseUrlDoesNotBypassRls(env.DATABASE_URL);
+  assertDatabaseUrlUsesEducaiSchema(env.DATABASE_URL);
   assertProductionFlag("TWILIO_SKIP_SIGNATURE_VALIDATION", env.TWILIO_SKIP_SIGNATURE_VALIDATION);
   assertProductionFlag("TWILIO_DRY_RUN", env.TWILIO_DRY_RUN);
 
@@ -56,6 +57,22 @@ function assertNoLocalhostUrl(key: string, value: string | undefined): void {
 function assertProductionFlag(key: string, value: string | undefined): void {
   if ((value ?? "").trim().toLowerCase() === "true") {
     throw new Error(`[api] ${key} no puede ser true en produccion`);
+  }
+}
+
+function assertDatabaseUrlUsesEducaiSchema(databaseUrl: string | undefined): void {
+  let schema = "";
+
+  try {
+    schema = new URL(databaseUrl ?? "").searchParams.get("schema")?.toLowerCase() ?? "";
+  } catch {
+    throw new Error("[api] DATABASE_URL de produccion no es una URL valida");
+  }
+
+  if (schema !== "educai") {
+    throw new Error(
+      "[api] DATABASE_URL de produccion debe incluir schema=educai para no usar public/IncluAI",
+    );
   }
 }
 

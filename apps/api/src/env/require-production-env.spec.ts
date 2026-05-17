@@ -5,7 +5,7 @@ import { requireApiProductionEnv } from "./require-production-env.js";
 function productionEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   return {
     NODE_ENV: "production",
-    DATABASE_URL: "postgresql://educai_app:secret@db.example.com:5432/postgres",
+    DATABASE_URL: "postgresql://educai_app:secret@db.example.com:5432/postgres?schema=educai",
     ALLOWED_ORIGINS: "https://educ-ai-web.vercel.app,https://educ-ai-gov-dashboard.vercel.app",
     PUBLIC_APP_URL: "https://educ-ai-web.vercel.app",
     SUPABASE_URL: "https://mfjpoaipjlimzdxkusav.supabase.co",
@@ -33,7 +33,7 @@ describe("requireApiProductionEnv", () => {
       requireApiProductionEnv(
         productionEnv({
           DATABASE_URL:
-            "postgresql://educai_app.mfjpoaipjlimzdxkusav:secret@pooler.example.com:6543/postgres",
+            "postgresql://educai_app.mfjpoaipjlimzdxkusav:secret@pooler.example.com:6543/postgres?schema=educai",
         }),
       ),
     ).not.toThrow();
@@ -68,7 +68,7 @@ describe("requireApiProductionEnv", () => {
       requireApiProductionEnv(
         productionEnv({
           DATABASE_URL:
-            "postgresql://postgres.mfjpoaipjlimzdxkusav:secret@pooler.example.com:6543/postgres",
+            "postgresql://postgres.mfjpoaipjlimzdxkusav:secret@pooler.example.com:6543/postgres?schema=educai",
         }),
       ),
     ).toThrow(/BYPASSRLS/);
@@ -92,5 +92,15 @@ describe("requireApiProductionEnv", () => {
     expect(() =>
       requireApiProductionEnv(productionEnv({ TWILIO_SKIP_SIGNATURE_VALIDATION: "true" })),
     ).toThrow(/TWILIO_SKIP_SIGNATURE_VALIDATION/);
+  });
+
+  it("rechaza DATABASE_URL sin schema educai en produccion", () => {
+    expect(() =>
+      requireApiProductionEnv(
+        productionEnv({
+          DATABASE_URL: "postgresql://educai_app:secret@db.example.com:5432/postgres",
+        }),
+      ),
+    ).toThrow(/schema=educai/);
   });
 });

@@ -219,7 +219,10 @@ describe("TutorOrchestratorService", () => {
 
     expect(outcome.status).toBe("answered");
     expect(outcome.outboundSid).toBe("SM123");
-    expect(m.resolver.resolveByWhatsapp).toHaveBeenCalledWith("whatsapp:+5493815550202");
+    expect(m.resolver.resolveByWhatsapp).toHaveBeenCalledWith(
+      "whatsapp:+5493815550202",
+      expect.stringContaining("1/2 + 1/4"),
+    );
     expect(m.rateLimiter.assertCanReceive).toHaveBeenCalled();
     expect(m.llm.generate).toHaveBeenCalledTimes(1);
     expect(m.conversation.appendInboundMessage).toHaveBeenCalled();

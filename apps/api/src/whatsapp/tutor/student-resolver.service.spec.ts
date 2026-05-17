@@ -30,7 +30,8 @@ const PROFILE_OK = {
 describe("StudentResolverService", () => {
   it("resuelve un alumno por whatsappPhone normalizado", async () => {
     const findUnique = vi.fn().mockResolvedValue(PROFILE_OK);
-    const prisma = { studentProfile: { findUnique } } as never;
+    const findMany = vi.fn().mockResolvedValue([]);
+    const prisma = { educaiWhatsappContact: { findMany }, studentProfile: { findUnique } } as never;
     const service = new StudentResolverService(prisma);
 
     const resolved = await service.resolveByWhatsapp("whatsapp:+5493815550202");
@@ -38,6 +39,8 @@ describe("StudentResolverService", () => {
     expect(resolved.studentName).toBe("Mateo");
     expect(resolved.grade).toBe(5);
     expect(resolved.subscription.plan).toBe("PREMIUM");
+    expect(resolved.replyWhatsappPhone).toBe("+5493815550202");
+    expect(findMany).toHaveBeenCalled();
     expect(findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { whatsappPhone: "+5493815550202" } }),
     );
@@ -45,6 +48,7 @@ describe("StudentResolverService", () => {
 
   it("lanza StudentNotEnrolledError si no existe", async () => {
     const prisma = {
+      educaiWhatsappContact: { findMany: vi.fn().mockResolvedValue([]) },
       studentProfile: { findUnique: vi.fn().mockResolvedValue(null) },
     } as never;
     const service = new StudentResolverService(prisma);
@@ -60,6 +64,7 @@ describe("StudentResolverService", () => {
       student: { ...PROFILE_OK.student, family: { id: "fam_1", subscription: null } },
     };
     const prisma = {
+      educaiWhatsappContact: { findMany: vi.fn().mockResolvedValue([]) },
       studentProfile: { findUnique: vi.fn().mockResolvedValue(profileSinSub) },
     } as never;
     const service = new StudentResolverService(prisma);

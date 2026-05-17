@@ -25,4 +25,9 @@ export class CreateStudentDto {
   @IsOptional()
   @IsString()
   whatsappPhone?: string;
+
+  @ApiProperty({ example: "+5493815550101", required: false })
+  @IsOptional()
+  @IsString()
+  parentWhatsappPhone?: string;
 }
