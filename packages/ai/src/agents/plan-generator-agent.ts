@@ -41,8 +41,14 @@ export interface PlanGeneratorInput {
   topic: string;
   totalDurationMinutes: number;
   sessionCount: number;
+  learningGoal?: string;
   groupProfile?: string;
+  priorKnowledge?: string;
   curriculumContext?: string;
+  availableResources?: string;
+  assessmentFocus?: string;
+  inclusionNeeds?: string;
+  outputFormat?: string;
 }
 
 export class PlanGeneratorAgent {
@@ -57,7 +63,7 @@ export class PlanGeneratorAgent {
         {
           role: "system",
           content:
-            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
+            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
         },
         {
           role: "user",
@@ -84,8 +90,16 @@ export class PlanGeneratorAgent {
 
   private buildFallbackPlan(input: PlanGeneratorInput): LessonPlanOutput {
     return lessonPlanSchema.parse({
-      overview: `Secuencia sobre ${input.topic} para ${input.subject}.`,
-      objectives: [`Comprender y aplicar ${input.topic} en situaciones cercanas.`],
+      overview: [
+        `Secuencia sobre ${input.topic} para ${input.subject}.`,
+        input.groupProfile ? `Grupo: ${input.groupProfile}.` : null,
+        input.curriculumContext ? `Marco curricular: ${input.curriculumContext}.` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      objectives: [
+        input.learningGoal || `Comprender y aplicar ${input.topic} en situaciones cercanas.`,
+      ],
       competences: ["comprension", "aplicacion", "comunicacion"],
       sessions: Array.from({ length: input.sessionCount }, (_, index) => ({
         number: index + 1,
@@ -107,15 +121,24 @@ export class PlanGeneratorAgent {
             activities: ["Registrar una idea clave y una duda para la proxima clase."],
           },
         ],
-        resources: ["Pizarron", "Tarjetas imprimibles", "Cuaderno"],
+        resources: input.availableResources
+          ? input.availableResources
+              .split(",")
+              .map((resource) => resource.trim())
+              .filter(Boolean)
+          : ["Pizarron", "Tarjetas imprimibles", "Cuaderno"],
         differentiation: {
-          low: "Usar material concreto y consignas paso a paso.",
-          medium: "Resolver problemas con una variable nueva.",
-          high: "Crear un problema propio y justificarlo.",
+          low:
+            input.inclusionNeeds ||
+            "Usar material concreto, consignas paso a paso y chequeos breves de comprension.",
+          medium: "Resolver problemas con una variable nueva y explicar el procedimiento.",
+          high: "Crear un problema propio, justificarlo y proponer una variante.",
         },
       })),
       assessment: {
-        rubric: ["Identifica el concepto", "Explica el procedimiento", "Aplica en contexto"],
+        rubric: input.assessmentFocus
+          ? [input.assessmentFocus, "Explica el procedimiento", "Aplica en contexto"]
+          : ["Identifica el concepto", "Explica el procedimiento", "Aplica en contexto"],
         instruments: ["Lista de cotejo", "Produccion grupal"],
       },
       printables: [

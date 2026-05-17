@@ -40,6 +40,14 @@ export async function POST(request: NextRequest) {
     topic: readString(formData, "topic"),
     sessionCount: readInteger(formData, "sessionCount"),
     totalDurationMinutes: readInteger(formData, "totalDurationMinutes"),
+    learningGoal: readString(formData, "learningGoal") || undefined,
+    groupProfile: readString(formData, "groupProfile") || undefined,
+    priorKnowledge: readString(formData, "priorKnowledge") || undefined,
+    curriculumContext: readString(formData, "curriculumContext") || undefined,
+    availableResources: readString(formData, "availableResources") || undefined,
+    assessmentFocus: readString(formData, "assessmentFocus") || undefined,
+    inclusionNeeds: readString(formData, "inclusionNeeds") || undefined,
+    outputFormat: readString(formData, "outputFormat") || undefined,
   };
 
   if (

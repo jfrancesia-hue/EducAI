@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Phone, Sparkles, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpenCheck,
+  Building2,
+  CheckCircle2,
+  MapPin,
+  Phone,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
 
@@ -21,6 +30,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const product = labels[params.producto ?? ""] ?? "EducAI";
   const plan = params.plan ?? "free";
   const isApoyoAi = product === "ApoyoAI";
+  const isEducAiSelfService =
+    product === "EducAI" && ["free", "docente-individual", "docente-pro"].includes(plan);
   const errorMessage =
     params.error === "exists"
       ? "Ya existe una cuenta con ese email. Inicia sesion o usa otro correo."
@@ -46,7 +57,9 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-600">
             {isApoyoAi
               ? "Crea la cuenta familiar, carga el primer alumno y deja vinculado WhatsApp para que el tutor pueda reconocer al adulto o al hijo."
-              : "Dejamos el plan preseleccionado en la URL para conectar el alta docente e institucional."}
+              : isEducAiSelfService
+                ? "Crea tu cuenta docente, deja armado tu espacio pedagogico y entra directo a planificar clases con IA."
+                : "Los planes de colegio e institucional se cierran con acompanamiento comercial para configurar docentes, permisos y alcance."}
           </p>
 
           <div className="mt-6 grid gap-3 rounded-lg bg-[#f7f8f3] p-5">
@@ -176,18 +189,127 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 </Button>
               </div>
             </form>
+          ) : isEducAiSelfService ? (
+            <form action="/registro/educai" method="post" className="mt-6 grid gap-5">
+              <input type="hidden" name="plan" value={plan} />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">Nombre docente</span>
+                  <span className="flex h-12 items-center gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3">
+                    <UserRound className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                    <input
+                      name="fullName"
+                      required
+                      placeholder="Mariana Lopez"
+                      className="h-full w-full bg-transparent outline-none"
+                    />
+                  </span>
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">Rol o cargo</span>
+                  <input
+                    name="title"
+                    placeholder="Docente de primaria"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">Email</span>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="docente@colegio.edu.ar"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">Contrasena</span>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    minLength={8}
+                    placeholder="Minimo 8 caracteres"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-slate-700">
+                      Escuela o espacio de trabajo
+                    </span>
+                    <span className="flex h-12 items-center gap-3 rounded-lg border border-[#d5e1dc] bg-white px-3">
+                      <Building2 className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                      <input
+                        name="schoolName"
+                        placeholder="Colegio del Valle"
+                        className="h-full w-full bg-transparent outline-none"
+                      />
+                    </span>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-slate-700">Materias</span>
+                    <span className="flex h-12 items-center gap-3 rounded-lg border border-[#d5e1dc] bg-white px-3">
+                      <BookOpenCheck className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                      <input
+                        name="subjects"
+                        placeholder="Matematica, Ciencias"
+                        className="h-full w-full bg-transparent outline-none"
+                      />
+                    </span>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-slate-700">Provincia</span>
+                    <span className="flex h-12 items-center gap-3 rounded-lg border border-[#d5e1dc] bg-white px-3">
+                      <MapPin className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                      <input
+                        name="province"
+                        placeholder="Catamarca"
+                        className="h-full w-full bg-transparent outline-none"
+                      />
+                    </span>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-slate-700">Ciudad</span>
+                    <input
+                      name="city"
+                      placeholder="San Fernando del Valle"
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
+                  Crear cuenta docente
+                  <Sparkles className="h-5 w-5" aria-hidden="true" />
+                </Button>
+                <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
+                  <Link href={`/contacto?producto=educai&plan=${plan}`}>
+                    Hablar con ventas
+                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </div>
+            </form>
           ) : (
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Button asChild size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                <Link href="/login">
-                  Continuar con acceso
-                  <Sparkles className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              </Button>
               <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
                 <Link href={`/contacto?producto=${params.producto ?? "educai"}&plan=${plan}`}>
                   Hablar con ventas
                   <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
+                <Link href="/login">
+                  Ingresar si ya tenes cuenta
+                  <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
             </div>

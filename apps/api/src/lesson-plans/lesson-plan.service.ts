@@ -20,6 +20,14 @@ export class LessonPlanService {
     topic: string;
     sessionCount: number;
     totalDurationMinutes: number;
+    learningGoal?: string;
+    groupProfile?: string;
+    priorKnowledge?: string;
+    curriculumContext?: string;
+    availableResources?: string;
+    assessmentFocus?: string;
+    inclusionNeeds?: string;
+    outputFormat?: string;
   }) {
     const plan = await this.generator.generate(input);
     const created = await this.prisma.lessonPlan.create({
@@ -35,6 +43,22 @@ export class LessonPlanService {
         activities: plan.sessions,
         resources: plan.sessions.flatMap((session) => session.resources),
         assessment: plan.assessment,
+        adaptations: {
+          planningContext: {
+            learningGoal: input.learningGoal,
+            groupProfile: input.groupProfile,
+            priorKnowledge: input.priorKnowledge,
+            curriculumContext: input.curriculumContext,
+            availableResources: input.availableResources,
+            assessmentFocus: input.assessmentFocus,
+            inclusionNeeds: input.inclusionNeeds,
+            outputFormat: input.outputFormat,
+          },
+          differentiation: plan.sessions.map((session) => ({
+            session: session.number,
+            differentiation: session.differentiation,
+          })),
+        },
         generatedByAI: true,
       },
     });

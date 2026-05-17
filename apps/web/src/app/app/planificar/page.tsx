@@ -16,19 +16,19 @@ import { AppShell } from "../_components/app-shell";
 const fields = [
   {
     title: "Objetivo de aprendizaje",
-    text: "Definir que deberian poder hacer los estudiantes al final de la clase.",
+    text: "Si lo cargas, la IA prioriza ese logro y no genera una clase generica.",
     icon: Target,
     color: "bg-[#e7fbf7] text-[#087968]",
   },
   {
-    title: "Secuencia didactica",
-    text: "Ordenar inicio, modelado, practica, cierre y evidencia de comprension.",
+    title: "Contexto del grupo",
+    text: "Ayuda a ajustar ritmo, dificultad, consignas y apoyos sin pedir datos sensibles.",
     icon: CalendarDays,
     color: "bg-[#efedff] text-[#4f3ee2]",
   },
   {
-    title: "Materiales y consignas",
-    text: "Generar consigna, ejemplo, practica y rubrica breve para revisar.",
+    title: "Evaluacion y recursos",
+    text: "Evita propuestas imposibles y deja evidencia clara para revisar en clase.",
     icon: FileText,
     color: "bg-[#fff8d7] text-[#876100]",
   },
@@ -110,7 +110,8 @@ export default function PlanningModulePage({ searchParams }: PlanningModulePageP
                   Datos de la clase
                 </h2>
                 <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-                  Estos campos alimentan `POST /lesson-plans/generate` del API.
+                  Los campos principales alcanzan para generar. Los opcionales mejoran la calidad
+                  pedagogica cuando necesitas una clase mas ajustada al grupo.
                 </p>
               </div>
               <Button
@@ -174,6 +175,94 @@ export default function PlanningModulePage({ searchParams }: PlanningModulePageP
                   max="600"
                   defaultValue="40"
                   required
+                  className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#33423c]">
+                  Objetivo de aprendizaje
+                </span>
+                <textarea
+                  name="learningGoal"
+                  rows={2}
+                  placeholder="Ej: que puedan resolver problemas de proporcionalidad directa y explicar la estrategia usada."
+                  className="resize-none rounded-lg border border-[#d5e1dc] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
+                />
+              </label>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Contexto del grupo</span>
+                  <textarea
+                    name="groupProfile"
+                    rows={3}
+                    placeholder="Ej: 7A, 28 estudiantes, grupo heterogeneo, les cuesta sostener atencion en consignas largas."
+                    className="resize-none rounded-lg border border-[#d5e1dc] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Saberes previos</span>
+                  <textarea
+                    name="priorKnowledge"
+                    rows={3}
+                    placeholder="Ej: ya trabajaron fracciones equivalentes y tablas simples; no vieron regla de tres formal."
+                    className="resize-none rounded-lg border border-[#d5e1dc] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">
+                    Marco curricular o enfoque
+                  </span>
+                  <input
+                    name="curriculumContext"
+                    placeholder="NAP, diseno provincial, ABP, repaso para evaluacion..."
+                    className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Recursos disponibles</span>
+                  <input
+                    name="availableResources"
+                    placeholder="Pizarron, fotocopias, celulares, proyector..."
+                    className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Que queres evaluar</span>
+                  <input
+                    name="assessmentFocus"
+                    placeholder="Procedimiento, argumentacion, produccion escrita, trabajo grupal..."
+                    className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">
+                    Apoyos o adaptaciones
+                  </span>
+                  <input
+                    name="inclusionNeeds"
+                    placeholder="Consignas breves, apoyo visual, extension para quienes terminan antes..."
+                    className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#33423c]">
+                  Formato de salida esperado
+                </span>
+                <input
+                  name="outputFormat"
+                  placeholder="Secuencia editable, guia para imprimir, ticket de salida, rubrica breve..."
                   className="h-11 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
                 />
               </label>
