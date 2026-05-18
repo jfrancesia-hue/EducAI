@@ -44,6 +44,7 @@ jobs:
       DATABASE_URL: postgresql://educai:educai_ci_password@localhost:5432/educai_ci?schema=public
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
+      OPENAI_API_KEY: test-openai-api-key
 
     steps:
       - name: Checkout
