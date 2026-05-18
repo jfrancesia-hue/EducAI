@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Building2, Menu, X } from "lucide-react";
@@ -48,7 +47,7 @@ function NavContent({
             return (
               <Link
                 key={item.href}
-                href={item.href as Route}
+                href={item.href}
                 onClick={onNavigate}
                 className={[
                   "group flex min-h-11 items-center gap-3 rounded-r-lg border-l-2 px-3 py-2.5 text-sm font-medium outline-none transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]",

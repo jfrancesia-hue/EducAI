@@ -5,6 +5,15 @@ function read(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+type ApoyoAiRegisterResponse = {
+  data?: {
+    nextStep?: string;
+    checkout?: {
+      checkoutUrl?: string;
+    } | null;
+  };
+};
+
 export async function POST(request: Request) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -45,8 +54,16 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url, { status: 303 });
   }
 
+  const body = (await response.json()) as ApoyoAiRegisterResponse;
+  if (body.data?.nextStep === "mercadopago_checkout_pending" && body.data.checkout?.checkoutUrl) {
+    return NextResponse.redirect(body.data.checkout.checkoutUrl, { status: 303 });
+  }
+
   const url = new URL("/login", request.url);
   url.searchParams.set("registered", "apoyoai");
   url.searchParams.set("email", parentEmail);
+  if (body.data?.nextStep === "mercadopago_checkout_pending") {
+    url.searchParams.set("payment", "pending");
+  }
   return NextResponse.redirect(url, { status: 303 });
 }

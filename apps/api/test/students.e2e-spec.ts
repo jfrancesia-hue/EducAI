@@ -145,8 +145,12 @@ const supabaseAuthGuardMock = {
 
 describe("Students API (e2e)", () => {
   let app: INestApplication;
+  let originalAnthropicApiKey: string | undefined;
 
   beforeAll(async () => {
+    originalAnthropicApiKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = "";
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -165,6 +169,11 @@ describe("Students API (e2e)", () => {
 
   afterAll(async () => {
     await app?.close();
+    if (originalAnthropicApiKey === undefined) {
+      delete process.env.ANTHROPIC_API_KEY;
+    } else {
+      process.env.ANTHROPIC_API_KEY = originalAnthropicApiKey;
+    }
   });
 
   it("POST /students rechaza body invalido (sin tenant context, grade fuera de rango)", async () => {

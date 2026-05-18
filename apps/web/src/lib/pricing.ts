@@ -1,3 +1,5 @@
+import type { Route } from "next";
+
 export type PublicPricingPlan = {
   id: string;
   product: "educai" | "apoyoai";
@@ -7,7 +9,7 @@ export type PublicPricingPlan = {
   description: string;
   featured?: boolean;
   ctaLabel: string;
-  ctaHref: string;
+  ctaHref: Route;
   includes: string[];
   excludes?: string[];
   note?: string;

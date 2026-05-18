@@ -41,6 +41,7 @@ Estas keys se cargan una sola vez por servicio que las use; no hacen falta nombr
 
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`
+- `MERCADOPAGO_WEBHOOK_URL`
 
 > Stripe queda fuera por decision de producto actual.
 
@@ -133,6 +134,7 @@ Minimo para produccion en despliegue unico (API + WhatsApp en el mismo servicio)
 - `EDUCAI_AGENT_PROVIDER=anthropic`
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`
+- `MERCADOPAGO_WEBHOOK_URL` opcional si se informa la notificacion por preferencia
 
 Opcionales:
 

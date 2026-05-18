@@ -14,6 +14,19 @@ const PLAN_TO_LEGACY_ENUM: Record<ApoyoAiPlanCode, "FREE" | "BASIC" | "PREMIUM" 
   intensivo: "FAMILY",
 };
 
+const MERCADOPAGO_PLAN_PRICES: Record<Exclude<ApoyoAiPlanCode, "free">, number> = {
+  basico: 14900,
+  plus: 34900,
+  familiar: 69900,
+  intensivo: 119900,
+};
+
+interface MercadoPagoPreferenceResponse {
+  id?: string;
+  init_point?: string;
+  sandbox_init_point?: string;
+}
+
 @Injectable()
 export class ApoyoAiOnboardingService {
   private supabase?: SupabaseClient;
@@ -137,6 +150,13 @@ export class ApoyoAiOnboardingService {
       product: "apoyoai",
     });
 
+    const checkout = await this.createCheckoutPreferenceSafely({
+      plan: dto.plan,
+      parentEmail: email,
+      parentName: dto.parentFullName,
+      externalReference: result.subscription.externalReference,
+    });
+
     return {
       data: {
         familyId: result.family.id,
@@ -149,6 +169,7 @@ export class ApoyoAiOnboardingService {
           status: result.subscription.status,
           externalReference: result.subscription.externalReference,
         },
+        checkout,
         students: result.students.map((student) => ({
           id: student.id,
           profileId: student.profile?.id,
@@ -158,6 +179,91 @@ export class ApoyoAiOnboardingService {
         nextStep:
           result.subscription.status === "ACTIVE" ? "login" : "mercadopago_checkout_pending",
       },
+    };
+  }
+
+  private async createCheckoutPreferenceSafely(input: {
+    plan: ApoyoAiPlanCode;
+    parentEmail: string;
+    parentName: string;
+    externalReference: string | null;
+  }): Promise<{ provider: "mercadopago"; preferenceId: string; checkoutUrl: string } | null> {
+    try {
+      return await this.createCheckoutPreference(input);
+    } catch {
+      return null;
+    }
+  }
+
+  private async createCheckoutPreference(input: {
+    plan: ApoyoAiPlanCode;
+    parentEmail: string;
+    parentName: string;
+    externalReference: string | null;
+  }): Promise<{ provider: "mercadopago"; preferenceId: string; checkoutUrl: string } | null> {
+    if (input.plan === "free") {
+      return null;
+    }
+
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
+    if (!accessToken) {
+      throw new ServiceUnavailableException("Mercado Pago no esta configurado");
+    }
+    if (!input.externalReference) {
+      throw new ServiceUnavailableException("La suscripcion no tiene referencia externa");
+    }
+
+    const appUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/u, "");
+    const notificationUrl = process.env.MERCADOPAGO_WEBHOOK_URL?.trim();
+    const preferenceBody = {
+      items: [
+        {
+          id: `apoyoai-${input.plan}`,
+          title: `ApoyoAI ${input.plan}`,
+          quantity: 1,
+          currency_id: "ARS",
+          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+        },
+      ],
+      payer: {
+        email: input.parentEmail,
+        name: input.parentName,
+      },
+      external_reference: input.externalReference,
+      back_urls: appUrl
+        ? {
+            success: `${appUrl}/login?registered=apoyoai&payment=success`,
+            pending: `${appUrl}/login?registered=apoyoai&payment=pending`,
+            failure: `${appUrl}/registro?producto=apoyoai&plan=${input.plan}&error=payment`,
+          }
+        : undefined,
+      notification_url: notificationUrl || undefined,
+      auto_return: appUrl ? "approved" : undefined,
+    };
+
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(preferenceBody),
+    });
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException("No se pudo crear el checkout de Mercado Pago");
+    }
+
+    const preference = (await response.json()) as MercadoPagoPreferenceResponse;
+    const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
+    if (!preference.id || !checkoutUrl) {
+      throw new ServiceUnavailableException("Mercado Pago no devolvio URL de checkout");
+    }
+
+    return {
+      provider: "mercadopago",
+      preferenceId: preference.id,
+      checkoutUrl,
     };
   }
 

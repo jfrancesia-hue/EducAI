@@ -19,6 +19,8 @@ function productionEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
     TWILIO_FORCE_PROTOCOL: "https",
     TWILIO_SKIP_SIGNATURE_VALIDATION: "false",
     TWILIO_DRY_RUN: "false",
+    MERCADOPAGO_ACCESS_TOKEN: "APP_USR-test",
+    MERCADOPAGO_WEBHOOK_SECRET: "mp-webhook-secret",
     ...overrides,
   };
 }
@@ -102,5 +104,11 @@ describe("requireApiProductionEnv", () => {
         }),
       ),
     ).toThrow(/schema=educai/);
+  });
+
+  it("rechaza produccion sin MERCADOPAGO_WEBHOOK_SECRET", () => {
+    expect(() =>
+      requireApiProductionEnv(productionEnv({ MERCADOPAGO_WEBHOOK_SECRET: "" })),
+    ).toThrow(/MERCADOPAGO_WEBHOOK_SECRET/);
   });
 });

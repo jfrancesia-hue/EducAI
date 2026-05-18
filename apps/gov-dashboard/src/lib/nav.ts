@@ -10,11 +10,12 @@ import {
   Shield,
   type LucideIcon,
 } from "lucide-react";
+import type { Route } from "next";
 
 export type GovRole = "SUPER_ADMIN" | "MINISTRY";
 
 export interface NavItem {
-  href: string;
+  href: Route;
   label: string;
   icon: LucideIcon;
   roles: GovRole[];

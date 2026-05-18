@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Route } from "next";
 import { CheckCircle2, MinusCircle } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
@@ -57,7 +56,7 @@ export function PublicPricingCard({ plan }: { plan: PublicPricingPlan }) {
             : "bg-[#11231f] text-white hover:bg-[#1b342e]",
         ].join(" ")}
       >
-        <Link href={plan.ctaHref as Route}>{plan.ctaLabel}</Link>
+        <Link href={plan.ctaHref}>{plan.ctaLabel}</Link>
       </Button>
     </article>
   );

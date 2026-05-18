@@ -51,6 +51,7 @@ Requeridas hoy para boot y flujo productivo unico:
 - `EDUCAI_AGENT_PROVIDER=anthropic`
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`
+- `MERCADOPAGO_WEBHOOK_URL=https://<api-render-url>/webhooks/mercadopago` si se quiere informar la URL por preferencia ademas de configurarla en Mercado Pago
 
 Opcionales:
 

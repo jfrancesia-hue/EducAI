@@ -10,6 +10,8 @@ const REQUIRED_PRODUCTION_ENV = [
   "TWILIO_WHATSAPP_FROM",
   "TWILIO_PUBLIC_WEBHOOK_URL",
   "TWILIO_FORCE_PROTOCOL",
+  "MERCADOPAGO_ACCESS_TOKEN",
+  "MERCADOPAGO_WEBHOOK_SECRET",
 ] as const;
 
 export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
