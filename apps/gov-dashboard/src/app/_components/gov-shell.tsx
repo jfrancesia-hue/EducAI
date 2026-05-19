@@ -45,10 +45,6 @@ export function GovShell({ children, userEmail, userRole, tenantName }: GovShell
       <div className="lg:pl-60">
         <GovHeader userEmail={userEmail} userRole={userRole} tenantName={tenantName} />
         <main id="main" className="mx-auto w-full max-w-7xl px-6 py-8">
-          <div className="mb-6 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-4 py-3 text-sm text-muted-foreground shadow-soft">
-            Produccion parcial: la cola de handoffs y su cierre ya operan con datos reales. El resto
-            de los modulos del panel sigue en despliegue progresivo.
-          </div>
           {children}
         </main>
       </div>

@@ -48,11 +48,7 @@ const scoreCards = [
 
 export default function AppPricingPage() {
   return (
-    <AppShell
-      title="Planes y unidad economica"
-      eyebrow="ApoyoAI - Cobro en pesos argentinos"
-      statusNote="Vista interna de referencia comercial: los valores sirven para operacion y decision, no como fuente contable cerrada."
-    >
+    <AppShell title="Planes y unidad economica" eyebrow="ApoyoAI - Cobro en pesos argentinos">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.78fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
