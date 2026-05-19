@@ -35,4 +35,10 @@ export class DashboardController {
   getMinistry() {
     return this.dashboard.getMinistryOverview();
   }
+
+  @Get("admin-config")
+  @Roles("SUPER_ADMIN")
+  getAdminConfig() {
+    return this.dashboard.getAdminConfigOverview();
+  }
 }

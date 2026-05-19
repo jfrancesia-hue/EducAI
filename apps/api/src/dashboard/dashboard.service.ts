@@ -294,6 +294,104 @@ export class DashboardService {
     };
   }
 
+  async getAdminConfigOverview() {
+    const [
+      tenantCount,
+      userCount,
+      roleCount,
+      permissionCount,
+      assignmentCount,
+      recentUsers,
+      tenantsByType,
+      roles,
+      recentTenants,
+    ] = await Promise.all([
+      this.prisma.tenant.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.role.count({ where: { deletedAt: null } }),
+      this.prisma.permission.count({ where: { deletedAt: null } }),
+      this.prisma.userRoleAssignment.count(),
+      this.prisma.user.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          tenantId: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.tenant.groupBy({
+        by: ["type"],
+        where: { deletedAt: null },
+        _count: { _all: true },
+        orderBy: { _count: { type: "desc" } },
+      }),
+      this.prisma.role.findMany({
+        where: { deletedAt: null },
+        orderBy: { name: "asc" },
+        take: 20,
+        select: {
+          id: true,
+          name: true,
+          tenantId: true,
+          _count: {
+            select: {
+              users: true,
+              permissions: true,
+            },
+          },
+        },
+      }),
+      this.prisma.tenant.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          type: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    return {
+      data: {
+        metrics: {
+          tenantCount,
+          userCount,
+          roleCount,
+          permissionCount,
+          assignmentCount,
+        },
+        tenantsByType: tenantsByType.map((item) => ({
+          type: item.type,
+          count: item._count._all,
+        })),
+        recentUsers: recentUsers.map((user) => ({
+          ...user,
+          createdAt: user.createdAt.toISOString(),
+        })),
+        roles: roles.map((role) => ({
+          id: role.id,
+          name: role.name,
+          tenantId: role.tenantId,
+          userCount: role._count.users,
+          permissionCount: role._count.permissions,
+        })),
+        recentTenants: recentTenants.map((tenant) => ({
+          ...tenant,
+          createdAt: tenant.createdAt.toISOString(),
+        })),
+      },
+    };
+  }
+
   private startOfWeek(reference: Date = new Date()): Date {
     const date = new Date(reference);
     const day = date.getDay();

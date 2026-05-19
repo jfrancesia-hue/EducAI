@@ -2,6 +2,10 @@ const { rmSync } = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
+function sleep(milliseconds) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
 function runBuild() {
   const nextBin = path.join(
     process.cwd(),
@@ -18,13 +22,32 @@ function runBuild() {
 }
 
 function cleanNextArtifacts() {
-  rmSync(path.join(process.cwd(), ".next"), { recursive: true, force: true });
+  const nextDir = path.join(process.cwd(), ".next");
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      rmSync(nextDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 200,
+      });
+      return;
+    } catch (error) {
+      if (attempt === 4) {
+        throw error;
+      }
+
+      sleep(400);
+    }
+  }
 }
 
 cleanNextArtifacts();
 let result = runBuild();
 
 if (result.status !== 0) {
+  sleep(1000);
   cleanNextArtifacts();
   result = runBuild();
 }
