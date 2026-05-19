@@ -14,7 +14,7 @@ import { CurriculumService } from "./curriculum.service.js";
 @ApiBearerAuth()
 @Controller("curricula")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
-@Roles("SCHOOL_ADMIN", "MINISTRY", "SUPER_ADMIN")
+@Roles("SCHOOL_ADMIN", "SUPER_ADMIN")
 export class CurriculumController {
   constructor(private readonly curricula: CurriculumService) {}
 

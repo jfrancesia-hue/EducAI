@@ -32,12 +32,14 @@ const navItems = [
 type AppShellProps = {
   title: string;
   eyebrow?: string;
+  statusNote?: string;
   children: ReactNode;
 };
 
 export function AppShell({
   title,
   eyebrow = "Colegio del Valle - Sesion institucional",
+  statusNote,
   children,
 }: AppShellProps) {
   const pathname = usePathname();
@@ -161,6 +163,12 @@ export function AppShell({
               );
             })}
           </nav>
+
+          {statusNote ? (
+            <div className="border-b border-[#f8d95c]/40 bg-[#fff8d7] px-4 py-3 text-sm text-[#5b4a12] sm:px-6">
+              {statusNote}
+            </div>
+          ) : null}
 
           {children}
         </section>

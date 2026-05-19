@@ -46,7 +46,10 @@ const groups = [
 
 export default function StudentsModulePage() {
   return (
-    <AppShell title="Modulo de estudiantes">
+    <AppShell
+      title="Modulo de estudiantes"
+      statusNote="Vista beta: este modulo todavia muestra datos de ejemplo para UX. No usarlo como registro operativo de alumnos."
+    >
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.05fr_0.95fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">

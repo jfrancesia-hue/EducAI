@@ -108,6 +108,11 @@ export default function ProtocolPage() {
         </header>
 
         <section className="grid gap-5 p-5 sm:p-7 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="xl:col-span-2 rounded-lg border border-[#f8d95c]/40 bg-[#fff8d7] px-4 py-3 text-sm text-[#5b4a12]">
+            Documento vivo del flujo: describe el protocolo real de uso, pero no representa una
+            consola transaccional ni evidencia en tiempo real.
+          </div>
+
           <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-6 text-white shadow-whisper">
             <Badge className="bg-[#f8d95c] text-[#11231f]">Para docentes de cualquier area</Badge>
             <h2 className="mt-6 max-w-2xl font-display text-5xl font-bold leading-tight tracking-tight">

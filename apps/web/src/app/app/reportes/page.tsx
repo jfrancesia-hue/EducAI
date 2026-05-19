@@ -51,7 +51,10 @@ const rows = [
 
 export default function ReportsModulePage() {
   return (
-    <AppShell title="Modulo de reportes">
+    <AppShell
+      title="Modulo de reportes"
+      statusNote="Vista beta: los indicadores de esta pantalla siguen siendo demostrativos hasta conectar analitica real por curso."
+    >
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.82fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">

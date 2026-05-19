@@ -3,6 +3,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import type { NextFunction, Request, Response } from "express";
 import { json, urlencoded } from "express";
 import { requireApiProductionEnv } from "./env/require-production-env.js";
 import { AppModule } from "./app.module.js";
@@ -10,6 +11,7 @@ import { AppModule } from "./app.module.js";
 async function bootstrap() {
   requireApiProductionEnv(process.env);
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.disable("x-powered-by");
   const allowedOrigins = (
     process.env.ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3100"
   )
@@ -19,6 +21,16 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+  });
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+    );
+    next();
   });
   app.use(urlencoded({ extended: false, limit: "1mb" }));
   app.use(json({ limit: "1mb" }));

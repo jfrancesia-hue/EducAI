@@ -26,23 +26,32 @@ type StudentResponse = {
   }>;
 };
 
-async function fetchStudents(accessToken: string): Promise<StudentResponse["data"]> {
+type StudentFetchResult = {
+  students: StudentResponse["data"];
+  error: "missing_api_url" | "request_failed" | null;
+};
+
+async function fetchStudents(accessToken: string): Promise<StudentFetchResult> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    return [];
+    return { students: [], error: "missing_api_url" };
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/students`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/students`, {
+      headers: { authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    return [];
+    if (!response.ok) {
+      return { students: [], error: "request_failed" };
+    }
+
+    const payload = (await response.json()) as StudentResponse;
+    return { students: payload.data ?? [], error: null };
+  } catch {
+    return { students: [], error: "request_failed" };
   }
-
-  const payload = (await response.json()) as StudentResponse;
-  return payload.data ?? [];
 }
 
 export default async function FamilyHomePage() {
@@ -63,7 +72,7 @@ export default async function FamilyHomePage() {
     redirect("/app");
   }
 
-  const students = await fetchStudents(session.access_token);
+  const { students, error } = await fetchStudents(session.access_token);
 
   return (
     <main className="min-h-screen bg-[#eef5f3] p-4 text-[#14120f] sm:p-6">
@@ -84,7 +93,17 @@ export default async function FamilyHomePage() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-2">
-          {students.length ? (
+          {error ? (
+            <article className="rounded-lg border border-[#f0c9c9] bg-white p-5 shadow-whisper md:col-span-2">
+              <MessageCircle className="h-7 w-7 text-[#c74d4d]" aria-hidden="true" />
+              <h2 className="mt-4 font-display text-2xl font-bold">No pudimos cargar la cuenta</h2>
+              <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
+                {error === "missing_api_url"
+                  ? "Falta configurar la conexion del frontend con la API. Revisar NEXT_PUBLIC_API_URL."
+                  : "La API no respondio como esperabamos. Reintenta en unos minutos o contacta soporte."}
+              </p>
+            </article>
+          ) : students.length ? (
             students.map((student) => (
               <article
                 key={student.id}

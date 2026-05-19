@@ -8,6 +8,7 @@ type ContactPageProps = {
     producto?: string;
     plan?: string;
     enviado?: string;
+    error?: string;
   }>;
 };
 
@@ -16,6 +17,12 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const product = params.producto ?? "";
   const plan = params.plan ?? "";
   const sent = params.enviado === "1";
+  const errorMessage =
+    params.error === "rate"
+      ? "Recibimos demasiados intentos desde esta conexion. Espera unos minutos y vuelve a intentar."
+      : params.error
+        ? "No pudimos registrar la consulta. Revisa los datos e intenta otra vez."
+        : null;
 
   return (
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -57,6 +64,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
             {sent ? (
               <div className="mb-5 rounded-lg border border-[#18b6a4]/30 bg-[#e7fbf7] p-4 text-sm font-semibold text-[#075c50]">
                 Recibimos tu consulta. Ya quedo registrada para seguimiento.
+              </div>
+            ) : null}
+            {errorMessage ? (
+              <div className="mb-5 rounded-lg border border-[#f0c9c9] bg-[#fff4f4] p-4 text-sm font-semibold text-[#a33b3b]">
+                {errorMessage}
               </div>
             ) : null}
 

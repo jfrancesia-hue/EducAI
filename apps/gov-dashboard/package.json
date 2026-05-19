@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "next build",
+    "build": "node -e \"require('fs').rmSync('.next',{ recursive: true, force: true })\" && next build",
     "start": "next start -p 3100",
     "lint": "eslint .",
-    "typecheck": "next build"
+    "typecheck": "node -e \"require('fs').rmSync('.next',{ recursive: true, force: true })\" && next build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

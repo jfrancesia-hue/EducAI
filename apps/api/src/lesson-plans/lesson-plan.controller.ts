@@ -14,7 +14,7 @@ import { LessonPlanService } from "./lesson-plan.service.js";
 @ApiBearerAuth()
 @Controller("lesson-plans")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
-@Roles("TEACHER", "SCHOOL_ADMIN", "SUPER_ADMIN")
+@Roles("TEACHER")
 export class LessonPlanController {
   constructor(private readonly lessonPlans: LessonPlanService) {}
 

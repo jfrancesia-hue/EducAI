@@ -9,6 +9,7 @@ import { LessonPlanModule } from "./lesson-plans/lesson-plan.module.js";
 import { OnboardingModule } from "./onboarding/onboarding.module.js";
 import { PaymentsModule } from "./payments/payments.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
+import { PublicIntakeModule } from "./public-intake/public-intake.module.js";
 import { StudentModule } from "./students/student.module.js";
 import { WhatsappModule } from "./whatsapp/whatsapp.module.js";
 
@@ -24,6 +25,7 @@ import { WhatsappModule } from "./whatsapp/whatsapp.module.js";
     HandoffModule,
     OnboardingModule,
     PaymentsModule,
+    PublicIntakeModule,
     WhatsappModule,
   ],
   controllers: [HealthController],

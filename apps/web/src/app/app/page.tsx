@@ -272,6 +272,11 @@ export default function EducAiAppPage() {
             ))}
           </nav>
 
+          <div className="border-b border-[#f8d95c]/40 bg-[#fff8d7] px-4 py-3 text-sm text-[#5b4a12] sm:px-6">
+            Centro en transicion a datos reales: esta portada todavia combina UI operativa con
+            metricas y tarjetas demostrativas.
+          </div>
+
           <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.24fr_0.76fr]">
             <section className="grid content-start gap-5">
               <div className="relative overflow-hidden rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-float sm:p-6">
