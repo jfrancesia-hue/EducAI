@@ -22,8 +22,7 @@ Motivos:
 - **pnpm workspaces** es el gestor con menor overhead para monorepos (hard links + store global),
   ideal para cold installs rápidos en CI.
 - Permite **deps internas** (`workspace:*`) sin publicar a npm.
-- Se integra bien con **Next.js 14/16** (via `transpilePackages`), **NestJS 10** y **Expo 51+**
-  (via Metro `watchFolders`).
+- Se integra bien con **Next.js 14/16** (via `transpilePackages`) y **NestJS 10**.
 - Turborepo genera un grafo de dependencias explícito que da visibilidad clara al team.
 
 ## Alternativas consideradas
@@ -37,12 +36,14 @@ Motivos:
 ## Consecuencias
 
 ### Positivas
+
 - Código compartido (`packages/database`, `packages/ai`, `packages/ui`, `packages/types`,
   `packages/i18n`, `packages/config`) usado por todas las apps sin duplicación.
 - Turbo permite `pnpm test --filter @educai/api` para correr sólo lo tocado.
 - CI corre lint + typecheck + test + build en un solo job, con caching.
 
 ### Negativas
+
 - Curva inicial para devs nuevos que no conocen Turborepo.
 - `pnpm install` pesa (muchas deps). Mitigación: `.pnpmfile.cjs` si hace falta tunear.
 - Deploys separados por app (Vercel web + gov-dashboard; Render/Railway api + whatsapp-agent +
@@ -58,7 +59,6 @@ educai/
 │   ├── worker/             # NestJS 10 + BullMQ — jobs asíncronos
 │   ├── web/                # Next.js 14 — portal colegios + padres
 │   ├── gov-dashboard/      # Next.js 14 + Tremor — ministerios
-│   └── mobile/             # Expo 51 + React Native — alumnos/padres
 ├── packages/
 │   ├── database/           # Prisma schema + migrations + seeds + client export
 │   ├── ui/                 # shadcn compartido + tailwind preset

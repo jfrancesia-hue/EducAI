@@ -8,6 +8,7 @@ Frontend principal de EducAI. Next.js 14 App Router + Tailwind + `@educai/ui`.
 - `/colegios`, `/contacto`, `/privacidad` y `/seguridad` cubren la superficie institucional.
 - `/login` autentica contra Supabase Auth.
 - `/app/*` queda protegido por middleware y sesion SSR.
+- expone manifest + service worker para instalarse como webapp en celular y escritorio.
 - aun no hay RBAC ni claims de tenant conectados en la UI.
 
 ## Arranque local
@@ -17,6 +18,11 @@ pnpm --filter @educai/web dev
 ```
 
 `http://localhost:3000` sirve el portal.
+
+## Instalacion como app
+
+- En Android/Chrome: abrir el sitio y usar `Instalar app` o `Agregar a pantalla de inicio`.
+- En iPhone/iPad: abrir en Safari y usar `Compartir -> Agregar a pantalla de inicio`.
 
 ## Notas operativas
 

@@ -19,7 +19,7 @@
 ## Prompt para Claude Code
 
 ```
-Actúa como un arquitecto senior de software especializado en SaaS multi-tenant con TypeScript, NestJS, Next.js y React Native.
+Actúa como un arquitecto senior de software especializado en SaaS multi-tenant con TypeScript, NestJS y Next.js.
 
 Vas a crear el setup inicial del monorepo del proyecto EducAI LATAM. Lee primero el archivo 00-PROYECTO-MAESTRO.md para entender el contexto completo.
 
@@ -31,7 +31,7 @@ Tu tarea ahora es generar la estructura completa del monorepo Turborepo con lo s
 Crear la estructura exacta descrita en la sección 12 del documento maestro:
 
 - apps/web (Next.js 14 App Router + TS + Tailwind + shadcn)
-- apps/mobile (Expo + React Native + TS + NativeWind)
+- apps/web como PWA instalable para mobile
 - apps/gov-dashboard (Next.js 14 + Tremor)
 - apps/api (NestJS + Prisma + Swagger)
 - apps/whatsapp-agent (NestJS + Twilio)

@@ -11,18 +11,18 @@ Plataforma SaaS multi-producto que moderniza la educación en LATAM conectando a
 
 | Producto    | Segmento                         | Canal            | Ticket                              |
 | ----------- | -------------------------------- | ---------------- | ----------------------------------- |
-| **ApoyoAI** | Familias (B2C)                   | WhatsApp + app   | USD 6-20 / mes                      |
+| **ApoyoAI** | Familias (B2C)                   | WhatsApp + PWA   | USD 6-20 / mes                      |
 | **EducAI**  | Colegios + Ministerios (B2B/B2G) | Web + dashboards | USD 2-5 / alumno o USD 50k-2M / año |
 
 ## Stack
 
 - **Monorepo:** Turborepo + pnpm
-- **Frontend:** Next.js 14 (App Router) + TailwindCSS + shadcn/ui · Expo React Native para mobile
+- **Frontend:** Next.js 14 (App Router) + TailwindCSS + shadcn/ui · PWA instalable para mobile
 - **Backend:** NestJS + Prisma + PostgreSQL (Supabase) + BullMQ + Redis
 - **IA:** Claude API (Anthropic) + OpenAI + pgvector (RAG) + Whisper + Claude Vision
 - **Mensajería:** Twilio (WhatsApp)
 - **Pagos:** MercadoPago (LATAM) · Stripe (internacional)
-- **Infra:** Vercel + Render + EAS + Sentry + PostHog
+- **Infra:** Vercel + Render + Sentry + PostHog
 
 ## Estructura del monorepo
 
@@ -30,7 +30,6 @@ Plataforma SaaS multi-producto que moderniza la educación en LATAM conectando a
 educai/
 ├── apps/
 │   ├── web/             # Portal colegios + padres (Next.js)
-│   ├── mobile/          # App alumnos + padres (Expo RN)
 │   ├── gov-dashboard/   # Dashboard ministerial (Next.js + Tremor)
 │   ├── api/             # API principal (NestJS)
 │   ├── whatsapp-agent/  # Agente tutor WhatsApp (NestJS + Twilio)
@@ -103,7 +102,7 @@ pnpm dev
 5. Cobertura de tests ≥ 70% en lógica de negocio.
 6. WCAG 2.1 AA en todas las UIs.
 7. I18n-ready desde el primer commit.
-8. Offline-first en mobile.
+8. Offline-first en PWA instalable.
 
 ## Licencia
 

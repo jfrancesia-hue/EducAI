@@ -15,8 +15,6 @@ Estas keys se cargan una sola vez por servicio que las use; no hacen falta nombr
 - `SUPABASE_ANON_KEY`: anon key para integraciones backend que la pidan.
 - `NEXT_PUBLIC_SUPABASE_URL`: URL publica de Supabase para Next.js.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: anon key publica para Next.js.
-- `EXPO_PUBLIC_SUPABASE_URL`: URL publica de Supabase para mobile.
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`: anon key publica para mobile.
 
 ### IA
 
@@ -52,16 +50,13 @@ Estas keys se cargan una sola vez por servicio que las use; no hacen falta nombr
 - `PUBLIC_APP_URL`
 - `ALLOWED_ORIGINS`
 - `NEXT_PUBLIC_API_URL`
-- `EXPO_PUBLIC_API_URL`
 - `REDIS_URL`
 - `BULL_QUEUE_PREFIX`
 - `LOG_LEVEL`
 - `SENTRY_DSN`
 - `NEXT_PUBLIC_SENTRY_DSN`
-- `EXPO_PUBLIC_SENTRY_DSN`
 - `POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_KEY`
-- `EXPO_PUBLIC_POSTHOG_KEY`
 
 ### Worker y mensajeria futura
 
@@ -95,19 +90,6 @@ Opcionales:
 
 - `NEXT_PUBLIC_TENANT`
 - `NEXT_PUBLIC_SENTRY_DSN`
-
-## Expo `apps/mobile`
-
-Minimo cuando mobile entre en alcance:
-
-- `EXPO_PUBLIC_API_URL`
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-
-Opcionales:
-
-- `EXPO_PUBLIC_POSTHOG_KEY`
-- `EXPO_PUBLIC_SENTRY_DSN`
 
 ## Render `apps/api`
 
@@ -214,6 +196,6 @@ Usadas por [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 ## Notas operativas
 
 - `DATABASE_URL` de produccion no debe usar el usuario `postgres` y debe incluir `schema=educai`.
-- Las keys publicas (`NEXT_PUBLIC_*`, `EXPO_PUBLIC_*`) pueden vivir en cliente; las demas no.
+- Las keys publicas (`NEXT_PUBLIC_*`) pueden vivir en cliente; las demas no.
 - No reutilizar valores de IncluAI salvo que se decida explicitamente compartir infraestructura.
 - `SUPABASE_SECRET_KEY` y `SUPABASE_SERVICE_ROLE_KEY` representan el mismo rol operativo; usar una sola como fuente principal.

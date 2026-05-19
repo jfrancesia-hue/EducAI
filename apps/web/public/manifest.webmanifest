@@ -1,0 +1,26 @@
+{
+  "name": "EducAI",
+  "short_name": "EducAI",
+  "description": "Plataforma educativa con agente IA docente, planificacion, produccion de recursos y seguimiento institucional.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8f3",
+  "theme_color": "#080d17",
+  "lang": "es-AR",
+  "orientation": "portrait",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/pwa-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

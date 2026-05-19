@@ -45,7 +45,6 @@ jobs:
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       OPENAI_API_KEY: test-openai-api-key
-      EXPO_ROUTER_APP_ROOT: app
 
     steps:
       - name: Checkout
