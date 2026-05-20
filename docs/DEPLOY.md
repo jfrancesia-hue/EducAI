@@ -12,6 +12,12 @@ Configurar estos secrets en GitHub Actions para el environment `production`:
 - `VERCEL_GOV_DASHBOARD_DEPLOY_HOOK_URL`
 - `RENDER_API_DEPLOY_HOOK_URL`
 
+Si tenes `gh` autenticado, podes cargarlos desde:
+
+- copiar [`ops/production/github.production.secrets.example.env`](../ops/production/github.production.secrets.example.env) a `ops/production/github.production.secrets.env`
+- completar valores reales
+- correr `powershell -ExecutionPolicy Bypass -File scripts/set-github-production-secrets.ps1`
+
 ## Destinos esperados
 
 - `apps/web` -> Vercel
@@ -59,6 +65,10 @@ Opcionales:
 - `SENTRY_DSN`
 - `POSTHOG_KEY`
 
+Template listo:
+
+- [`ops/production/render.api.production.example.env`](../ops/production/render.api.production.example.env)
+
 ### Supabase compartido
 
 El proyecto Supabase convive con IncluAI. EducAI debe operar siempre dentro del schema PostgreSQL
@@ -83,6 +93,10 @@ Reservadas para fases siguientes o integraciones parciales:
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
+Template listo:
+
+- [`ops/production/vercel.web.production.example.env`](../ops/production/vercel.web.production.example.env)
+
 ### `apps/gov-dashboard`
 
 Requeridas hoy para login SSR y operacion del panel:
@@ -97,6 +111,10 @@ Reservadas para fases siguientes o integraciones parciales:
 - `NEXT_PUBLIC_TENANT`
 - `NEXT_PUBLIC_SENTRY_DSN`
 
+Template listo:
+
+- [`ops/production/vercel.gov-dashboard.production.example.env`](../ops/production/vercel.gov-dashboard.production.example.env)
+
 ### `apps/whatsapp-agent`
 
 Legacy/local. En produccion unica, el webhook Twilio esta montado en `apps/api`.
@@ -110,3 +128,9 @@ Legacy/local. En produccion unica inicial no se despliega worker ni Redis; los l
 EducAI comparte proyecto de Supabase con otra aplicacion, pero cualquier cambio productivo debe
 limitarse a recursos, tenants y variables de entorno propios de EducAI. No reutilizar ni modificar
 configuracion operativa de IncluAI.
+
+## Chequeo rapido
+
+Despues de completar los archivos de `ops/production`, podes validar faltantes con:
+
+`powershell -ExecutionPolicy Bypass -File scripts/check-production-config.ps1`

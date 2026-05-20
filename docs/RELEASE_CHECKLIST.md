@@ -14,6 +14,8 @@ Checklist operativa para mover EducAI o ApoyoAI a produccion sin omisiones obvia
 ## 2. Infraestructura y deploy
 
 - GitHub Actions con secrets del environment `production` cargados
+- `gh auth status` valido si vas a cargar secrets por CLI
+- `powershell -ExecutionPolicy Bypass -File scripts/check-production-config.ps1`
 - Hooks de deploy configurados segun [`docs/DEPLOY.md`](./DEPLOY.md)
 - Servicios productivos creados en Vercel y Render
 - `DATABASE_URL` apuntando a un recurso productivo con rol app sin `BYPASSRLS` y `schema=educai`
