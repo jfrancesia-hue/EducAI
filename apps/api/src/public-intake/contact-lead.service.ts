@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -7,6 +8,8 @@ import type { CreateContactLeadDto } from "./dto/create-contact-lead.dto.js";
 
 @Injectable()
 export class ContactLeadService {
+  private supabaseAdmin: SupabaseClient<any, any, any, any, any> | null = null;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLogger,
@@ -56,22 +59,12 @@ export class ContactLeadService {
 
       return { data: { id: lead.id, status: "received", storage: "database" } };
     } catch (error) {
-      const fallbackId = `lead-log-${randomUUID()}`;
+      const persistedViaSupabase = await this.persistViaSupabase(metadata, error);
+      if (persistedViaSupabase) {
+        return persistedViaSupabase;
+      }
 
-      this.logger.error(
-        {
-          err: error,
-          leadId: fallbackId,
-          email: metadata.email,
-          product: metadata.product,
-          plan: metadata.plan,
-          storage: "log_only",
-          metadata,
-        },
-        "contact_lead.persist_failed",
-      );
-
-      return { data: { id: fallbackId, status: "received", storage: "log_only" } };
+      return this.persistToLogsOnly(metadata, error);
     }
   }
 
@@ -93,5 +86,102 @@ export class ContactLeadService {
     });
 
     return tenant.id;
+  }
+
+  private getSupabaseAdmin(): SupabaseClient<any, any, any, any, any> | null {
+    if (this.supabaseAdmin) {
+      return this.supabaseAdmin;
+    }
+
+    const url = process.env.SUPABASE_URL?.trim();
+    const secretKey = (
+      process.env.SUPABASE_SECRET_KEY ??
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      ""
+    ).trim();
+
+    if (!url || !secretKey) {
+      return null;
+    }
+
+    this.supabaseAdmin = createClient(url, secretKey, {
+      db: { schema: "educai" },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    return this.supabaseAdmin;
+  }
+
+  private async persistViaSupabase(
+    metadata: Record<string, unknown>,
+    prismaError: unknown,
+  ): Promise<{ data: { id: string; status: "received"; storage: "supabase" } } | null> {
+    const supabase = this.getSupabaseAdmin();
+    if (!supabase) {
+      return null;
+    }
+
+    const tenantId = await this.ensurePublicIntakeTenant();
+    const leadId = `lead-sb-${randomUUID()}`;
+
+    const { error } = await supabase.from("AuditLog").insert({
+      id: leadId,
+      tenantId,
+      action: "contact_lead.created",
+      entity: "ContactLead",
+      metadata,
+    });
+
+    if (error) {
+      this.logger.error(
+        {
+          err: error,
+          prismaError,
+          leadId,
+          email: metadata.email,
+          product: metadata.product,
+          plan: metadata.plan,
+          storage: "supabase_failed",
+          metadata,
+        },
+        "contact_lead.persist_supabase_failed",
+      );
+      return null;
+    }
+
+    this.logger.warn(
+      {
+        leadId,
+        email: metadata.email,
+        product: metadata.product,
+        plan: metadata.plan,
+        storage: "supabase",
+      },
+      "contact_lead.persisted_via_supabase",
+    );
+
+    return { data: { id: leadId, status: "received", storage: "supabase" } };
+  }
+
+  private persistToLogsOnly(metadata: Record<string, unknown>, error: unknown) {
+    const fallbackId = `lead-log-${randomUUID()}`;
+
+    this.logger.error(
+      {
+        err: error,
+        leadId: fallbackId,
+        email: metadata.email,
+        product: metadata.product,
+        plan: metadata.plan,
+        storage: "log_only",
+        metadata,
+      },
+      "contact_lead.persist_failed",
+    );
+
+    return { data: { id: fallbackId, status: "received", storage: "log_only" as const } };
   }
 }

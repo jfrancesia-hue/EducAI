@@ -154,12 +154,20 @@ describe("Students API (e2e)", () => {
   let app: INestApplication;
   let originalAnthropicApiKey: string | undefined;
   let originalOpenAiApiKey: string | undefined;
+  let originalSupabaseUrl: string | undefined;
+  let originalSupabaseSecretKey: string | undefined;
+  let originalFetch: typeof globalThis.fetch | undefined;
 
   beforeAll(async () => {
     originalAnthropicApiKey = process.env.ANTHROPIC_API_KEY;
     originalOpenAiApiKey = process.env.OPENAI_API_KEY;
+    originalSupabaseUrl = process.env.SUPABASE_URL;
+    originalSupabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+    originalFetch = globalThis.fetch;
     process.env.ANTHROPIC_API_KEY = "";
     process.env.OPENAI_API_KEY = "test-openai-api-key";
+    process.env.SUPABASE_URL = "https://supabase.test";
+    process.env.SUPABASE_SECRET_KEY = "supabase-secret";
     prismaMock.tenant.upsert.mockResolvedValue({ id: "tnt_public_intake" });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback({
@@ -195,6 +203,19 @@ describe("Students API (e2e)", () => {
       delete process.env.OPENAI_API_KEY;
     } else {
       process.env.OPENAI_API_KEY = originalOpenAiApiKey;
+    }
+    if (originalSupabaseUrl === undefined) {
+      delete process.env.SUPABASE_URL;
+    } else {
+      process.env.SUPABASE_URL = originalSupabaseUrl;
+    }
+    if (originalSupabaseSecretKey === undefined) {
+      delete process.env.SUPABASE_SECRET_KEY;
+    } else {
+      process.env.SUPABASE_SECRET_KEY = originalSupabaseSecretKey;
+    }
+    if (originalFetch) {
+      globalThis.fetch = originalFetch;
     }
   });
 
@@ -264,6 +285,11 @@ describe("Students API (e2e)", () => {
 
   it("POST /public-intake/contact-leads no rompe el flujo si falla la persistencia", async () => {
     prismaMock.auditLog.create.mockRejectedValueOnce(new Error("db unavailable"));
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: vi.fn(),
+      text: vi.fn(),
+    } as never);
 
     const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
       name: "Codex Test",
