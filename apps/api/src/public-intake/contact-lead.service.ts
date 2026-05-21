@@ -30,13 +30,17 @@ export class ContactLeadService {
 
     try {
       const tenantId = await this.ensurePublicIntakeTenant();
-      const lead = await this.prisma.auditLog.create({
-        data: {
-          tenantId,
-          action: "contact_lead.created",
-          entity: "ContactLead",
-          metadata,
-        },
+      const lead = await this.prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`select set_config('app.tenant_id', ${tenantId}, true)`;
+
+        return tx.auditLog.create({
+          data: {
+            tenantId,
+            action: "contact_lead.created",
+            entity: "ContactLead",
+            metadata,
+          },
+        });
       });
 
       this.logger.info(
