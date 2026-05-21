@@ -150,7 +150,7 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[13];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[14];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const resolver = m.resolver as unknown as ConstructorParameters<

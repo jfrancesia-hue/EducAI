@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   applicationName: "EducAI",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icon",
-    apple: "/apple-icon",
+    icon: "/icons/pwa-icon.svg",
+    apple: "/icons/pwa-icon.svg",
   },
   appleWebApp: {
     capable: true,

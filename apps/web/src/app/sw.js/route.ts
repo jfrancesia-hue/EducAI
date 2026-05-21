@@ -1,7 +1,7 @@
 const serviceWorker = `
 const CACHE_NAME = "educai-shell-v1";
 const ASSET_CACHE = "educai-assets-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon", "/apple-icon"];
+const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/pwa-icon.svg", "/icons/pwa-maskable.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
