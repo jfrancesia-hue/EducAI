@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -27,24 +28,44 @@ export class ContactLeadService {
       requestedAt: new Date().toISOString(),
     };
 
-    const lead = await this.prisma.auditLog.create({
-      data: {
-        action: "contact_lead.created",
-        entity: "ContactLead",
-        metadata,
-      },
-    });
+    try {
+      const lead = await this.prisma.auditLog.create({
+        data: {
+          action: "contact_lead.created",
+          entity: "ContactLead",
+          metadata,
+        },
+      });
 
-    this.logger.info(
-      {
-        leadId: lead.id,
-        email: metadata.email,
-        product: metadata.product,
-        plan: metadata.plan,
-      },
-      "contact_lead.created",
-    );
+      this.logger.info(
+        {
+          leadId: lead.id,
+          email: metadata.email,
+          product: metadata.product,
+          plan: metadata.plan,
+          storage: "database",
+        },
+        "contact_lead.created",
+      );
 
-    return { data: { id: lead.id, status: "received" } };
+      return { data: { id: lead.id, status: "received", storage: "database" } };
+    } catch (error) {
+      const fallbackId = `lead-log-${randomUUID()}`;
+
+      this.logger.error(
+        {
+          err: error,
+          leadId: fallbackId,
+          email: metadata.email,
+          product: metadata.product,
+          plan: metadata.plan,
+          storage: "log_only",
+          metadata,
+        },
+        "contact_lead.persist_failed",
+      );
+
+      return { data: { id: fallbackId, status: "received", storage: "log_only" } };
+    }
   }
 }

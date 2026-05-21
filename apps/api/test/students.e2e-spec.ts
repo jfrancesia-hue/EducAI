@@ -233,6 +233,7 @@ describe("Students API (e2e)", () => {
       data: {
         id: "lead_1",
         status: "received",
+        storage: "database",
       },
     });
   });
@@ -246,6 +247,20 @@ describe("Students API (e2e)", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("property unexpected should not exist");
+  });
+
+  it("POST /public-intake/contact-leads no rompe el flujo si falla la persistencia", async () => {
+    prismaMock.auditLog.create.mockRejectedValueOnce(new Error("db unavailable"));
+
+    const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
+      name: "Codex Test",
+      email: "codex@example.com",
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.status).toBe("received");
+    expect(response.body.data.storage).toBe("log_only");
+    expect(response.body.data.id).toMatch(/^lead-log-/);
   });
 
   it("POST /students crea estudiante con body valido", async () => {
