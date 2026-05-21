@@ -36,6 +36,9 @@ const prismaMock = {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
   },
+  auditLog: {
+    create: vi.fn(),
+  },
   learningSession: {
     count: vi.fn().mockResolvedValue(0),
     aggregate: vi.fn().mockResolvedValue({ _sum: { durationMinutes: 0 } }),
@@ -191,6 +194,58 @@ describe("Students API (e2e)", () => {
       .send({ firstName: "X", lastName: "Y", grade: 99 });
 
     expect(response.status).toBe(400);
+  });
+
+  it("POST /public-intake/contact-leads acepta payload valido y persiste lead", async () => {
+    prismaMock.auditLog.create.mockResolvedValueOnce({
+      id: "lead_1",
+    });
+
+    const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
+      name: "Codex Test",
+      email: "codex@example.com",
+      institution: "QA School",
+      quantity: 12,
+      product: "educai",
+      plan: "demo",
+      message: "hola",
+    });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "contact_lead.created",
+          entity: "ContactLead",
+          metadata: expect.objectContaining({
+            name: "Codex Test",
+            email: "codex@example.com",
+            institution: "QA School",
+            quantity: 12,
+            product: "educai",
+            plan: "demo",
+            message: "hola",
+          }),
+        }),
+      }),
+    );
+    expect(response.body).toEqual({
+      data: {
+        id: "lead_1",
+        status: "received",
+      },
+    });
+  });
+
+  it("POST /public-intake/contact-leads rechaza campos no esperados", async () => {
+    const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
+      name: "Codex Test",
+      email: "codex@example.com",
+      unexpected: "field",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("property unexpected should not exist");
   });
 
   it("POST /students crea estudiante con body valido", async () => {

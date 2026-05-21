@@ -2,7 +2,7 @@ import { Body, Controller, Headers, Ip, Post, UseGuards } from "@nestjs/common";
 import { ApiCreatedResponse, ApiTags } from "@nestjs/swagger";
 
 import { ContactLeadService } from "./contact-lead.service.js";
-import type { CreateContactLeadDto } from "./dto/create-contact-lead.dto.js";
+import { CreateContactLeadDto } from "./dto/create-contact-lead.dto.js";
 import { PublicThrottleGuard } from "./public-throttle.guard.js";
 
 @ApiTags("public-intake")
