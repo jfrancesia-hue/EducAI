@@ -124,7 +124,11 @@ export class ContactLeadService {
       return null;
     }
 
-    const tenantId = await this.ensurePublicIntakeTenant();
+    const tenantId = await this.ensurePublicIntakeTenantViaSupabase(supabase);
+    if (!tenantId) {
+      return null;
+    }
+
     const leadId = `lead-sb-${randomUUID()}`;
 
     const { error } = await supabase.from("AuditLog").insert({
@@ -164,6 +168,41 @@ export class ContactLeadService {
     );
 
     return { data: { id: leadId, status: "received", storage: "supabase" } };
+  }
+
+  private async ensurePublicIntakeTenantViaSupabase(
+    supabase: SupabaseClient<any, any, any, any, any>,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("Tenant")
+      .upsert(
+        {
+          type: "MINISTRY",
+          name: "EducAI Public Intake",
+          slug: "educai-public-intake",
+          country: "AR",
+          metadata: {
+            system: true,
+            source: "public_intake",
+          },
+        },
+        { onConflict: "slug" },
+      )
+      .select("id")
+      .single();
+
+    if (error || !data?.id) {
+      this.logger.error(
+        {
+          err: error,
+          storage: "supabase_failed",
+        },
+        "contact_lead.ensure_tenant_supabase_failed",
+      );
+      return null;
+    }
+
+    return data.id;
   }
 
   private persistToLogsOnly(metadata: Record<string, unknown>, error: unknown) {
