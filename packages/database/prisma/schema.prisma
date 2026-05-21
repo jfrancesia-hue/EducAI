@@ -631,6 +631,27 @@ model CommunityComment {
   @@index([postId])
 }
 
+model ContactLead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  institution String?
+  quantity    Int?
+  product     String?
+  plan        String?
+  message     String?
+  source      String   @default("website_contact_form")
+  status      String   @default("open")
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   tenantId  String?

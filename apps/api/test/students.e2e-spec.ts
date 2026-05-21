@@ -12,10 +12,6 @@ import { PrismaService } from "../src/prisma/prisma.service.js";
 const prismaMock = {
   $connect: vi.fn().mockResolvedValue(undefined),
   $disconnect: vi.fn().mockResolvedValue(undefined),
-  $transaction: vi.fn(),
-  tenant: {
-    upsert: vi.fn(),
-  },
   student: {
     create: vi.fn(),
     findFirst: vi.fn(),
@@ -40,7 +36,7 @@ const prismaMock = {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
   },
-  auditLog: {
+  contactLead: {
     create: vi.fn(),
   },
   learningSession: {
@@ -154,27 +150,12 @@ describe("Students API (e2e)", () => {
   let app: INestApplication;
   let originalAnthropicApiKey: string | undefined;
   let originalOpenAiApiKey: string | undefined;
-  let originalSupabaseUrl: string | undefined;
-  let originalSupabaseSecretKey: string | undefined;
-  let originalFetch: typeof globalThis.fetch | undefined;
 
   beforeAll(async () => {
     originalAnthropicApiKey = process.env.ANTHROPIC_API_KEY;
     originalOpenAiApiKey = process.env.OPENAI_API_KEY;
-    originalSupabaseUrl = process.env.SUPABASE_URL;
-    originalSupabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
-    originalFetch = globalThis.fetch;
     process.env.ANTHROPIC_API_KEY = "";
     process.env.OPENAI_API_KEY = "test-openai-api-key";
-    process.env.SUPABASE_URL = "https://supabase.test";
-    process.env.SUPABASE_SECRET_KEY = "supabase-secret";
-    prismaMock.tenant.upsert.mockResolvedValue({ id: "tnt_public_intake" });
-    prismaMock.$transaction.mockImplementation(async (callback) =>
-      callback({
-        $executeRaw: vi.fn().mockResolvedValue(1),
-        auditLog: prismaMock.auditLog,
-      }),
-    );
 
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
@@ -204,19 +185,6 @@ describe("Students API (e2e)", () => {
     } else {
       process.env.OPENAI_API_KEY = originalOpenAiApiKey;
     }
-    if (originalSupabaseUrl === undefined) {
-      delete process.env.SUPABASE_URL;
-    } else {
-      process.env.SUPABASE_URL = originalSupabaseUrl;
-    }
-    if (originalSupabaseSecretKey === undefined) {
-      delete process.env.SUPABASE_SECRET_KEY;
-    } else {
-      process.env.SUPABASE_SECRET_KEY = originalSupabaseSecretKey;
-    }
-    if (originalFetch) {
-      globalThis.fetch = originalFetch;
-    }
   });
 
   it("POST /students rechaza body invalido (sin tenant context, grade fuera de rango)", async () => {
@@ -229,8 +197,12 @@ describe("Students API (e2e)", () => {
   });
 
   it("POST /public-intake/contact-leads acepta payload valido y persiste lead", async () => {
-    prismaMock.auditLog.create.mockResolvedValueOnce({
+    prismaMock.contactLead.create.mockResolvedValueOnce({
       id: "lead_1",
+      email: "codex@example.com",
+      product: "educai",
+      plan: "demo",
+      status: "open",
     });
 
     const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
@@ -244,30 +216,23 @@ describe("Students API (e2e)", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(prismaMock.$transaction).toHaveBeenCalled();
-    expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+    expect(prismaMock.contactLead.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          tenantId: "tnt_public_intake",
-          action: "contact_lead.created",
-          entity: "ContactLead",
-          metadata: expect.objectContaining({
-            name: "Codex Test",
-            email: "codex@example.com",
-            institution: "QA School",
-            quantity: 12,
-            product: "educai",
-            plan: "demo",
-            message: "hola",
-          }),
+          name: "Codex Test",
+          email: "codex@example.com",
+          institution: "QA School",
+          quantity: 12,
+          product: "educai",
+          plan: "demo",
+          message: "hola",
         }),
       }),
     );
     expect(response.body).toEqual({
       data: {
         id: "lead_1",
-        status: "received",
-        storage: "database",
+        status: "open",
       },
     });
   });
@@ -283,23 +248,15 @@ describe("Students API (e2e)", () => {
     expect(response.body.message).toContain("property unexpected should not exist");
   });
 
-  it("POST /public-intake/contact-leads no rompe el flujo si falla la persistencia", async () => {
-    prismaMock.auditLog.create.mockRejectedValueOnce(new Error("db unavailable"));
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: vi.fn(),
-      text: vi.fn(),
-    } as never);
+  it("POST /public-intake/contact-leads propaga errores de persistencia", async () => {
+    prismaMock.contactLead.create.mockRejectedValueOnce(new Error("db unavailable"));
 
     const response = await request(app.getHttpServer()).post("/public-intake/contact-leads").send({
       name: "Codex Test",
       email: "codex@example.com",
     });
 
-    expect(response.status).toBe(201);
-    expect(response.body.data.status).toBe("received");
-    expect(response.body.data.storage).toBe("log_only");
-    expect(response.body.data.id).toMatch(/^lead-log-/);
+    expect(response.status).toBe(500);
   });
 
   it("POST /students crea estudiante con body valido", async () => {
