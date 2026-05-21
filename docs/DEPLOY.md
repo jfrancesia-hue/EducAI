@@ -1,8 +1,9 @@
 # Deploy
 
 El workflow [`deploy.yml`](../.github/workflows/deploy.yml) dispara deploys reales por hooks HTTP y
-falla de forma explicita si falta alguna configuracion productiva. Esto evita falsos positivos en
-`main`.
+falla de forma explicita si falta alguna configuracion productiva. El workflow confirma que los
+hooks fueron disparados; la verificacion final del estado del deploy sigue ocurriendo del lado de
+Vercel/Render.
 
 ## Secrets requeridos
 
@@ -128,6 +129,12 @@ Legacy/local. En produccion unica inicial no se despliega worker ni Redis; los l
 EducAI comparte proyecto de Supabase con otra aplicacion, pero cualquier cambio productivo debe
 limitarse a recursos, tenants y variables de entorno propios de EducAI. No reutilizar ni modificar
 configuracion operativa de IncluAI.
+
+## RLS y excepciones publicas
+
+Las tablas multi-tenant deben vivir en el schema `educai` y quedar cubiertas por RLS basada en
+`tenantId`. La excepcion actual explicita es `ContactLead`: intake comercial publico, sin datos de
+menores y sin alcance tenant, por lo que no usa RLS y acepta escritura anonima desde `apps/web`.
 
 ## Chequeo rapido
 

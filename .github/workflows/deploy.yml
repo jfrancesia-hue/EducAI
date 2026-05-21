@@ -1,4 +1,4 @@
-name: Deploy
+name: Trigger Deploy Hooks
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   deploy-web:
-    name: Deploy apps/web (Vercel)
+    name: Trigger apps/web deploy hook (Vercel)
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 10
@@ -26,10 +26,12 @@ jobs:
           fi
 
       - name: Trigger deploy
-        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
+        run: |
+          response=$(curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL")
+          echo "$response"
 
   deploy-gov-dashboard:
-    name: Deploy apps/gov-dashboard (Vercel)
+    name: Trigger apps/gov-dashboard deploy hook (Vercel)
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 10
@@ -44,10 +46,12 @@ jobs:
           fi
 
       - name: Trigger deploy
-        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
+        run: |
+          response=$(curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL")
+          echo "$response"
 
   deploy-api:
-    name: Deploy apps/api (Render)
+    name: Trigger apps/api deploy hook (Render)
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 10
@@ -62,4 +66,6 @@ jobs:
           fi
 
       - name: Trigger deploy
-        run: curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL"
+        run: |
+          response=$(curl --fail-with-body --silent --show-error -X POST "$DEPLOY_HOOK_URL")
+          echo "$response"
