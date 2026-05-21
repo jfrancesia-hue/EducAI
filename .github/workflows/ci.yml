@@ -41,7 +41,7 @@ jobs:
           --health-retries 8
 
     env:
-      DATABASE_URL: postgresql://educai:educai_ci_password@localhost:5432/educai_ci?schema=public
+      DATABASE_URL: postgresql://educai:educai_ci_password@localhost:5432/educai_ci?schema=educai
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       OPENAI_API_KEY: test-openai-api-key

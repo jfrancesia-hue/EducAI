@@ -20,9 +20,11 @@ sería un incidente de compliance grave.
 - Un único **modelo `Tenant`** con enum `TenantType { SCHOOL, FAMILY, MINISTRY }`.
 - Cada modelo de negocio (User, Student, Parent, Teacher, Classroom, Conversation, etc.) tiene
   una columna `tenantId: String` indexada.
-- **Row Level Security (RLS) habilitado** en todas las tablas con una política de tipo
+- **Row Level Security (RLS) habilitado** en las tablas multi-tenant con una política de tipo
   `tenantId = current_setting('app.tenant_id')::text`.
-- La API NestJS setea `SET LOCAL app.tenant_id` al inicio de cada transacción según el JWT.
+- La API NestJS debe setear `SET LOCAL app.tenant_id` al inicio de cada transacción según el JWT.
+- Excepciones explícitas sin RLS por tenant:
+  - `ContactLead`, porque modela intake comercial público y no datos de menores ni datos tenant-scoped.
 - Excepciones con `tenantId: null`:
   - `Permission` (globales, sólo escritura por super-admin).
   - `ContentLibraryItem` y `TeacherCourse` (biblioteca pública de EducAI, lectura libre).
@@ -41,12 +43,14 @@ sería un incidente de compliance grave.
 ## Consecuencias
 
 ### Positivas
+
 - Un solo schema + migrations. Simplifica DX.
 - RLS protege contra bugs de query en app layer.
 - Supabase soporta RLS nativo + pgvector.
 
 ### Negativas
-- Todo query debe setear `SET LOCAL app.tenant_id` o bypass explícito con service role.
+
+- Todo query sobre tablas multi-tenant debe setear `SET LOCAL app.tenant_id` o bypass explícito con service role.
 - Debugging en dev requiere awareness: `prisma.migrate reset` es seguro por RLS, pero producción
   exige super-admin role con `BYPASSRLS`.
 - Tests e2e deben simular JWT + tenant context.

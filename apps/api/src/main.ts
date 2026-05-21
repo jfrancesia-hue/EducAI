@@ -42,14 +42,18 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle("EducAI API")
-    .setDescription("API multi-tenant para EducAI LATAM y ApoyoAI.")
-    .setVersion("0.1.0")
-    .addBearerAuth()
-    .build();
+  const swaggerEnabled =
+    process.env.NODE_ENV !== "production" || process.env.ENABLE_SWAGGER_DOCS?.trim() === "true";
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle("EducAI API")
+      .setDescription("API multi-tenant para EducAI LATAM y ApoyoAI.")
+      .setVersion("0.1.0")
+      .addBearerAuth()
+      .build();
 
-  SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, config));
+    SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, config));
+  }
 
   const port = Number(process.env.PORT ?? 4000);
   await app.listen(port);
