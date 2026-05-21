@@ -59,9 +59,24 @@ export class ContactLeadService {
 
       return { data: { id: lead.id, status: "received", storage: "database" } };
     } catch (error) {
-      const persistedViaSupabase = await this.persistViaSupabase(metadata, error);
-      if (persistedViaSupabase) {
-        return persistedViaSupabase;
+      try {
+        const persistedViaSupabase = await this.persistViaSupabase(metadata, error);
+        if (persistedViaSupabase) {
+          return persistedViaSupabase;
+        }
+      } catch (supabaseFallbackError) {
+        this.logger.error(
+          {
+            err: supabaseFallbackError,
+            prismaError: error,
+            email: metadata.email,
+            product: metadata.product,
+            plan: metadata.plan,
+            storage: "supabase_threw",
+            metadata,
+          },
+          "contact_lead.persist_supabase_threw",
+        );
       }
 
       return this.persistToLogsOnly(metadata, error);
@@ -173,25 +188,38 @@ export class ContactLeadService {
   private async ensurePublicIntakeTenantViaSupabase(
     supabase: SupabaseClient<any, any, any, any, any>,
   ): Promise<string | null> {
-    const { data, error } = await supabase
-      .from("Tenant")
-      .upsert(
-        {
-          type: "MINISTRY",
-          name: "EducAI Public Intake",
-          slug: "educai-public-intake",
-          country: "AR",
-          metadata: {
-            system: true,
-            source: "public_intake",
+    try {
+      const { data, error } = await supabase
+        .from("Tenant")
+        .upsert(
+          {
+            type: "MINISTRY",
+            name: "EducAI Public Intake",
+            slug: "educai-public-intake",
+            country: "AR",
+            metadata: {
+              system: true,
+              source: "public_intake",
+            },
           },
-        },
-        { onConflict: "slug" },
-      )
-      .select("id")
-      .single();
+          { onConflict: "slug" },
+        )
+        .select("id")
+        .single();
 
-    if (error || !data?.id) {
+      if (error || !data?.id) {
+        this.logger.error(
+          {
+            err: error,
+            storage: "supabase_failed",
+          },
+          "contact_lead.ensure_tenant_supabase_failed",
+        );
+        return null;
+      }
+
+      return data.id;
+    } catch (error) {
       this.logger.error(
         {
           err: error,
@@ -201,8 +229,6 @@ export class ContactLeadService {
       );
       return null;
     }
-
-    return data.id;
   }
 
   private persistToLogsOnly(metadata: Record<string, unknown>, error: unknown) {
