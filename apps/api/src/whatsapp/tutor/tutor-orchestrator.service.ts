@@ -10,6 +10,7 @@ import {
 import type { Logger } from "pino";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
 import { HumanHandoffService } from "../agent/human-handoff.service.js";
+import { InstitutionalAgentAuditService } from "../agent/institutional-agent-audit.service.js";
 import { InstitutionalAgentService } from "../agent/institutional-agent.service.js";
 import { InstitutionalIntentService } from "../agent/institutional-intent.service.js";
 import { AppLogger } from "../common/logger/app-logger.service.js";
@@ -88,6 +89,7 @@ export class TutorOrchestratorService {
     private readonly prisma: PrismaService,
     private readonly institutionalIntent: InstitutionalIntentService,
     private readonly institutionalAgent: InstitutionalAgentService,
+    private readonly institutionalAudit: InstitutionalAgentAuditService,
     private readonly humanHandoff: HumanHandoffService,
     logger: AppLogger,
   ) {
@@ -470,6 +472,17 @@ export class TutorOrchestratorService {
       modelUsed: agentResponse.modelUsed,
       tokensUsed: agentResponse.tokensUsed,
       safetyStatus: agentResponse.shouldEscalate ? "escalate" : "safe",
+    });
+
+    await this.institutionalAudit.record({
+      student,
+      conversationId: stored.conversationId,
+      inboundMessage: inboundBody,
+      outboundMessage: agentResponse.replyText,
+      modelUsed: agentResponse.modelUsed,
+      tokensUsed: agentResponse.tokensUsed,
+      shouldEscalate: agentResponse.shouldEscalate,
+      toolEvents: agentResponse.toolEvents,
     });
 
     const send = await this.sender.send({

@@ -10,7 +10,9 @@ import {
 import { WHATSAPP_AGENT_LLM } from "./agent/agent-llm.token.js";
 import { HumanHandoffService } from "./agent/human-handoff.service.js";
 import { InstitutionalAgentService } from "./agent/institutional-agent.service.js";
+import { InstitutionalAgentAuditService } from "./agent/institutional-agent-audit.service.js";
 import { InstitutionalIntentService } from "./agent/institutional-intent.service.js";
+import { InstitutionalResponsePolicyService } from "./agent/institutional-response-policy.service.js";
 import { InstitutionalToolsService } from "./agent/institutional-tools.service.js";
 import { OpenAiLlmClient } from "./agent/providers/openai-llm.client.js";
 import { LoggerModule } from "./common/logger/logger.module.js";
@@ -39,7 +41,9 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
     TutorOrchestratorService,
     InstitutionalIntentService,
     InstitutionalToolsService,
+    InstitutionalResponsePolicyService,
     InstitutionalAgentService,
+    InstitutionalAgentAuditService,
     HumanHandoffService,
     {
       provide: OcrService,

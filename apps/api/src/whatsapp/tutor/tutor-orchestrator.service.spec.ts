@@ -54,6 +54,7 @@ interface Mocks {
   };
   institutionalIntent: { detect: ReturnType<typeof vi.fn> };
   institutionalAgent: { respond: ReturnType<typeof vi.fn> };
+  institutionalAudit: { record: ReturnType<typeof vi.fn> };
   humanHandoff: { create: ReturnType<typeof vi.fn> };
 }
 
@@ -134,6 +135,9 @@ function buildMocks(): Mocks {
         toolEvents: [{ tool: "student_summary", ok: true, summary: "ok" }],
       }),
     },
+    institutionalAudit: {
+      record: vi.fn().mockResolvedValue(undefined),
+    },
     humanHandoff: {
       create: vi.fn().mockResolvedValue({ id: "log_1" }),
     },
@@ -175,9 +179,12 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const institutionalAgent = m.institutionalAgent as unknown as ConstructorParameters<
     typeof TutorOrchestratorService
   >[11];
-  const humanHandoff = m.humanHandoff as unknown as ConstructorParameters<
+  const institutionalAudit = m.institutionalAudit as unknown as ConstructorParameters<
     typeof TutorOrchestratorService
   >[12];
+  const humanHandoff = m.humanHandoff as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[13];
 
   return new TutorOrchestratorService(
     resolver,
@@ -192,6 +199,7 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     prisma,
     institutionalIntent,
     institutionalAgent,
+    institutionalAudit,
     humanHandoff,
     loggerStub,
   );
@@ -252,6 +260,7 @@ describe("TutorOrchestratorService", () => {
     expect(outcome.status).toBe("answered");
     expect(outcome.channel).toBe("institutional");
     expect(m.institutionalAgent.respond).toHaveBeenCalledTimes(1);
+    expect(m.institutionalAudit.record).toHaveBeenCalledTimes(1);
     expect(m.llm.generate).not.toHaveBeenCalled();
     expect(m.humanHandoff.create).not.toHaveBeenCalled();
     const inboundArg = m.conversation.appendInboundMessage.mock.calls[0]?.[0] as {

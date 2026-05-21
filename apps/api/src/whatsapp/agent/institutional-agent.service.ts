@@ -3,6 +3,7 @@ import type { LlmClient } from "@educai/ai";
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import type { ResolvedStudent } from "../tutor/student-resolver.service.js";
 import { WHATSAPP_AGENT_LLM } from "./agent-llm.token.js";
+import { InstitutionalResponsePolicyService } from "./institutional-response-policy.service.js";
 import {
   InstitutionalToolsService,
   type InstitutionalToolResult,
@@ -23,13 +24,14 @@ const ESCALATION_PATTERN = /\b(humano|asesor|persona|urgente|reclamo|denuncia|pr
 export class InstitutionalAgentService {
   constructor(
     private readonly tools: InstitutionalToolsService,
+    private readonly responsePolicy: InstitutionalResponsePolicyService,
     @Inject(WHATSAPP_AGENT_LLM) private readonly llm: LlmClient,
     private readonly logger: AppLogger,
   ) {}
 
   async respond(student: ResolvedStudent, message: string): Promise<InstitutionalAgentResponse> {
     if (ESCALATION_PATTERN.test(message)) {
-      return {
+      return this.responsePolicy.finalize({
         replyText: [
           `Puedo ayudarte con la información registrada de ${student.studentName}, pero este caso conviene derivarlo a una persona del equipo.`,
           "Si querés, respondé con el detalle del problema y lo dejamos listo para seguimiento humano.",
@@ -40,7 +42,7 @@ export class InstitutionalAgentService {
         toolEvents: [
           { tool: "human_handoff", ok: true, summary: "Se activó derivación a humano." },
         ],
-      };
+      });
     }
 
     const toolResults = await this.tools.collectForMessage(student, message);
@@ -67,13 +69,13 @@ export class InstitutionalAgentService {
       "institutional_agent.responded",
     );
 
-    return {
+    return this.responsePolicy.finalize({
       replyText: completion.content.trim(),
       modelUsed: completion.modelUsed,
       tokensUsed: completion.tokensUsed,
       shouldEscalate: false,
       toolEvents: toolResults.map((tool) => ({ tool: tool.tool, ok: true, summary: tool.summary })),
-    };
+    });
   }
 
   private buildSystemPrompt(): string {

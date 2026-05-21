@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { LlmClient } from "@educai/ai";
 import type { ResolvedStudent } from "../tutor/student-resolver.service.js";
 import { InstitutionalAgentService } from "./institutional-agent.service.js";
+import { InstitutionalResponsePolicyService } from "./institutional-response-policy.service.js";
 
 const STUDENT: ResolvedStudent = {
   studentId: "stu_1",
@@ -48,11 +49,12 @@ describe("InstitutionalAgentService", () => {
     const typedTools = tools as unknown as ConstructorParameters<
       typeof InstitutionalAgentService
     >[0];
+    const policy = new InstitutionalResponsePolicyService();
     const typedLogger = logger as unknown as ConstructorParameters<
       typeof InstitutionalAgentService
-    >[2];
+    >[3];
 
-    const service = new InstitutionalAgentService(typedTools, typedLlm, typedLogger);
+    const service = new InstitutionalAgentService(typedTools, policy, typedLlm, typedLogger);
     const result = await service.respond(STUDENT, "Quiero saber el estado de la cuota");
 
     expect(result.replyText).toContain("PREMIUM");
@@ -71,14 +73,51 @@ describe("InstitutionalAgentService", () => {
     const typedTools = tools as unknown as ConstructorParameters<
       typeof InstitutionalAgentService
     >[0];
+    const policy = new InstitutionalResponsePolicyService();
     const typedLogger = logger as unknown as ConstructorParameters<
       typeof InstitutionalAgentService
-    >[2];
+    >[3];
 
-    const service = new InstitutionalAgentService(typedTools, typedLlm, typedLogger);
+    const service = new InstitutionalAgentService(typedTools, policy, typedLlm, typedLogger);
     const result = await service.respond(STUDENT, "Necesito hablar urgente con una persona");
 
     expect(result.shouldEscalate).toBe(true);
     expect(llm.generate).not.toHaveBeenCalled();
+  });
+
+  it("escala cuando la respuesta del modelo queda vacia", async () => {
+    const tools = {
+      collectForMessage: vi.fn().mockResolvedValue([]),
+    };
+    const llm = {
+      generate: vi.fn().mockResolvedValue({
+        content: "   ",
+        modelUsed: "gpt-4o-mini",
+        tokensUsed: 12,
+      }),
+    };
+    const logger = {
+      info: vi.fn(),
+      child: vi.fn(),
+    };
+    const typedLlm: LlmClient = llm;
+    const typedTools = tools as unknown as ConstructorParameters<
+      typeof InstitutionalAgentService
+    >[0];
+    const typedLogger = logger as unknown as ConstructorParameters<
+      typeof InstitutionalAgentService
+    >[3];
+
+    const service = new InstitutionalAgentService(
+      typedTools,
+      new InstitutionalResponsePolicyService(),
+      typedLlm,
+      typedLogger,
+    );
+
+    const result = await service.respond(STUDENT, "Necesito saber el estado");
+
+    expect(result.shouldEscalate).toBe(true);
+    expect(result.replyText).toContain("seguimiento humano");
   });
 });
