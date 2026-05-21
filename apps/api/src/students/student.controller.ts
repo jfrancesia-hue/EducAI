@@ -40,31 +40,54 @@ export class StudentController {
 
   @Get(":id")
   @ApiOkResponse({ description: "Perfil de estudiante" })
-  findOne(@Param("id") id: string) {
-    return this.students.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.students.findOne(id, {
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
   }
 
   @Patch(":id")
   @ApiOkResponse({ description: "Perfil actualizado" })
-  update(@Param("id") id: string, @Body() dto: UpdateStudentDto) {
-    return this.students.update(id, dto);
+  update(
+    @Param("id") id: string,
+    @Body() dto: UpdateStudentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.students.update(id, dto, {
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
   }
 
   @Post(":id/diagnostic")
   @ApiCreatedResponse({ description: "Diagnostico iniciado" })
-  startDiagnostic(@Param("id") id: string) {
-    return this.students.startDiagnostic(id);
+  startDiagnostic(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.students.startDiagnostic(id, {
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
   }
 
   @Post(":id/diagnostic/answer")
   @ApiOkResponse({ description: "Respuesta diagnosticada" })
-  answerDiagnostic(@Param("id") id: string, @Body() dto: DiagnosticAnswerDto) {
-    return this.students.answerDiagnostic(id, dto);
+  answerDiagnostic(
+    @Param("id") id: string,
+    @Body() dto: DiagnosticAnswerDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.students.answerDiagnostic(id, dto, {
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
   }
 
   @Get(":id/progress")
   @ApiOkResponse({ description: "Progreso agregado" })
-  progress(@Param("id") id: string) {
-    return this.students.progress(id);
+  progress(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.students.progress(id, {
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+    });
   }
 }

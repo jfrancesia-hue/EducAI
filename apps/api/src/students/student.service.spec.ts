@@ -157,7 +157,7 @@ describe("StudentService", () => {
     it("devuelve el estudiante cuando existe", async () => {
       prisma.student.findFirst.mockResolvedValue({ id: "stu_1", familyId: "fam_1" });
 
-      const result = await service.findOne("stu_1");
+      const result = await service.findOne("stu_1", { tenantId: "tnt_1", familyId: "fam_1" });
 
       expect(result.data.id).toBe("stu_1");
     });
@@ -165,7 +165,9 @@ describe("StudentService", () => {
     it("lanza StudentNotFoundError cuando no existe", async () => {
       prisma.student.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne("missing")).rejects.toBeInstanceOf(StudentNotFoundError);
+      await expect(
+        service.findOne("missing", { tenantId: "tnt_1", familyId: "fam_1" }),
+      ).rejects.toBeInstanceOf(StudentNotFoundError);
     });
   });
 
@@ -174,7 +176,11 @@ describe("StudentService", () => {
       prisma.student.findFirst.mockResolvedValue({ id: "stu_1" });
       prisma.student.update.mockResolvedValue({ id: "stu_1", firstName: "Mateo Pablo" });
 
-      await service.update("stu_1", { firstName: "Mateo Pablo" });
+      await service.update(
+        "stu_1",
+        { firstName: "Mateo Pablo" },
+        { tenantId: "tnt_1", familyId: "fam_1" },
+      );
 
       const callArg = prisma.student.update.mock.calls[0]?.[0] as
         | { data: { profile?: unknown } }
@@ -186,7 +192,11 @@ describe("StudentService", () => {
       prisma.student.findFirst.mockResolvedValue({ id: "stu_1" });
       prisma.student.update.mockResolvedValue({ id: "stu_1" });
 
-      await service.update("stu_1", { grade: 7, curriculum: "AR-NACIONAL" });
+      await service.update(
+        "stu_1",
+        { grade: 7, curriculum: "AR-NACIONAL" },
+        { tenantId: "tnt_1", familyId: "fam_1" },
+      );
 
       const callArg = prisma.student.update.mock.calls[0]?.[0] as
         | { data: { profile?: unknown } }
@@ -201,16 +211,18 @@ describe("StudentService", () => {
     it("lanza StudentNotFoundError si el estudiante no existe", async () => {
       prisma.student.findFirst.mockResolvedValue(null);
 
-      await expect(service.startDiagnostic("stu_x")).rejects.toBeInstanceOf(StudentNotFoundError);
+      await expect(
+        service.startDiagnostic("stu_x", { tenantId: "tnt_1", familyId: "fam_1" }),
+      ).rejects.toBeInstanceOf(StudentNotFoundError);
     });
 
     it("lanza StudentProfileNotFoundError si falta perfil", async () => {
       prisma.student.findFirst.mockResolvedValue({ id: "stu_1", grade: 6 });
       prisma.studentProfile.findUnique.mockResolvedValue(null);
 
-      await expect(service.startDiagnostic("stu_1")).rejects.toBeInstanceOf(
-        StudentProfileNotFoundError,
-      );
+      await expect(
+        service.startDiagnostic("stu_1", { tenantId: "tnt_1", familyId: "fam_1" }),
+      ).rejects.toBeInstanceOf(StudentProfileNotFoundError);
     });
 
     it("inicia diagnóstico nuevo cuando no hay state previo", async () => {
@@ -220,7 +232,10 @@ describe("StudentService", () => {
         diagnosticState: null,
       });
 
-      const result = await service.startDiagnostic("stu_1");
+      const result = await service.startDiagnostic("stu_1", {
+        tenantId: "tnt_1",
+        familyId: "fam_1",
+      });
 
       expect(result.data.resumed).toBe(false);
       expect(result.data.state.studentProfileId).toBe("prof_1");
@@ -246,7 +261,10 @@ describe("StudentService", () => {
         diagnosticState: existingState,
       });
 
-      const result = await service.startDiagnostic("stu_1");
+      const result = await service.startDiagnostic("stu_1", {
+        tenantId: "tnt_1",
+        familyId: "fam_1",
+      });
 
       expect(result.data.resumed).toBe(true);
       expect(diagnostic.start).not.toHaveBeenCalled();
@@ -273,10 +291,14 @@ describe("StudentService", () => {
       });
       prisma.studentProfile.update.mockResolvedValue({});
 
-      const result = await service.answerDiagnostic("stu_1", {
-        questionId: "q1",
-        answer: "A",
-      });
+      const result = await service.answerDiagnostic(
+        "stu_1",
+        {
+          questionId: "q1",
+          answer: "A",
+        },
+        { tenantId: "tnt_1", familyId: "fam_1" },
+      );
 
       expect(result.data.summary).toBeNull();
       expect(result.data.nextQuestion).not.toBeNull();
@@ -308,10 +330,14 @@ describe("StudentService", () => {
       });
       prisma.studentProfile.update.mockResolvedValue({});
 
-      const result = await service.answerDiagnostic("stu_1", {
-        questionId: "q14",
-        answer: "A",
-      });
+      const result = await service.answerDiagnostic(
+        "stu_1",
+        {
+          questionId: "q14",
+          answer: "A",
+        },
+        { tenantId: "tnt_1", familyId: "fam_1" },
+      );
 
       expect(result.data.summary).not.toBeNull();
       expect(result.data.nextQuestion).toBeNull();
@@ -332,7 +358,11 @@ describe("StudentService", () => {
       });
 
       await expect(
-        service.answerDiagnostic("stu_1", { questionId: "q1", answer: "A" }),
+        service.answerDiagnostic(
+          "stu_1",
+          { questionId: "q1", answer: "A" },
+          { tenantId: "tnt_1", familyId: "fam_1" },
+        ),
       ).rejects.toBeInstanceOf(StudentProfileNotFoundError);
     });
   });
@@ -350,7 +380,7 @@ describe("StudentService", () => {
       prisma.achievement.findMany.mockResolvedValue([{ id: "a1", name: "Racha 3 días" }]);
       prisma.learningSession.aggregate.mockResolvedValue({ _sum: { durationMinutes: 90 } });
 
-      const result = await service.progress("stu_1");
+      const result = await service.progress("stu_1", { tenantId: "tnt_1", familyId: "fam_1" });
 
       expect(result.data).toMatchObject({
         studentId: "stu_1",
@@ -375,7 +405,7 @@ describe("StudentService", () => {
       prisma.achievement.findMany.mockResolvedValue([]);
       prisma.learningSession.aggregate.mockResolvedValue({ _sum: { durationMinutes: null } });
 
-      const result = await service.progress("stu_1");
+      const result = await service.progress("stu_1", { tenantId: "tnt_1", familyId: "fam_1" });
 
       expect(result.data.minutesThisWeek).toBe(0);
     });

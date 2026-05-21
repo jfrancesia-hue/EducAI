@@ -92,9 +92,14 @@ export class StudentService {
     return { data: students };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, context: { tenantId: string; familyId: string }) {
     const student = await this.prisma.student.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        tenantId: context.tenantId,
+        familyId: context.familyId,
+        deletedAt: null,
+      },
       include: { profile: true, family: true, school: true },
     });
 
@@ -105,8 +110,8 @@ export class StudentService {
     return { data: student };
   }
 
-  async update(id: string, dto: UpdateStudentDto) {
-    await this.ensureExists(id);
+  async update(id: string, dto: UpdateStudentDto, context: { tenantId: string; familyId: string }) {
+    await this.ensureExists(id, context);
 
     const profileTouched =
       dto.grade !== undefined || dto.curriculum !== undefined || dto.whatsappPhone !== undefined;
@@ -139,8 +144,8 @@ export class StudentService {
    * Inicia o retoma un diagnóstico. Si ya hay state in-progress en DB lo
    * retoma y devuelve la última pregunta sin respuesta. Si no, arranca uno nuevo.
    */
-  async startDiagnostic(id: string) {
-    const student = await this.ensureExists(id);
+  async startDiagnostic(id: string, context: { tenantId: string; familyId: string }) {
+    const student = await this.ensureExists(id, context);
     const profile = await this.ensureProfile(student.id);
 
     const existing = this.readState(profile.diagnosticState);
@@ -164,8 +169,12 @@ export class StudentService {
     return { data: { state, question, resumed: isResume } };
   }
 
-  async answerDiagnostic(id: string, dto: DiagnosticAnswerDto) {
-    const student = await this.ensureExists(id);
+  async answerDiagnostic(
+    id: string,
+    dto: DiagnosticAnswerDto,
+    context: { tenantId: string; familyId: string },
+  ) {
+    const student = await this.ensureExists(id, context);
     const profile = await this.ensureProfile(student.id);
 
     const state = this.readState(profile.diagnosticState);
@@ -215,8 +224,8 @@ export class StudentService {
     return { data: { state: updated, summary: null, nextQuestion } };
   }
 
-  async progress(id: string) {
-    const student = await this.ensureExists(id);
+  async progress(id: string, context: { tenantId: string; familyId: string }) {
+    const student = await this.ensureExists(id, context);
     const profile = await this.ensureProfile(student.id);
 
     const [completedSessions, achievements, minutesAggregation] = await Promise.all([
@@ -259,8 +268,15 @@ export class StudentService {
     return date;
   }
 
-  private async ensureExists(id: string) {
-    const student = await this.prisma.student.findFirst({ where: { id, deletedAt: null } });
+  private async ensureExists(id: string, context: { tenantId: string; familyId: string }) {
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id,
+        tenantId: context.tenantId,
+        familyId: context.familyId,
+        deletedAt: null,
+      },
+    });
 
     if (!student) {
       throw new StudentNotFoundError(id);
