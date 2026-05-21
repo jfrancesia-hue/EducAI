@@ -29,8 +29,10 @@ export class ContactLeadService {
     };
 
     try {
+      const tenantId = await this.ensurePublicIntakeTenant();
       const lead = await this.prisma.auditLog.create({
         data: {
+          tenantId,
           action: "contact_lead.created",
           entity: "ContactLead",
           metadata,
@@ -67,5 +69,25 @@ export class ContactLeadService {
 
       return { data: { id: fallbackId, status: "received", storage: "log_only" } };
     }
+  }
+
+  private async ensurePublicIntakeTenant(): Promise<string> {
+    const tenant = await this.prisma.tenant.upsert({
+      where: { slug: "educai-public-intake" },
+      update: {},
+      create: {
+        type: "MINISTRY",
+        name: "EducAI Public Intake",
+        slug: "educai-public-intake",
+        country: "AR",
+        metadata: {
+          system: true,
+          source: "public_intake",
+        },
+      },
+      select: { id: true },
+    });
+
+    return tenant.id;
   }
 }

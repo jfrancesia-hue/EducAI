@@ -12,6 +12,9 @@ import { PrismaService } from "../src/prisma/prisma.service.js";
 const prismaMock = {
   $connect: vi.fn().mockResolvedValue(undefined),
   $disconnect: vi.fn().mockResolvedValue(undefined),
+  tenant: {
+    upsert: vi.fn(),
+  },
   student: {
     create: vi.fn(),
     findFirst: vi.fn(),
@@ -156,6 +159,7 @@ describe("Students API (e2e)", () => {
     originalOpenAiApiKey = process.env.OPENAI_API_KEY;
     process.env.ANTHROPIC_API_KEY = "";
     process.env.OPENAI_API_KEY = "test-openai-api-key";
+    prismaMock.tenant.upsert.mockResolvedValue({ id: "tnt_public_intake" });
 
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
@@ -215,6 +219,7 @@ describe("Students API (e2e)", () => {
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          tenantId: "tnt_public_intake",
           action: "contact_lead.created",
           entity: "ContactLead",
           metadata: expect.objectContaining({
