@@ -137,7 +137,7 @@ export default function HomePage() {
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#f7f8f3] to-transparent" />
         <div className="absolute left-0 top-28 hidden h-44 w-1 bg-gradient-to-b from-[#18b6a4] via-[#f8d95c] to-[#ef5da8] md:block" />
 
-        <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/20 bg-white/10 px-4 py-3 text-white shadow-float backdrop-blur-xl">
+        <header className="fixed left-4 right-4 top-4 z-50 mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/15 bg-slate-950/78 px-4 py-3 text-white shadow-float backdrop-blur-xl sm:left-6 sm:right-6 lg:left-8 lg:right-8">
           <Link href="/" className="flex items-center gap-3" aria-label="EducAI inicio">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-950">
               <GraduationCap className="h-5 w-5" aria-hidden="true" />
@@ -264,7 +264,7 @@ export default function HomePage() {
 
       <section
         id="plataforma"
-        className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-24 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8"
+        className="mx-auto grid scroll-mt-28 max-w-7xl grid-cols-1 gap-10 px-4 py-24 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8"
       >
         <div className="flex flex-col justify-center">
           <Badge
@@ -368,7 +368,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="ecosistema" className="bg-white py-24">
+      <section id="ecosistema" className="scroll-mt-28 bg-white py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <Badge variant="outline" className="border-[#7c6cff]/35 bg-[#efedff] text-[#4f3ee2]">
@@ -407,7 +407,7 @@ export default function HomePage() {
 
       <section
         id="seguridad"
-        className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-24 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8"
+        className="mx-auto grid scroll-mt-28 max-w-7xl grid-cols-1 gap-10 px-4 py-24 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8"
       >
         <div>
           <Badge variant="outline" className="border-[#ef5da8]/35 bg-[#fdeaf4] text-[#b82170]">
@@ -434,23 +434,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-950 px-4 py-24 text-white sm:px-6 lg:px-8">
+      <section className="bg-[#62dcca] px-4 py-24 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
-            <Badge className="border-white/20 bg-[#7c6cff]/20 text-white" variant="outline">
+            <Badge className="border-[#087968]/25 bg-white/72 text-[#075f53]" variant="outline">
               Pilotos 2026
             </Badge>
             <h2 className="mt-5 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
               Listo para convertirse en un producto que docentes y escuelas quieran abrir todos los
               dias.
             </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/74">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
               El siguiente salto es cerrar auth, CI, deploy y observabilidad. La experiencia visual
               ya empieza a contar una historia fuerte: aprendizaje posible, datos cuidados y apoyo
               real.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" pill className="bg-white text-slate-950 hover:bg-white/90">
+              <Button asChild size="lg" pill className="bg-slate-950 text-white hover:bg-slate-800">
                 <Link href="/login">
                   Ir al acceso <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
@@ -460,7 +460,7 @@ export default function HomePage() {
                 size="lg"
                 pill
                 variant="outline"
-                className="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+                className="border-[#075f53]/25 bg-white/72 text-[#075f53] hover:bg-white hover:text-[#064c43]"
               >
                 <Link href="/colegios">
                   Ver para colegios <UsersRound className="h-5 w-5" aria-hidden="true" />
@@ -468,9 +468,9 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border border-white/15 bg-white/10 p-5 backdrop-blur-xl">
-            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-              <LockKeyhole className="h-5 w-5 text-[#f8d95c]" aria-hidden="true" />
+          <div className="rounded-lg border border-white/55 bg-white/76 p-5 shadow-float backdrop-blur-xl">
+            <div className="flex items-center gap-3 border-b border-[#087968]/16 pb-4">
+              <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="font-display text-lg font-semibold">Checklist pre-produccion</p>
             </div>
             <div className="mt-5 grid gap-3">
@@ -484,11 +484,11 @@ export default function HomePage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center justify-between rounded-lg bg-white/10 px-4 py-3"
+                  className="flex items-center justify-between rounded-lg bg-[#e4fffb] px-4 py-3"
                 >
-                  <span className="text-sm text-white/80">{item}</span>
-                  <span className="h-2 w-16 overflow-hidden rounded-full bg-white/15">
-                    <span className="block h-full w-2/3 rounded-full bg-[#f8d95c]" />
+                  <span className="text-sm text-slate-700">{item}</span>
+                  <span className="h-2 w-16 overflow-hidden rounded-full bg-[#087968]/18">
+                    <span className="block h-full w-2/3 rounded-full bg-[#087968]" />
                   </span>
                 </div>
               ))}
