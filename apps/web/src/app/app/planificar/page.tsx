@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { AlertCircle, BookOpenCheck, CheckCircle2, Clock, FileText, Sparkles } from "lucide-react";
+import { AlertCircle, BookOpenCheck, CheckCircle2, Clock, FileText } from "lucide-react";
 
-import { Badge, Button } from "@educai/ui";
+import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
+import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 
@@ -16,7 +17,7 @@ type PlanningModulePageProps = {
 const errorMessages: Record<string, string> = {
   config: "Falta NEXT_PUBLIC_API_URL para conectar con el API.",
   auth: "No se encontro una sesion valida. Volve a ingresar.",
-  invalid: "Revisa grado, materia, tema, cantidad de clases y duracion.",
+  invalid: "Revisa nivel, anio, materia, tema, cantidad de clases y duracion.",
   api: "El API no pudo generar la clase. Revisar logs del backend.",
   network: "No se pudo conectar con el API.",
 };
@@ -74,194 +75,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             </div>
           ) : null}
 
-          <form
-            action="/app/planificar/generar"
-            method="post"
-            className="rounded-lg border border-[#d5e1dc] bg-white shadow-whisper"
-          >
-            <div className="border-b border-[#e3ebe7] p-5">
-              <Badge className="bg-[#e7fbf7] text-[#087968]">Nuevo borrador</Badge>
-              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-                Datos minimos de la clase
-              </h2>
-              <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-                Completa lo esencial. Los ajustes finos quedan abajo y son opcionales.
-              </p>
-            </div>
-
-            <div className="grid gap-5 p-5">
-              <div className="grid gap-4 md:grid-cols-[0.45fr_1fr]">
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Grado / anio</span>
-                  <input
-                    name="grade"
-                    type="number"
-                    min="1"
-                    max="12"
-                    defaultValue="7"
-                    required
-                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                  />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Materia</span>
-                  <input
-                    name="subject"
-                    defaultValue="Matematica"
-                    required
-                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                  />
-                </label>
-              </div>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Tema</span>
-                <input
-                  name="topic"
-                  defaultValue="Proporcionalidad directa"
-                  required
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Cantidad de clases</span>
-                  <input
-                    name="sessionCount"
-                    type="number"
-                    min="1"
-                    max="10"
-                    defaultValue="1"
-                    required
-                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                  />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">
-                    Duracion total en minutos
-                  </span>
-                  <input
-                    name="totalDurationMinutes"
-                    type="number"
-                    min="10"
-                    max="600"
-                    defaultValue="40"
-                    required
-                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                  />
-                </label>
-              </div>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">
-                  Objetivo de aprendizaje
-                </span>
-                <textarea
-                  name="learningGoal"
-                  rows={3}
-                  placeholder="Ej: resolver problemas de proporcionalidad directa y explicar la estrategia usada."
-                  className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-
-              <details className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd]">
-                <summary className="cursor-pointer px-4 py-3 font-semibold text-[#11231f]">
-                  Ajustes opcionales
-                </summary>
-                <div className="grid gap-4 border-t border-[#e3ebe7] p-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">
-                        Contexto del grupo
-                      </span>
-                      <textarea
-                        name="groupProfile"
-                        rows={3}
-                        placeholder="Ej: grupo heterogeneo, consignas breves, ritmo medio."
-                        className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">Saberes previos</span>
-                      <textarea
-                        name="priorKnowledge"
-                        rows={3}
-                        placeholder="Ej: ya trabajaron fracciones equivalentes y tablas simples."
-                        className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">
-                        Recursos disponibles
-                      </span>
-                      <input
-                        name="availableResources"
-                        placeholder="Pizarron, fotocopias, proyector..."
-                        className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">
-                        Que queres evaluar
-                      </span>
-                      <input
-                        name="assessmentFocus"
-                        placeholder="Procedimiento, argumentacion, trabajo grupal..."
-                        className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">Marco curricular</span>
-                      <input
-                        name="curriculumContext"
-                        placeholder="NAP, diseno provincial, repaso..."
-                        className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                    <label className="grid gap-2">
-                      <span className="text-sm font-semibold text-[#33423c]">
-                        Apoyos o adaptaciones
-                      </span>
-                      <input
-                        name="inclusionNeeds"
-                        placeholder="Apoyo visual, consignas cortas, extension..."
-                        className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#33423c]">Formato de salida</span>
-                    <input
-                      name="outputFormat"
-                      placeholder="Secuencia editable, guia para imprimir, rubrica breve..."
-                      className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] outline-none focus:border-[#18b6a4]"
-                    />
-                  </label>
-                </div>
-              </details>
-
-              <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-[15px] leading-6 text-[#4f5f58]">
-                  Se guarda como planificacion del tenant autenticado.
-                </p>
-                <Button
-                  type="submit"
-                  className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
-                >
-                  <Sparkles className="h-5 w-5" aria-hidden="true" />
-                  Crear clase
-                </Button>
-              </div>
-            </div>
-          </form>
+          <LessonPlanForm />
         </section>
 
         <aside className="grid content-start gap-5">

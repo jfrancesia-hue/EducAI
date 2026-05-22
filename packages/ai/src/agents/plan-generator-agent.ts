@@ -36,8 +36,15 @@ export const lessonPlanSchema = z.object({
 export type LessonPlanOutput = z.infer<typeof lessonPlanSchema>;
 
 export interface PlanGeneratorInput {
+  educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
   grade: number;
   subject: string;
+  courseLabel?: string;
+  institutionName?: string;
+  lessonIntent?: string;
+  levelContext?: string;
+  plannedDate?: string;
+  careerName?: string;
   topic: string;
   totalDurationMinutes: number;
   sessionCount: number;
@@ -63,7 +70,7 @@ export class PlanGeneratorAgent {
         {
           role: "system",
           content:
-            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
+            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Adapta vocabulario, complejidad, evaluacion y autonomia al nivel educativo indicado: primaria, secundaria, terciario o universitario. Ajusta la clase a la intencion didactica si viene informada: introducir, practicar, profundizar, integrar, evaluar, repasar o proyecto. Si hay fecha tentativa, usala solo para contextualizar tiempos, efemerides o calendario escolar cuando aporte. Si hay carrera, orientacion, eje, trayecto, plan de estudios, curso, comision o institucion, usalos para dar precision sin inventar datos. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
         },
         {
           role: "user",
@@ -91,7 +98,13 @@ export class PlanGeneratorAgent {
   private buildFallbackPlan(input: PlanGeneratorInput): LessonPlanOutput {
     return lessonPlanSchema.parse({
       overview: [
-        `Secuencia sobre ${input.topic} para ${input.subject}.`,
+        `Secuencia de ${input.educationLevel} sobre ${input.topic} para ${input.subject}.`,
+        input.courseLabel ? `Curso: ${input.courseLabel}.` : null,
+        input.lessonIntent ? `Intencion: ${input.lessonIntent}.` : null,
+        input.levelContext ? `Contexto del nivel: ${input.levelContext}.` : null,
+        input.plannedDate ? `Fecha tentativa: ${input.plannedDate}.` : null,
+        input.careerName ? `Carrera u orientacion: ${input.careerName}.` : null,
+        input.institutionName ? `Institucion: ${input.institutionName}.` : null,
         input.groupProfile ? `Grupo: ${input.groupProfile}.` : null,
         input.curriculumContext ? `Marco curricular: ${input.curriculumContext}.` : null,
       ]

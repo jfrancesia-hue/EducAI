@@ -445,6 +445,7 @@ describe("Students API (e2e)", () => {
       .post("/lesson-plans/generate")
       .set("Authorization", "Bearer token:teacher-missing-teacher")
       .send({
+        educationLevel: "secundaria",
         grade: 7,
         subject: "matematica",
         topic: "proporcionalidad",
@@ -467,6 +468,7 @@ describe("Students API (e2e)", () => {
       .post("/lesson-plans/generate")
       .set("Authorization", "Bearer token:teacher-1")
       .send({
+        educationLevel: "secundaria",
         grade: 7,
         subject: "matematica",
         topic: "proporcionalidad",

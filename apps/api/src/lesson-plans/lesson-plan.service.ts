@@ -15,8 +15,15 @@ export class LessonPlanService {
   async generate(input: {
     tenantId: string;
     teacherId: string;
+    educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
     grade: number;
     subject: string;
+    courseLabel?: string;
+    institutionName?: string;
+    lessonIntent?: string;
+    levelContext?: string;
+    plannedDate?: string;
+    careerName?: string;
     topic: string;
     sessionCount: number;
     totalDurationMinutes: number;
@@ -45,6 +52,13 @@ export class LessonPlanService {
         assessment: plan.assessment,
         adaptations: {
           planningContext: {
+            educationLevel: input.educationLevel,
+            courseLabel: input.courseLabel,
+            institutionName: input.institutionName,
+            lessonIntent: input.lessonIntent,
+            levelContext: input.levelContext,
+            plannedDate: input.plannedDate,
+            careerName: input.careerName,
             learningGoal: input.learningGoal,
             groupProfile: input.groupProfile,
             priorKnowledge: input.priorKnowledge,

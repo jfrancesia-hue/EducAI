@@ -35,8 +35,18 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const payload = {
+    educationLevel: readString(formData, "educationLevel"),
     grade: readInteger(formData, "grade"),
     subject: readString(formData, "subject"),
+    courseLabel: readString(formData, "courseLabel") || undefined,
+    institutionName: readString(formData, "institutionName") || undefined,
+    lessonIntent: readString(formData, "lessonIntent") || undefined,
+    levelContext: readString(formData, "levelContext") || undefined,
+    plannedDate: readString(formData, "plannedDate") || undefined,
+    careerName:
+      readString(formData, "educationLevel") === "universitario"
+        ? readString(formData, "careerName") || undefined
+        : undefined,
     topic: readString(formData, "topic"),
     sessionCount: readInteger(formData, "sessionCount"),
     totalDurationMinutes: readInteger(formData, "totalDurationMinutes"),
@@ -51,6 +61,8 @@ export async function POST(request: NextRequest) {
   };
 
   if (
+    !["primaria", "secundaria", "terciario", "universitario"].includes(payload.educationLevel) ||
+    (payload.educationLevel === "universitario" && !payload.careerName) ||
     payload.grade < 1 ||
     payload.grade > 12 ||
     !payload.subject ||
