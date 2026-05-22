@@ -8,7 +8,6 @@ import {
   ClipboardList,
   GraduationCap,
   LineChart,
-  MessageCircle,
   Sparkles,
   UsersRound,
 } from "lucide-react";
@@ -64,23 +63,29 @@ export default async function EducAiAppPage() {
   const dashboard = await fetchInstitutionalDashboard(session.access_token);
 
   return (
-    <AppShell title="Centro operativo institucional">
+    <AppShell title="Inicio">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.08fr_0.92fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-6 text-white shadow-float">
-            <Badge className="bg-[#f8d95c] text-[#11231f]">Datos reales</Badge>
+            <Badge className="bg-[#f8d95c] text-[#11231f]">EducAI docente</Badge>
             <h2 className="mt-5 max-w-3xl font-display text-4xl font-bold tracking-tight sm:text-5xl">
-              Estado operativo del trabajo docente y del seguimiento institucional.
+              Crear clases, seguir estudiantes y revisar indicadores en un solo lugar.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/82">
-              Este panel resume estudiantes, planificaciones, diagnosticos y handoffs del tenant
-              autenticado. Ya no depende de datos de ejemplo.
+              El flujo principal es generar una clase editable. Desde ahi podes mirar estudiantes y
+              reportes sin pasar por pantallas duplicadas.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
                 <Link href="/app/planificar">
                   <Sparkles className="h-4 w-4" aria-hidden="true" />
-                  Generar clase
+                  Crear clase
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white">
+                <Link href="/app/estudiantes">
+                  <UsersRound className="h-4 w-4" aria-hidden="true" />
+                  Ver estudiantes
                 </Link>
               </Button>
               <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white">
@@ -249,15 +254,12 @@ export default async function EducAiAppPage() {
           </section>
 
           <section className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-whisper">
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
-              <h2 className="font-display text-2xl font-bold tracking-tight">Acciones rapidas</h2>
-            </div>
+            <h2 className="font-display text-2xl font-bold tracking-tight">Acciones utiles</h2>
             <div className="mt-5 grid gap-3">
               {[
-                { label: "Planificar una nueva clase", href: "/app/planificar" as Route },
+                { label: "Crear una clase editable", href: "/app/planificar" as Route },
+                { label: "Revisar estudiantes", href: "/app/estudiantes" as Route },
                 { label: "Revisar indicadores reales", href: "/app/reportes" as Route },
-                { label: "Abrir el agente institucional", href: "/app/agente" as Route },
               ].map(({ label, href }) => (
                 <Button
                   key={href}

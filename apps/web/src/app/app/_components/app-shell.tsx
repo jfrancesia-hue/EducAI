@@ -5,28 +5,22 @@ import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
-  Bell,
   ClipboardList,
   GraduationCap,
   Home,
   LineChart,
-  MessageCircle,
-  Search,
-  Settings,
+  LogOut,
   Sparkles,
   UsersRound,
-  WalletCards,
 } from "lucide-react";
 
 import { Button } from "@educai/ui";
 
 const navItems = [
-  { label: "Hoy", icon: Home, href: "/app" },
+  { label: "Inicio", icon: Home, href: "/app" },
+  { label: "Crear clase", icon: ClipboardList, href: "/app/planificar" },
   { label: "Estudiantes", icon: UsersRound, href: "/app/estudiantes" },
-  { label: "Planificar", icon: ClipboardList, href: "/app/planificar" },
-  { label: "Agente IA", icon: MessageCircle, href: "/app/agente" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
-  { label: "Planes", icon: WalletCards, href: "/app/planes" },
 ] satisfies Array<{ label: string; icon: typeof Home; href: Route }>;
 
 type AppShellProps = {
@@ -57,9 +51,7 @@ export function AppShell({
                 <span className="block font-display text-lg font-semibold leading-none">
                   EducAI
                 </span>
-                <span className="mt-1 block text-[13px] leading-5 text-white/68">
-                  Centro operativo
-                </span>
+                <span className="mt-1 block text-[13px] leading-5 text-white/68">Docentes</span>
               </span>
             </Link>
 
@@ -88,23 +80,24 @@ export function AppShell({
           <div className="rounded-lg border border-white/10 bg-white/8 p-4">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#18b6a4]" />
-              <p className="text-[15px] font-semibold leading-6">Agente activo</p>
+              <p className="text-[15px] font-semibold leading-6">Flujo principal</p>
             </div>
             <p className="mt-2 text-[13px] leading-5 text-white/70">
-              Monitoreando planificaciones, recursos y pendientes docentes.
+              Crear una clase ordenada con objetivos, actividades y evaluacion.
             </p>
             <Link
-              href="/app/agente"
+              href="/app/planificar"
               className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#ff7a1a] text-sm font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.24)] transition hover:bg-[#ea6508]"
             >
-              Ejecutar
+              Crear clase
               <Sparkles className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
               href="/login/salir"
-              className="mt-2 flex h-10 w-full items-center justify-center rounded-lg bg-white/10 text-white/72 transition hover:bg-white/15 hover:text-white"
+              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white/10 text-sm font-semibold text-white/72 transition hover:bg-white/15 hover:text-white"
             >
-              <Settings className="h-4 w-4" aria-hidden="true" />
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Salir
             </Link>
           </div>
         </aside>
@@ -120,24 +113,23 @@ export function AppShell({
               </h1>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden h-11 items-center gap-2 rounded-lg border border-[#d5e1dc] bg-white px-3 text-[15px] text-[#5b6962] md:flex">
-                <Search className="h-4 w-4" aria-hidden="true" />
-                Buscar estudiante, tema o curso
-              </div>
-              <button
-                className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#d5e1dc] bg-white"
-                type="button"
-                title="Notificaciones"
-              >
-                <Bell className="h-5 w-5" aria-hidden="true" />
-              </button>
               <Button
                 asChild
                 className="bg-[#ff7a1a] text-white shadow-[0_14px_34px_rgba(255,122,26,0.36)] hover:bg-[#ea6508]"
               >
-                <Link href="/app/agente">
+                <Link href="/app/planificar">
                   <Sparkles className="h-4 w-4" aria-hidden="true" />
-                  Ejecutar agente
+                  Crear clase
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="border-[#d5e1dc] bg-white text-[#11231f]"
+              >
+                <Link href="/login/salir">
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                  Salir
                 </Link>
               </Button>
             </div>
