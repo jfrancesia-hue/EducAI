@@ -19,7 +19,7 @@ export default async function StudentsModulePage() {
   const dashboard = await fetchInstitutionalDashboard(session.access_token);
 
   return (
-    <AppShell title="Modulo de estudiantes">
+    <AppShell title="Estudiantes" eyebrow="Seguimiento">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.05fr_0.95fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
