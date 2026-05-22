@@ -1,8 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "@educai/ui";
 import { hasSupabaseEnv } from "../../lib/supabase/env";
+
+const loginHeroImage =
+  "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=85";
 
 const errorMessages: Record<string, string> = {
   config: "Falta configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en web.",
@@ -25,42 +29,52 @@ export default function LoginPage({
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
 
   return (
-    <main className="min-h-screen bg-[#1f2a24] p-4 text-white sm:p-6">
-      <div className="grid min-h-[calc(100vh-32px)] overflow-hidden rounded-lg border border-white/12 bg-[#faf8f0] text-[#14120f] shadow-float lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="flex flex-col justify-between bg-[#1f2a24] p-6 text-white sm:p-10">
+    <main className="min-h-screen bg-[#62dcca] p-4 text-slate-950 sm:p-6">
+      <div className="grid min-h-[calc(100vh-32px)] overflow-hidden rounded-lg border border-white/45 bg-[#faf8f0] text-[#14120f] shadow-float lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="relative flex flex-col justify-between overflow-hidden bg-[#62dcca] p-6 text-slate-950 sm:p-10">
+          <Image
+            src={loginHeroImage}
+            alt="Docente acompanando a estudiantes felices en el aula"
+            fill
+            priority
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-[#62dcca]/72" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(98,220,202,0.94)_0%,rgba(98,220,202,0.78)_48%,rgba(98,220,202,0.46)_100%)]" />
           <Link
             href="/"
-            className="flex items-center gap-3 font-display text-xl font-bold tracking-tight"
+            className="relative z-10 flex items-center gap-3 font-display text-xl font-bold tracking-tight"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f7d95c] text-[#1f2a24]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-[#075f53]">
               <GraduationCap className="h-6 w-6" aria-hidden="true" />
             </span>
             EducAI
           </Link>
 
-          <div className="max-w-xl py-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#f7d95c]">
+          <div className="relative z-10 max-w-xl py-16">
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#075f53]">
               Acceso seguro
             </p>
             <h1 className="mt-5 font-display text-5xl font-bold leading-tight tracking-tight">
               Entra con tu cuenta real de EducAI.
             </h1>
-            <p className="mt-5 text-lg leading-8 text-white/70">
+            <p className="mt-5 text-lg leading-8 text-slate-700">
               Este acceso ya no usa una cookie demo. La sesion vive en Supabase Auth y es la base
               para cerrar permisos, roles y aislamiento real por tenant.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-white/12 bg-white/8 p-4">
-              <ShieldCheck className="h-5 w-5 text-[#f7d95c]" aria-hidden="true" />
-              <p className="mt-3 text-sm leading-6 text-white/70">
+          <div className="relative z-10 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
+              <ShieldCheck className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
+              <p className="mt-3 text-sm leading-6 text-slate-700">
                 Sesion real respaldada por Supabase Auth.
               </p>
             </div>
-            <div className="rounded-lg border border-white/12 bg-white/8 p-4">
-              <LockKeyhole className="h-5 w-5 text-[#f7d95c]" aria-hidden="true" />
-              <p className="mt-3 text-sm leading-6 text-white/70">
+            <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
+              <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
+              <p className="mt-3 text-sm leading-6 text-slate-700">
                 Primer paso para conectar RBAC y contexto de tenant.
               </p>
             </div>

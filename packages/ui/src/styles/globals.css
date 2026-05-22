@@ -67,17 +67,29 @@
 
   [data-brand="educai"] .text-xs {
     font-size: 0.8125rem;
+    font-weight: 600;
     line-height: 1.35rem;
   }
 
   [data-brand="educai"] .text-sm {
     font-size: 0.9375rem;
+    font-weight: 600;
     line-height: 1.55rem;
   }
 
   [data-brand="educai"] .text-\[13px\] {
     font-size: 0.875rem;
+    font-weight: 600;
     line-height: 1.45rem;
+  }
+
+  [data-brand="educai"] .text-slate-500,
+  [data-brand="educai"] .text-slate-600 {
+    color: #475569;
+  }
+
+  [data-brand="educai"] .text-slate-700 {
+    color: #334155;
   }
 
   [data-brand="educai"] .tracking-\[0\.28em\],
@@ -94,6 +106,7 @@
     color: #35443d;
   }
 
+  [data-brand="educai"] .text-white\/60,
   [data-brand="educai"] .text-white\/62,
   [data-brand="educai"] .text-white\/64,
   [data-brand="educai"] .text-white\/68,

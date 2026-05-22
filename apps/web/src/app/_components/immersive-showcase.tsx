@@ -38,19 +38,18 @@ export function ImmersiveShowcase() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-[#111827] px-4 py-24 text-white sm:px-6 lg:px-8">
-      <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:56px_56px]" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+    <section className="relative overflow-hidden bg-[#62dcca] px-4 py-24 text-slate-950 sm:px-6 lg:px-8">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#087968]/45 to-transparent" />
 
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
         <div className="relative z-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#f8d95c]">
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#087968]">
             Aula aumentada
           </p>
           <h2 className="mt-5 max-w-2xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
             Que la plataforma se sienta como una ventana al aprendizaje real.
           </h2>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-white/72">
+          <p className="mt-5 max-w-xl text-lg leading-8 text-slate-700">
             Fotos reales, senales pedagogicas y una capa visual que muestra como EducAI ayuda a
             planificar, producir recursos y seguir el aprendizaje sin invadir la experiencia de
             aula.
@@ -59,13 +58,13 @@ export function ImmersiveShowcase() {
             {signals.map((signal) => (
               <div
                 key={signal.label}
-                className="flex items-center justify-between rounded-lg border border-white/12 bg-white/10 p-4 backdrop-blur-xl"
+                className="flex items-center justify-between rounded-lg border border-[#18b6a4]/18 bg-white/72 p-4 shadow-whisper backdrop-blur-xl"
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e9fffb] text-[#087968]">
                     <signal.icon className="h-5 w-5" aria-hidden="true" />
                   </span>
-                  <span className="text-sm text-white/72">{signal.label}</span>
+                  <span className="text-sm text-slate-600">{signal.label}</span>
                 </div>
                 <span className="font-display text-xl font-semibold">{signal.value}</span>
               </div>
@@ -79,7 +78,7 @@ export function ImmersiveShowcase() {
           onPointerMove={handlePointerMove}
           onPointerLeave={resetTilt}
         >
-          <div className="immersive-stack mx-auto max-w-3xl overflow-hidden rounded-lg border border-white/15 bg-white/10 p-3 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-4">
+          <div className="immersive-stack mx-auto max-w-3xl overflow-hidden rounded-lg border border-[#18b6a4]/18 bg-white/70 p-3 shadow-[0_30px_80px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:p-4">
             <div className="grid gap-4">
               <div className="relative min-h-[360px] overflow-hidden rounded-lg border border-white/10 bg-slate-900 sm:min-h-[430px]">
                 <Image
