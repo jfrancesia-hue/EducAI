@@ -18,6 +18,15 @@ function redirectTo(request: NextRequest, params: Record<string, string>) {
   return NextResponse.redirect(url, { status: 303 });
 }
 
+async function readApiErrorCode(response: Response) {
+  try {
+    const body = (await response.json()) as { code?: unknown };
+    return typeof body.code === "string" ? body.code : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (!apiBaseUrl) {
@@ -87,6 +96,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
+      const code = await readApiErrorCode(response);
+      if (code === "TEACHER_PROFILE_MISSING") {
+        return redirectTo(request, { error: "teacher_profile" });
+      }
+
       return redirectTo(request, { error: "api" });
     }
 

@@ -18,6 +18,8 @@ const errorMessages: Record<string, string> = {
   config: "No pudimos preparar el generador en este momento.",
   auth: "Tu sesion expiro. Volve a ingresar.",
   invalid: "Revisa nivel, anio, materia, tema, cantidad de clases y duracion.",
+  teacher_profile:
+    "Esta cuenta escolar todavia no tiene un perfil docente asociado para guardar clases.",
   api: "No pudimos generar la clase. Reintenta en unos minutos.",
   network: "La conexion fallo. Reintenta en unos minutos.",
 };
