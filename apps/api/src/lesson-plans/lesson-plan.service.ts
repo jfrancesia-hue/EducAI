@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { AnthropicLlmClient, PlanGeneratorAgent } from "@educai/ai";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -39,54 +44,66 @@ export class LessonPlanService {
       });
     }
 
-    const plannerEmail = `planner-${user.id}@educai.local`;
-    const appUser =
-      (await this.prisma.user.findUnique({ where: { email: plannerEmail } })) ??
-      (await this.prisma.user.create({
-        data: {
-          tenantId: user.tenantId,
-          email: plannerEmail,
-          fullName: user.email?.split("@")[0] || "Administrador escolar",
-          role: "TEACHER",
-        },
-      }));
+    try {
+      const plannerEmail = `planner-${user.id}@educai.local`;
+      const appUser =
+        (await this.prisma.user.findUnique({ where: { email: plannerEmail } })) ??
+        (await this.prisma.user.create({
+          data: {
+            tenantId: user.tenantId,
+            email: plannerEmail,
+            fullName: user.email?.split("@")[0] || "Administrador escolar",
+            role: "TEACHER",
+          },
+        }));
 
-    if (appUser.tenantId && appUser.tenantId !== user.tenantId) {
-      throw new ForbiddenException({
-        code: "TENANT_CONTEXT_MISMATCH",
-        message: "El usuario autenticado no pertenece al tenant solicitado",
-      });
-    }
-
-    const existingTeacher = await this.prisma.teacher.findUnique({
-      where: { userId: appUser.id },
-    });
-
-    if (existingTeacher) {
-      if (
-        existingTeacher.tenantId !== user.tenantId ||
-        existingTeacher.schoolId !== user.schoolId
-      ) {
+      if (appUser.tenantId && appUser.tenantId !== user.tenantId) {
         throw new ForbiddenException({
-          code: "SCHOOL_CONTEXT_MISMATCH",
-          message: "El perfil docente no pertenece a la escuela autenticada",
+          code: "TENANT_CONTEXT_MISMATCH",
+          message: "El usuario autenticado no pertenece al tenant solicitado",
         });
       }
 
-      return existingTeacher.id;
+      const existingTeacher = await this.prisma.teacher.findUnique({
+        where: { userId: appUser.id },
+      });
+
+      if (existingTeacher) {
+        if (
+          existingTeacher.tenantId !== user.tenantId ||
+          existingTeacher.schoolId !== user.schoolId
+        ) {
+          throw new ForbiddenException({
+            code: "SCHOOL_CONTEXT_MISMATCH",
+            message: "El perfil docente no pertenece a la escuela autenticada",
+          });
+        }
+
+        return existingTeacher.id;
+      }
+
+      const teacher = await this.prisma.teacher.create({
+        data: {
+          tenantId: user.tenantId,
+          schoolId: user.schoolId,
+          userId: appUser.id,
+          title: "Administrador escolar",
+          subjects: [],
+        },
+      });
+
+      return teacher.id;
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException({
+        code: "PLANNER_PROFILE_FAILED",
+        message: "No se pudo preparar el perfil docente para generar la clase",
+        detail: error instanceof Error ? error.message : "Error desconocido",
+      });
     }
-
-    const teacher = await this.prisma.teacher.create({
-      data: {
-        tenantId: user.tenantId,
-        schoolId: user.schoolId,
-        userId: appUser.id,
-        title: "Administrador escolar",
-        subjects: [],
-      },
-    });
-
-    return teacher.id;
   }
 
   async generate(input: {
@@ -114,45 +131,54 @@ export class LessonPlanService {
     outputFormat?: string;
   }) {
     const plan = await this.generator.generate(input);
-    const created = await this.prisma.lessonPlan.create({
-      data: {
-        tenantId: input.tenantId,
-        teacherId: input.teacherId,
-        grade: input.grade,
-        subject: input.subject,
-        topic: input.topic,
-        durationMinutes: input.totalDurationMinutes,
-        competences: plan.competences,
-        objectives: plan.objectives,
-        activities: plan.sessions,
-        resources: plan.sessions.flatMap((session) => session.resources),
-        assessment: plan.assessment,
-        adaptations: {
-          planningContext: {
-            educationLevel: input.educationLevel,
-            courseLabel: input.courseLabel,
-            institutionName: input.institutionName,
-            lessonIntent: input.lessonIntent,
-            levelContext: input.levelContext,
-            plannedDate: input.plannedDate,
-            careerName: input.careerName,
-            learningGoal: input.learningGoal,
-            groupProfile: input.groupProfile,
-            priorKnowledge: input.priorKnowledge,
-            curriculumContext: input.curriculumContext,
-            availableResources: input.availableResources,
-            assessmentFocus: input.assessmentFocus,
-            inclusionNeeds: input.inclusionNeeds,
-            outputFormat: input.outputFormat,
+    let created: { id: string };
+    try {
+      created = await this.prisma.lessonPlan.create({
+        data: {
+          tenantId: input.tenantId,
+          teacherId: input.teacherId,
+          grade: input.grade,
+          subject: input.subject,
+          topic: input.topic,
+          durationMinutes: input.totalDurationMinutes,
+          competences: plan.competences,
+          objectives: plan.objectives,
+          activities: plan.sessions,
+          resources: plan.sessions.flatMap((session) => session.resources),
+          assessment: plan.assessment,
+          adaptations: {
+            planningContext: {
+              educationLevel: input.educationLevel,
+              courseLabel: input.courseLabel,
+              institutionName: input.institutionName,
+              lessonIntent: input.lessonIntent,
+              levelContext: input.levelContext,
+              plannedDate: input.plannedDate,
+              careerName: input.careerName,
+              learningGoal: input.learningGoal,
+              groupProfile: input.groupProfile,
+              priorKnowledge: input.priorKnowledge,
+              curriculumContext: input.curriculumContext,
+              availableResources: input.availableResources,
+              assessmentFocus: input.assessmentFocus,
+              inclusionNeeds: input.inclusionNeeds,
+              outputFormat: input.outputFormat,
+            },
+            differentiation: plan.sessions.map((session) => ({
+              session: session.number,
+              differentiation: session.differentiation,
+            })),
           },
-          differentiation: plan.sessions.map((session) => ({
-            session: session.number,
-            differentiation: session.differentiation,
-          })),
+          generatedByAI: true,
         },
-        generatedByAI: true,
-      },
-    });
+      });
+    } catch (error) {
+      throw new InternalServerErrorException({
+        code: "LESSON_PLAN_SAVE_FAILED",
+        message: "No se pudo guardar la planificacion generada",
+        detail: error instanceof Error ? error.message : "Error desconocido",
+      });
+    }
 
     return { data: { id: created.id, plan } };
   }
