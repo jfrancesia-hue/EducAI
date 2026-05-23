@@ -37,6 +37,7 @@ const prismaMock = {
   },
   teacher: {
     create: vi.fn(),
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
   },
   lessonPlan: {
@@ -497,13 +498,7 @@ describe("Students API (e2e)", () => {
   });
 
   it("POST /lesson-plans/generate permite al admin escolar crear plan con perfil docente asociado", async () => {
-    prismaMock.user.findUnique.mockResolvedValueOnce({
-      id: "usr_school_planner_1",
-      tenantId: "tnt_school_1",
-      email: "planner-usr_school_1@educai.local",
-    });
-    prismaMock.teacher.findUnique.mockResolvedValueOnce(null);
-    prismaMock.teacher.create.mockResolvedValueOnce({
+    prismaMock.teacher.findFirst.mockResolvedValueOnce({
       id: "tea_school_admin_1",
       tenantId: "tnt_school_1",
       schoolId: "sch_1",
@@ -527,12 +522,11 @@ describe("Students API (e2e)", () => {
       });
 
     expect(response.status).toBe(201);
-    expect(prismaMock.teacher.create).toHaveBeenCalledWith(
+    expect(prismaMock.teacher.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
+        where: expect.objectContaining({
           tenantId: "tnt_school_1",
           schoolId: "sch_1",
-          userId: "usr_school_planner_1",
         }),
       }),
     );

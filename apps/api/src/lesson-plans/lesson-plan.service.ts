@@ -45,54 +45,23 @@ export class LessonPlanService {
     }
 
     try {
-      const plannerEmail = `planner-${user.id}@educai.local`;
-      const appUser =
-        (await this.prisma.user.findUnique({ where: { email: plannerEmail } })) ??
-        (await this.prisma.user.create({
-          data: {
-            tenantId: user.tenantId,
-            email: plannerEmail,
-            fullName: user.email?.split("@")[0] || "Administrador escolar",
-            role: "TEACHER",
-          },
-        }));
+      const existingTeacher = await this.prisma.teacher.findFirst({
+        where: {
+          tenantId: user.tenantId,
+          schoolId: user.schoolId,
+          deletedAt: null,
+        },
+        orderBy: { createdAt: "asc" },
+      });
 
-      if (appUser.tenantId && appUser.tenantId !== user.tenantId) {
+      if (!existingTeacher) {
         throw new ForbiddenException({
-          code: "TENANT_CONTEXT_MISMATCH",
-          message: "El usuario autenticado no pertenece al tenant solicitado",
+          code: "TEACHER_PROFILE_MISSING",
+          message: "La escuela no tiene un perfil docente disponible para guardar la clase",
         });
       }
 
-      const existingTeacher = await this.prisma.teacher.findUnique({
-        where: { userId: appUser.id },
-      });
-
-      if (existingTeacher) {
-        if (
-          existingTeacher.tenantId !== user.tenantId ||
-          existingTeacher.schoolId !== user.schoolId
-        ) {
-          throw new ForbiddenException({
-            code: "SCHOOL_CONTEXT_MISMATCH",
-            message: "El perfil docente no pertenece a la escuela autenticada",
-          });
-        }
-
-        return existingTeacher.id;
-      }
-
-      const teacher = await this.prisma.teacher.create({
-        data: {
-          tenantId: user.tenantId,
-          schoolId: user.schoolId,
-          userId: appUser.id,
-          title: "Administrador escolar",
-          subjects: [],
-        },
-      });
-
-      return teacher.id;
+      return existingTeacher.id;
     } catch (error) {
       if (error instanceof ForbiddenException) {
         throw error;
