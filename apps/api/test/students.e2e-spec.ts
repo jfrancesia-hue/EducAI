@@ -498,9 +498,9 @@ describe("Students API (e2e)", () => {
 
   it("POST /lesson-plans/generate permite al admin escolar crear plan con perfil docente asociado", async () => {
     prismaMock.user.findUnique.mockResolvedValueOnce({
-      id: "usr_school_1",
+      id: "usr_school_planner_1",
       tenantId: "tnt_school_1",
-      email: "escuela1@educai.local",
+      email: "planner-usr_school_1@educai.local",
     });
     prismaMock.teacher.findUnique.mockResolvedValueOnce(null);
     prismaMock.teacher.create.mockResolvedValueOnce({
@@ -532,7 +532,7 @@ describe("Students API (e2e)", () => {
         data: expect.objectContaining({
           tenantId: "tnt_school_1",
           schoolId: "sch_1",
-          userId: "usr_school_1",
+          userId: "usr_school_planner_1",
         }),
       }),
     );

@@ -39,21 +39,15 @@ export class LessonPlanService {
       });
     }
 
-    if (!user.email) {
-      throw new ForbiddenException({
-        code: "EMAIL_CONTEXT_MISSING",
-        message: "Falta el email en la sesion autenticada",
-      });
-    }
-
+    const plannerEmail = `planner-${user.id}@educai.local`;
     const appUser =
-      (await this.prisma.user.findUnique({ where: { email: user.email } })) ??
+      (await this.prisma.user.findUnique({ where: { email: plannerEmail } })) ??
       (await this.prisma.user.create({
         data: {
           tenantId: user.tenantId,
-          email: user.email,
-          fullName: user.email.split("@")[0] || "Administrador escolar",
-          role: "SCHOOL_ADMIN",
+          email: plannerEmail,
+          fullName: user.email?.split("@")[0] || "Administrador escolar",
+          role: "TEACHER",
         },
       }));
 
