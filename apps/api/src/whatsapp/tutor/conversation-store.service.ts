@@ -18,6 +18,7 @@ export interface InboundMessageInput {
   mediaType?: string;
   twilioMessageSid: string;
   safetyStatus: string;
+  channel?: "whatsapp" | "web";
 }
 
 export interface OutboundMessageInput {
@@ -40,7 +41,7 @@ export class ConversationStoreService {
       data: {
         tenantId: input.student.tenantId,
         conversationId: conversation.id,
-        role: "student",
+        role: input.channel === "web" ? "web_student" : "student",
         content: input.body,
         mediaUrl: input.mediaUrl,
         mediaType: input.mediaType,

@@ -101,6 +101,38 @@ export class StudentResolverService {
     return this.fromProfile(profile, phone, "STUDENT");
   }
 
+  async resolveByStudentForFamily(input: {
+    studentId: string;
+    tenantId: string;
+    familyId: string;
+  }): Promise<ResolvedStudent> {
+    const profile = await this.prisma.studentProfile.findFirst({
+      where: {
+        studentId: input.studentId,
+        tenantId: input.tenantId,
+        student: {
+          familyId: input.familyId,
+          deletedAt: null,
+        },
+      },
+      include: {
+        student: {
+          include: {
+            family: {
+              include: { subscription: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!profile || !profile.student || profile.student.deletedAt) {
+      throw new StudentNotEnrolledError(input.studentId);
+    }
+
+    return this.fromProfile(profile, profile.whatsappPhone ?? "", "STUDENT");
+  }
+
   private fromProfile(
     profile: {
       id: string;

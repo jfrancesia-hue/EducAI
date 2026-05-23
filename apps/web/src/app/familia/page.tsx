@@ -6,6 +6,7 @@ import { Badge, Button } from "@educai/ui";
 import { fetchFamilyStudents } from "../../lib/api/family-students";
 import { extractRoleFromMetadata } from "../../lib/supabase/roles";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { FamilyTutorChat } from "./_components/family-tutor-chat";
 
 export const dynamic = "force-dynamic";
 
@@ -219,6 +220,8 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
             </article>
           </section>
         ) : null}
+
+        {!error && students.length ? <FamilyTutorChat students={students} /> : null}
 
         <section className="grid gap-4 md:grid-cols-2">
           {error ? (

@@ -9,8 +9,10 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { CreateStudentDto } from "./dto/create-student.dto.js";
 import { DiagnosticAnswerDto } from "./dto/diagnostic-answer.dto.js";
 import { UpdateStudentDto } from "./dto/update-student.dto.js";
+import { WebTutorMessageDto } from "./dto/web-tutor-message.dto.js";
 import { FamilyScopeGuard } from "./guards/family-scope.guard.js";
 import { StudentService } from "./student.service.js";
+import { WebTutorService } from "../whatsapp/tutor/web-tutor.service.js";
 
 @ApiTags("students")
 @ApiBearerAuth()
@@ -18,7 +20,10 @@ import { StudentService } from "./student.service.js";
 @UseGuards(SupabaseAuthGuard, RolesGuard, FamilyScopeGuard)
 @Roles("PARENT", "SUPER_ADMIN")
 export class StudentController {
-  constructor(private readonly students: StudentService) {}
+  constructor(
+    private readonly students: StudentService,
+    private readonly webTutor: WebTutorService,
+  ) {}
 
   @Post()
   @ApiCreatedResponse({ description: "Perfil de estudiante creado" })
@@ -88,6 +93,22 @@ export class StudentController {
     return this.students.progress(id, {
       familyId: user.familyId!,
       tenantId: user.tenantId!,
+    });
+  }
+
+  @Post(":id/tutor")
+  @ApiCreatedResponse({ description: "Respuesta del tutor ApoyoAI por web" })
+  askTutor(
+    @Param("id") id: string,
+    @Body() dto: WebTutorMessageDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.webTutor.ask({
+      studentId: id,
+      familyId: user.familyId!,
+      tenantId: user.tenantId!,
+      message: dto.message,
+      subject: dto.subject,
     });
   }
 }
