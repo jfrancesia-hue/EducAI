@@ -14,6 +14,18 @@ import type {
 } from "./dto/register-educai-teacher.dto.js";
 
 type EducAiTeacherSignupInput = Omit<RegisterEducAiTeacherDto, "email" | "password">;
+type EducAiPlanCode = RegisterEducAiTeacherDto["plan"];
+
+const MERCADOPAGO_PLAN_PRICES: Record<Exclude<EducAiPlanCode, "free">, number> = {
+  "docente-individual": 9900,
+  "docente-pro": 24900,
+};
+
+interface MercadoPagoPreferenceResponse {
+  id?: string;
+  init_point?: string;
+  sandbox_init_point?: string;
+}
 
 @Injectable()
 export class EducAiOnboardingService {
@@ -113,14 +125,109 @@ export class EducAiOnboardingService {
       plan: dto.plan,
     });
 
+    const checkout = await this.createCheckoutPreferenceSafely({
+      plan: dto.plan,
+      email,
+      fullName: dto.fullName,
+      externalReference: `educai:${result.tenant.id}:${dto.plan}`,
+    });
+
     return {
       data: {
         tenantId: result.tenant.id,
         schoolId: result.school.id,
         teacherId: result.teacher.id,
         plan: dto.plan,
-        nextStep: "login",
+        checkout,
+        nextStep:
+          dto.plan === "free"
+            ? "login"
+            : checkout
+              ? "mercadopago_checkout_pending"
+              : "payment_unavailable",
       },
+    };
+  }
+
+  private async createCheckoutPreferenceSafely(input: {
+    plan: EducAiPlanCode;
+    email: string;
+    fullName: string;
+    externalReference: string;
+  }): Promise<{ provider: "mercadopago"; preferenceId: string; checkoutUrl: string } | null> {
+    try {
+      return await this.createCheckoutPreference(input);
+    } catch {
+      return null;
+    }
+  }
+
+  private async createCheckoutPreference(input: {
+    plan: EducAiPlanCode;
+    email: string;
+    fullName: string;
+    externalReference: string;
+  }): Promise<{ provider: "mercadopago"; preferenceId: string; checkoutUrl: string } | null> {
+    if (input.plan === "free") {
+      return null;
+    }
+
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
+    if (!accessToken) {
+      throw new ServiceUnavailableException("Mercado Pago no esta configurado");
+    }
+
+    const appUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/u, "");
+    const notificationUrl = process.env.MERCADOPAGO_WEBHOOK_URL?.trim();
+    const preferenceBody = {
+      items: [
+        {
+          id: `educai-${input.plan}`,
+          title: `EducAI ${input.plan}`,
+          quantity: 1,
+          currency_id: "ARS",
+          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+        },
+      ],
+      payer: {
+        email: input.email,
+        name: input.fullName,
+      },
+      external_reference: input.externalReference,
+      back_urls: appUrl
+        ? {
+            success: `${appUrl}/login?registered=educai&payment=success&next=/app`,
+            pending: `${appUrl}/login?registered=educai&payment=pending&next=/app`,
+            failure: `${appUrl}/registro?producto=educai&plan=${input.plan}&error=payment`,
+          }
+        : undefined,
+      notification_url: notificationUrl || undefined,
+      auto_return: appUrl ? "approved" : undefined,
+    };
+
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(preferenceBody),
+    });
+
+    if (!response.ok) {
+      throw new ServiceUnavailableException("No se pudo crear el checkout de Mercado Pago");
+    }
+
+    const preference = (await response.json()) as MercadoPagoPreferenceResponse;
+    const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
+    if (!preference.id || !checkoutUrl) {
+      throw new ServiceUnavailableException("Mercado Pago no devolvio URL de checkout");
+    }
+
+    return {
+      provider: "mercadopago",
+      preferenceId: preference.id,
+      checkoutUrl,
     };
   }
 

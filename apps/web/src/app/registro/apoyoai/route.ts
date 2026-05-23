@@ -69,6 +69,13 @@ export async function POST(request: Request) {
   if (body.data?.nextStep === "mercadopago_checkout_pending" && body.data.checkout?.checkoutUrl) {
     return NextResponse.redirect(body.data.checkout.checkoutUrl, { status: 303 });
   }
+  if (body.data?.nextStep === "mercadopago_checkout_pending") {
+    const url = new URL("/registro", request.url);
+    url.searchParams.set("producto", "apoyoai");
+    url.searchParams.set("plan", plan);
+    url.searchParams.set("error", "payment");
+    return NextResponse.redirect(url, { status: 303 });
+  }
 
   const redirectUrl = new URL("/familia", request.url);
   const auth = await signInWithPasswordRedirect(request, {

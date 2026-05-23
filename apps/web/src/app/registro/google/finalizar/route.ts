@@ -27,7 +27,7 @@ type PendingGoogleSignup =
       studentWhatsappPhone?: string;
     };
 
-type ApoyoAiRegisterResponse = {
+type RegisterResponse = {
   data?: {
     nextStep?: string;
     checkout?: {
@@ -125,15 +125,26 @@ export async function GET(request: Request) {
     );
   }
 
-  if (pending.product === "apoyoai") {
-    const payload = (await response.json()) as ApoyoAiRegisterResponse;
-    if (
-      payload.data?.nextStep === "mercadopago_checkout_pending" &&
-      payload.data.checkout?.checkoutUrl
-    ) {
-      return redirectWithClearedCookie(new URL(payload.data.checkout.checkoutUrl));
-    }
+  const payload = (await response.json()) as RegisterResponse;
+  if (
+    payload.data?.nextStep === "mercadopago_checkout_pending" &&
+    payload.data.checkout?.checkoutUrl
+  ) {
+    return redirectWithClearedCookie(new URL(payload.data.checkout.checkoutUrl));
+  }
+  if (
+    payload.data?.nextStep === "mercadopago_checkout_pending" ||
+    payload.data?.nextStep === "payment_unavailable"
+  ) {
+    return redirectWithClearedCookie(
+      new URL(
+        `/registro?producto=${pending.product}&plan=${pending.plan}&error=payment`,
+        request.url,
+      ),
+    );
+  }
 
+  if (pending.product === "apoyoai") {
     return redirectWithClearedCookie(new URL("/familia", request.url));
   }
 

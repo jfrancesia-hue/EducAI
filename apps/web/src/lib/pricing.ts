@@ -68,7 +68,7 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     audience: "Para probar sin tarjeta",
     price: "$0",
     description: "Creditos unicos de por vida para conocer el flujo docente.",
-    ctaLabel: "Empezar gratis",
+    ctaLabel: "Registrarse gratis",
     ctaHref: "/registro?producto=educai&plan=free",
     includes: [
       "2 planificaciones completas",
@@ -163,7 +163,7 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
     audience: "Para conocer el tutor",
     price: "$0",
     description: "Creditos unicos de por vida para probar apoyo por app.",
-    ctaLabel: "Empezar gratis",
+    ctaLabel: "Registrarse gratis",
     ctaHref: "/registro?producto=apoyoai&plan=free",
     includes: ["10 consultas de tutor por app", "2 fotos de tareas", "1 perfil de hijo"],
     excludes: ["WhatsApp", "Audio", "Diagnostico adaptativo", "Reportes"],

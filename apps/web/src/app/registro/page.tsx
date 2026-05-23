@@ -1,16 +1,19 @@
+import type { Route } from "next";
 import Link from "next/link";
 import {
   ArrowLeft,
   BookOpenCheck,
   Building2,
-  CheckCircle2,
+  GraduationCap,
   MapPin,
   Phone,
   Sparkles,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { apoyoAiPublicPlans, educaiPublicPlans, type PublicPricingPlan } from "../../lib/pricing";
 import { PasswordField } from "../_components/password-field";
 
 type RegisterPageProps = {
@@ -21,18 +24,87 @@ type RegisterPageProps = {
   }>;
 };
 
-const labels: Record<string, string> = {
-  educai: "EducAI",
-  apoyoai: "ApoyoAI",
-};
+type ProductId = "educai" | "apoyoai";
+
+const educaiSelfServicePlans = educaiPublicPlans.filter((plan) =>
+  ["free", "docente-individual", "docente-pro"].includes(plan.id),
+);
+
+function registerHref(product: ProductId, plan = "free") {
+  return `/registro?producto=${product}&plan=${plan}` as Route;
+}
+
+function pricingHref(product: ProductId) {
+  return (product === "apoyoai" ? "/apoyoai/precios" : "/precios") as Route;
+}
+
+function normalizeProduct(value?: string): ProductId {
+  return value === "apoyoai" ? "apoyoai" : "educai";
+}
+
+function normalizePlan(plans: PublicPricingPlan[], value?: string) {
+  return plans.some((plan) => plan.id === value) ? (value ?? "free") : "free";
+}
+
+function PlanChooser({
+  plans,
+  selectedPlanId,
+}: {
+  plans: PublicPricingPlan[];
+  selectedPlanId: string;
+}) {
+  return (
+    <fieldset className="grid gap-3">
+      <legend className="text-sm font-bold text-slate-800">Elegir plan</legend>
+      <div className="grid gap-3 md:grid-cols-3">
+        {plans.map((plan) => {
+          const isFree = plan.id === "free";
+          return (
+            <label key={plan.id} className="cursor-pointer">
+              <input
+                type="radio"
+                name="plan"
+                value={plan.id}
+                defaultChecked={plan.id === selectedPlanId}
+                className="peer sr-only"
+              />
+              <span className="block h-full rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 transition peer-checked:border-[#18b6a4] peer-checked:bg-[#d8f7ee] peer-checked:ring-2 peer-checked:ring-[#18b6a4]/25">
+                <span className="flex items-start justify-between gap-3">
+                  <span>
+                    <span className="block font-display text-lg font-bold">{plan.name}</span>
+                    <span className="mt-1 block text-sm font-semibold text-slate-700">
+                      {plan.price}
+                    </span>
+                  </span>
+                  {plan.featured ? (
+                    <Badge className="bg-[#ff7a1a] text-white">Recomendado</Badge>
+                  ) : isFree ? (
+                    <Badge className="bg-white text-[#075f53]">Sin tarjeta</Badge>
+                  ) : null}
+                </span>
+                <span className="mt-3 block text-sm leading-6 text-slate-600">
+                  {plan.description}
+                </span>
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      <p className="text-sm font-semibold leading-6 text-[#075f53]">
+        Free crea la cuenta sin tarjeta. Si elegis un plan pago, guardamos tus datos y despues te
+        llevamos a Mercado Pago para completar la contratacion.
+      </p>
+    </fieldset>
+  );
+}
 
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const params = (await searchParams) ?? {};
-  const product = labels[params.producto ?? ""] ?? "EducAI";
-  const plan = params.plan ?? "free";
-  const isApoyoAi = product === "ApoyoAI";
-  const isEducAiSelfService =
-    product === "EducAI" && ["free", "docente-individual", "docente-pro"].includes(plan);
+  const product = normalizeProduct(params.producto);
+  const isApoyoAi = product === "apoyoai";
+  const plans = isApoyoAi ? apoyoAiPublicPlans : educaiSelfServicePlans;
+  const plan = normalizePlan(plans, params.plan);
+  const selectedPlan = plans.find((item) => item.id === plan) ?? plans[0];
   const errorMessage =
     params.error === "exists"
       ? "Ya existe una cuenta con ese email. Inicia sesion o usa otro correo."
@@ -40,54 +112,92 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
         ? "Para crear la cuenta tenes que aceptar los terminos y la politica de privacidad."
         : params.error === "google"
           ? "No pudimos iniciar el registro con Google. Intenta de nuevo o usa email y contrasena."
-          : params.error
-            ? "No pudimos completar el registro. Revisa los datos e intenta de nuevo."
-            : null;
+          : params.error === "payment"
+            ? "No pudimos iniciar el pago. Proba otra vez o escribinos para ayudarte."
+            : params.error
+              ? "No pudimos completar el registro. Revisa los datos e intenta de nuevo."
+              : null;
 
   return (
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <Button asChild variant="outline" pill className="border-[#d5e1dc] bg-white text-slate-900">
-          <Link href={product === "ApoyoAI" ? "/apoyoai/precios" : "/precios"}>
+          <Link href={pricingHref(product)}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Volver a planes
+            Ver planes
           </Link>
         </Button>
 
         <section className="mt-8 rounded-lg border border-[#d5e1dc] bg-white p-6 shadow-whisper sm:p-8">
-          <Badge className="bg-[#d8f7ee] text-[#075c50]">Registro</Badge>
-          <h1 className="mt-5 font-display text-4xl font-bold tracking-tight">
-            Crear cuenta para {product}
-          </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-600">
-            {isApoyoAi
-              ? "Crea la cuenta familiar, carga el primer alumno y deja vinculado WhatsApp para que el tutor pueda reconocer al adulto o al hijo."
-              : isEducAiSelfService
-                ? "Crea tu cuenta docente, deja armado tu espacio pedagogico y entra directo a planificar clases con IA."
-                : "Los planes de colegio e institucional se cierran con acompanamiento comercial para configurar docentes, permisos y alcance."}
-          </p>
+          <div className="grid gap-3 rounded-lg bg-[#f7f8f3] p-2 sm:grid-cols-2">
+            <Button
+              asChild
+              pill
+              variant={isApoyoAi ? "outline" : "default"}
+              className={
+                isApoyoAi
+                  ? "border-[#d5e1dc] bg-white text-slate-900"
+                  : "bg-[#18b6a4] text-white hover:bg-[#119b8c]"
+              }
+            >
+              <Link href={registerHref("educai")}>
+                <GraduationCap className="h-4 w-4" aria-hidden="true" />
+                EducAI docentes
+              </Link>
+            </Button>
+            <Button
+              asChild
+              pill
+              variant={isApoyoAi ? "default" : "outline"}
+              className={
+                isApoyoAi
+                  ? "bg-[#18b6a4] text-white hover:bg-[#119b8c]"
+                  : "border-[#d5e1dc] bg-white text-slate-900"
+              }
+            >
+              <Link href={registerHref("apoyoai")}>
+                <UsersRound className="h-4 w-4" aria-hidden="true" />
+                ApoyoAI familias
+              </Link>
+            </Button>
+          </div>
 
-          <div className="mt-6 grid gap-3 rounded-lg bg-[#f7f8f3] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-slate-600">Producto</span>
-              <span className="font-display text-xl font-bold">{product}</span>
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_280px] lg:items-start">
+            <div>
+              <Badge className="bg-[#d8f7ee] text-[#075c50]">Registro</Badge>
+              <h1 className="mt-5 font-display text-4xl font-bold tracking-tight">
+                {isApoyoAi ? "Crear cuenta familiar" : "Crear cuenta docente"}
+              </h1>
+              <p className="mt-3 max-w-2xl text-[15px] font-medium leading-7 text-slate-600">
+                {isApoyoAi
+                  ? "Carga el adulto responsable y el primer alumno para dejar ApoyoAI listo desde el primer ingreso."
+                  : "Carga tu perfil docente y tu espacio de trabajo para entrar directo a planificar clases con IA."}
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-[#d5e1dc] pt-3">
-              <span className="text-sm font-semibold text-slate-600">Plan</span>
-              <span className="font-display text-xl font-bold">{plan}</span>
+
+            <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
+              <p className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
+                Seleccion actual
+              </p>
+              <p className="mt-3 font-display text-2xl font-bold">
+                {isApoyoAi ? "ApoyoAI" : "EducAI"}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {selectedPlan?.name} · {selectedPlan?.price}
+              </p>
             </div>
           </div>
 
           {errorMessage ? (
-            <p className="mt-5 rounded-lg border border-[#f0c9c9] bg-[#fff4f4] px-4 py-3 text-sm text-[#a33b3b]">
+            <p className="mt-5 rounded-lg border border-[#f0c9c9] bg-[#fff4f4] px-4 py-3 text-sm font-semibold text-[#a33b3b]">
               {errorMessage}
             </p>
           ) : null}
 
           {isApoyoAi ? (
-            <form action="/registro/apoyoai" method="post" className="mt-6 grid gap-5">
+            <form action="/registro/apoyoai" method="post" className="mt-6 grid gap-6">
               <input type="hidden" name="producto" value="apoyoai" />
-              <input type="hidden" name="plan" value={plan} />
+              <PlanChooser plans={plans} selectedPlanId={plan} />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2">
@@ -98,7 +208,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       name="parentFullName"
                       required
                       placeholder="Jorge Francesia"
-                      className="h-full w-full bg-transparent outline-none"
+                      className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
                 </label>
@@ -110,7 +220,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       name="parentWhatsappPhone"
                       required
                       placeholder="+5493834000000"
-                      className="h-full w-full bg-transparent outline-none"
+                      className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
                 </label>
@@ -121,7 +231,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     name="parentEmail"
                     required
                     placeholder="familia@email.com"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none"
                   />
                 </label>
                 <PasswordField
@@ -132,14 +242,14 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               </div>
 
               <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
-                <div className="grid gap-4 md:grid-cols-[1fr_1fr_120px]">
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_150px]">
                   <label className="grid gap-2">
                     <span className="text-sm font-semibold text-slate-700">Nombre del alumno</span>
                     <input
                       name="studentFirstName"
                       required
                       placeholder="Mateo"
-                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                     />
                   </label>
                   <label className="grid gap-2">
@@ -148,20 +258,26 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       name="studentLastName"
                       required
                       placeholder="Francesia"
-                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                     />
                   </label>
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-slate-700">Grado</span>
-                    <input
-                      type="number"
+                    <span className="text-sm font-semibold text-slate-700">Grado o ano</span>
+                    <select
                       name="studentGrade"
                       required
-                      min={1}
-                      max={12}
-                      placeholder="6"
-                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
-                    />
+                      defaultValue=""
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
+                    >
+                      <option value="" disabled>
+                        Elegir
+                      </option>
+                      {Array.from({ length: 12 }, (_, index) => index + 1).map((grade) => (
+                        <option key={grade} value={grade}>
+                          {grade}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                 </div>
                 <label className="mt-4 grid gap-2">
@@ -171,12 +287,12 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                   <input
                     name="studentWhatsappPhone"
                     placeholder="+5493834000001"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                   />
                 </label>
               </div>
 
-              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm leading-6 text-slate-700">
+              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm font-medium leading-6 text-slate-700">
                 <input
                   type="checkbox"
                   name="termsAccepted"
@@ -186,11 +302,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 />
                 <span>
                   Acepto los{" "}
-                  <Link href="/terminos" className="font-semibold text-[#075f53] underline">
+                  <Link href="/terminos" className="font-bold text-[#075f53] underline">
                     Terminos y condiciones
                   </Link>{" "}
                   y la{" "}
-                  <Link href="/privacidad" className="font-semibold text-[#075f53] underline">
+                  <Link href="/privacidad" className="font-bold text-[#075f53] underline">
                     Politica de privacidad
                   </Link>
                   . Declaro que soy adulto responsable y autorizo el uso de los datos cargados para
@@ -200,7 +316,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                  Crear familia ApoyoAI
+                  Crear cuenta y continuar
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Button>
                 <Button
@@ -216,18 +332,12 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     G
                   </span>
                 </Button>
-                <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
-                  <Link href={`/contacto?producto=apoyoai&plan=${plan}`}>
-                    Hablar con ventas
-                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                  </Link>
-                </Button>
               </div>
             </form>
-          ) : isEducAiSelfService ? (
-            <form action="/registro/educai" method="post" className="mt-6 grid gap-5">
+          ) : (
+            <form action="/registro/educai" method="post" className="mt-6 grid gap-6">
               <input type="hidden" name="producto" value="educai" />
-              <input type="hidden" name="plan" value={plan} />
+              <PlanChooser plans={plans} selectedPlanId={plan} />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2">
@@ -238,7 +348,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       name="fullName"
                       required
                       placeholder="Mariana Lopez"
-                      className="h-full w-full bg-transparent outline-none"
+                      className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
                 </label>
@@ -247,7 +357,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                   <input
                     name="title"
                     placeholder="Docente de primaria"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none"
                   />
                 </label>
                 <label className="grid gap-2">
@@ -257,7 +367,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     name="email"
                     required
                     placeholder="docente@colegio.edu.ar"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
+                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none"
                   />
                 </label>
                 <PasswordField
@@ -278,7 +388,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       <input
                         name="schoolName"
                         placeholder="Colegio del Valle"
-                        className="h-full w-full bg-transparent outline-none"
+                        className="h-full w-full bg-transparent font-medium outline-none"
                       />
                     </span>
                   </label>
@@ -289,7 +399,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       <input
                         name="subjects"
                         placeholder="Matematica, Ciencias"
-                        className="h-full w-full bg-transparent outline-none"
+                        className="h-full w-full bg-transparent font-medium outline-none"
                       />
                     </span>
                   </label>
@@ -300,7 +410,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       <input
                         name="province"
                         placeholder="Catamarca"
-                        className="h-full w-full bg-transparent outline-none"
+                        className="h-full w-full bg-transparent font-medium outline-none"
                       />
                     </span>
                   </label>
@@ -309,13 +419,13 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="city"
                       placeholder="San Fernando del Valle"
-                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 outline-none"
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                     />
                   </label>
                 </div>
               </div>
 
-              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm leading-6 text-slate-700">
+              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm font-medium leading-6 text-slate-700">
                 <input
                   type="checkbox"
                   name="termsAccepted"
@@ -325,11 +435,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 />
                 <span>
                   Acepto los{" "}
-                  <Link href="/terminos" className="font-semibold text-[#075f53] underline">
+                  <Link href="/terminos" className="font-bold text-[#075f53] underline">
                     Terminos y condiciones
                   </Link>{" "}
                   y la{" "}
-                  <Link href="/privacidad" className="font-semibold text-[#075f53] underline">
+                  <Link href="/privacidad" className="font-bold text-[#075f53] underline">
                     Politica de privacidad
                   </Link>
                   . Entiendo que EducAI genera borradores pedagogicos que deben ser revisados antes
@@ -339,7 +449,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                  Crear cuenta docente
+                  Crear cuenta y continuar
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Button>
                 <Button
@@ -355,29 +465,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     G
                   </span>
                 </Button>
-                <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
-                  <Link href={`/contacto?producto=educai&plan=${plan}`}>
-                    Hablar con ventas
-                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                  </Link>
-                </Button>
               </div>
             </form>
-          ) : (
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
-                <Link href={`/contacto?producto=${params.producto ?? "educai"}&plan=${plan}`}>
-                  Hablar con ventas
-                  <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                <Link href="/login">
-                  Ingresar si ya tenes cuenta
-                  <Sparkles className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
           )}
         </section>
         <p className="mt-5 text-center text-sm font-medium text-slate-600">

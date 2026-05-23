@@ -50,8 +50,20 @@ export default function LoginPage({
       : Array.isArray(searchParams?.registered)
         ? searchParams.registered[0]
         : undefined;
+  const payment =
+    typeof searchParams?.payment === "string"
+      ? searchParams.payment
+      : Array.isArray(searchParams?.payment)
+        ? searchParams.payment[0]
+        : undefined;
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
-  const registeredMessage = registered ? (registeredMessages[registered] ?? null) : null;
+  const registeredMessage = registered
+    ? payment === "success"
+      ? "Pago confirmado. Ya podes ingresar."
+      : payment === "pending"
+        ? "Tu pago esta pendiente. Cuando se confirme, vas a poder usar el plan contratado."
+        : (registeredMessages[registered] ?? null)
+    : null;
 
   return (
     <main className="min-h-screen bg-[#62dcca] p-4 text-slate-950 sm:p-6">

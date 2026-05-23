@@ -51,7 +51,7 @@ export default function EducaiPricingPage() {
           </nav>
           <Button asChild size="sm" pill className="bg-white text-slate-950 hover:bg-white/90">
             <Link href="/registro?producto=educai&plan=free">
-              Empezar <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              Registrarse <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         </header>

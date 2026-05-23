@@ -7,6 +7,15 @@ function read(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+type EducAiRegisterResponse = {
+  data?: {
+    nextStep?: string;
+    checkout?: {
+      checkoutUrl?: string;
+    } | null;
+  };
+};
+
 export async function POST(request: Request) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
@@ -49,6 +58,18 @@ export async function POST(request: Request) {
     url.searchParams.set("producto", "educai");
     url.searchParams.set("plan", plan);
     url.searchParams.set("error", response.status === 409 ? "exists" : "signup");
+    return NextResponse.redirect(url, { status: 303 });
+  }
+
+  const body = (await response.json()) as EducAiRegisterResponse;
+  if (body.data?.nextStep === "mercadopago_checkout_pending" && body.data.checkout?.checkoutUrl) {
+    return NextResponse.redirect(body.data.checkout.checkoutUrl, { status: 303 });
+  }
+  if (body.data?.nextStep === "payment_unavailable") {
+    const url = new URL("/registro", request.url);
+    url.searchParams.set("producto", "educai");
+    url.searchParams.set("plan", plan);
+    url.searchParams.set("error", "payment");
     return NextResponse.redirect(url, { status: 303 });
   }
 
