@@ -4,7 +4,15 @@ import { CheckCircle2, MinusCircle } from "lucide-react";
 import { Badge, Button } from "@educai/ui";
 import type { PublicPricingPlan } from "../../lib/pricing";
 
-export function PublicPricingCard({ plan }: { plan: PublicPricingPlan }) {
+export function PublicPricingCard({
+  plan,
+  ctaOverrideHref,
+  ctaOverrideLabel,
+}: {
+  plan: PublicPricingPlan;
+  ctaOverrideHref?: PublicPricingPlan["ctaHref"];
+  ctaOverrideLabel?: string;
+}) {
   return (
     <article
       className={[
@@ -56,7 +64,7 @@ export function PublicPricingCard({ plan }: { plan: PublicPricingPlan }) {
             : "bg-[#18b6a4] text-white hover:bg-[#119b8c]",
         ].join(" ")}
       >
-        <Link href={plan.ctaHref}>{plan.ctaLabel}</Link>
+        <Link href={ctaOverrideHref ?? plan.ctaHref}>{ctaOverrideLabel ?? plan.ctaLabel}</Link>
       </Button>
     </article>
   );

@@ -14,6 +14,8 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { hasSupabaseEnv } from "../../lib/supabase/env";
 import { PublicPricingCard } from "./public-pricing-card";
 import { SchoolPriceCalculator } from "./school-price-calculator";
 import { apoyoAiPublicPlans, billingCopy, educaiPublicPlans } from "../../lib/pricing";
@@ -69,7 +71,37 @@ const modules = [
   highlights: string[];
 }>;
 
-export function PublicPricingPage() {
+async function getSessionTarget(): Promise<{ href: Route; label: string } | null> {
+  if (!hasSupabaseEnv()) {
+    return null;
+  }
+
+  try {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return null;
+    }
+
+    const metadata = session.user.app_metadata as Record<string, unknown>;
+    const role = typeof metadata.role === "string" ? metadata.role : "";
+    const product = typeof metadata.product === "string" ? metadata.product : "";
+    const href = role === "PARENT" || product === "apoyoai" ? "/familia" : "/app";
+
+    return { href, label: "Ir a mi cuenta" };
+  } catch {
+    return null;
+  }
+}
+
+export async function PublicPricingPage() {
+  const sessionTarget = await getSessionTarget();
+  const accountHref = sessionTarget?.href;
+  const accountLabel = sessionTarget?.label;
+
   return (
     <main className="min-h-screen bg-[#f7f8f3] text-slate-950">
       <section className="relative overflow-hidden px-4 pb-20 pt-4 sm:px-6 lg:px-8">
@@ -106,8 +138,8 @@ export function PublicPricingPage() {
             </Link>
           </nav>
           <Button asChild size="sm" pill className="bg-white text-[#075f53] hover:bg-white/90">
-            <Link href="/registro?producto=educai&plan=free">
-              Registrarse <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <Link href={accountHref ?? "/registro?producto=educai&plan=free"}>
+              {accountLabel ?? "Registrarse"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         </header>
@@ -124,6 +156,11 @@ export function PublicPricingPage() {
               EducAI organiza el trabajo docente. ApoyoAI acompana a estudiantes y familias. Los dos
               comparten una base educativa, pero cada flujo tiene planes y registro propios.
             </p>
+            {sessionTarget ? (
+              <p className="mt-5 inline-flex rounded-full border border-white/25 bg-white/14 px-4 py-2 text-sm font-bold text-white backdrop-blur">
+                Ya tenes una sesion iniciada. Podes revisar precios o volver a tu cuenta.
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -166,7 +203,9 @@ export function PublicPricingPage() {
                       variant="outline"
                       className="border-[#c7dfd8] bg-white text-[#075f53]"
                     >
-                      <Link href={module.ctaHref}>Registrarse gratis</Link>
+                      <Link href={accountHref ?? module.ctaHref}>
+                        {accountLabel ?? "Registrarse gratis"}
+                      </Link>
                     </Button>
                   </div>
                 </article>
@@ -206,7 +245,12 @@ export function PublicPricingPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-5">
           {educaiPublicPlans.map((plan) => (
-            <PublicPricingCard key={plan.id} plan={plan} />
+            <PublicPricingCard
+              key={plan.id}
+              plan={plan}
+              ctaOverrideHref={accountHref}
+              ctaOverrideLabel={accountLabel}
+            />
           ))}
         </div>
       </section>
@@ -264,7 +308,12 @@ export function PublicPricingPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-5">
           {apoyoAiPublicPlans.map((plan) => (
-            <PublicPricingCard key={plan.id} plan={plan} />
+            <PublicPricingCard
+              key={plan.id}
+              plan={plan}
+              ctaOverrideHref={accountHref}
+              ctaOverrideLabel={accountLabel}
+            />
           ))}
         </div>
       </section>

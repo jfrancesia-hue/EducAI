@@ -46,6 +46,10 @@ function normalizePlan(plans: PublicPricingPlan[], value?: string) {
   return plans.some((plan) => plan.id === value) ? (value ?? "free") : "free";
 }
 
+function planHighlights(plan: PublicPricingPlan) {
+  return plan.includes.slice(0, 3);
+}
+
 function PlanChooser({
   plans,
   selectedPlanId,
@@ -84,6 +88,14 @@ function PlanChooser({
                 </span>
                 <span className="mt-3 block text-sm leading-6 text-slate-600">
                   {plan.description}
+                </span>
+                <span className="mt-4 grid gap-2">
+                  {planHighlights(plan).map((item) => (
+                    <span key={item} className="flex gap-2 text-sm font-semibold text-slate-700">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#18b6a4]" />
+                      <span>{item}</span>
+                    </span>
+                  ))}
                 </span>
               </span>
             </label>
@@ -183,7 +195,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 {isApoyoAi ? "ApoyoAI" : "EducAI"}
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-700">
-                {selectedPlan?.name} · {selectedPlan?.price}
+                {selectedPlan?.name} - {selectedPlan?.price}
               </p>
             </div>
           </div>
