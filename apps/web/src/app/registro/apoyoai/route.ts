@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { signInWithPasswordRedirect } from "../../../lib/supabase/password-session";
+
 function read(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const plan = read(formData, "plan") || "free";
   const parentEmail = read(formData, "parentEmail");
+  const password = read(formData, "password");
 
   const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/onboarding/apoyoai/families`, {
     method: "POST",
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       plan,
       parentEmail,
-      password: read(formData, "password"),
+      password,
       parentFullName: read(formData, "parentFullName"),
       parentWhatsappPhone: read(formData, "parentWhatsappPhone"),
       students: [
@@ -57,6 +60,16 @@ export async function POST(request: Request) {
   const body = (await response.json()) as ApoyoAiRegisterResponse;
   if (body.data?.nextStep === "mercadopago_checkout_pending" && body.data.checkout?.checkoutUrl) {
     return NextResponse.redirect(body.data.checkout.checkoutUrl, { status: 303 });
+  }
+
+  const redirectUrl = new URL("/familia", request.url);
+  const auth = await signInWithPasswordRedirect(request, {
+    email: parentEmail,
+    password,
+    redirectUrl,
+  });
+  if (auth) {
+    return auth.response;
   }
 
   const url = new URL("/login", request.url);

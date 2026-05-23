@@ -6,6 +6,18 @@ import { extractRoleFromMetadata } from "./src/lib/supabase/roles";
 
 const WEB_ALLOWED_ROLES = new Set(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
 
+function safeNextPath(value: string | null) {
+  if (!value?.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  if (value.startsWith("/app")) {
+    return value;
+  }
+
+  return null;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, user } = await updateSession(request);
@@ -14,7 +26,9 @@ export async function middleware(request: NextRequest) {
     extractRoleFromMetadata(user?.app_metadata) ?? extractRoleFromMetadata(user?.user_metadata);
 
   if (pathname.startsWith("/app") && !hasSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   if (pathname.startsWith("/app") && hasSession && (!role || !WEB_ALLOWED_ROLES.has(role))) {
@@ -22,7 +36,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/login" && hasSession && role && WEB_ALLOWED_ROLES.has(role)) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
+    return NextResponse.redirect(new URL(nextPath ?? "/app", request.url));
   }
 
   return response;

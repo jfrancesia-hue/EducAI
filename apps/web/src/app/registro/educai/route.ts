@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { signInWithPasswordRedirect } from "../../../lib/supabase/password-session";
+
 function read(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -16,6 +18,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const plan = read(formData, "plan") || "free";
   const email = read(formData, "email");
+  const password = read(formData, "password");
 
   const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/onboarding/educai/teachers`, {
     method: "POST",
@@ -23,7 +26,7 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       plan,
       email,
-      password: read(formData, "password"),
+      password,
       fullName: read(formData, "fullName"),
       schoolName: read(formData, "schoolName") || undefined,
       province: read(formData, "province") || undefined,
@@ -41,8 +44,15 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url, { status: 303 });
   }
 
+  const redirectUrl = new URL("/app", request.url);
+  const auth = await signInWithPasswordRedirect(request, { email, password, redirectUrl });
+  if (auth) {
+    return auth.response;
+  }
+
   const url = new URL("/login", request.url);
   url.searchParams.set("registered", "educai");
   url.searchParams.set("email", email);
+  url.searchParams.set("next", "/app");
   return NextResponse.redirect(url, { status: 303 });
 }

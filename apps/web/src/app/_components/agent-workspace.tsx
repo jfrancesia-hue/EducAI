@@ -163,8 +163,8 @@ export function AgentWorkspace() {
               asChild
               className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
             >
-              <Link href="/app/planificar">
-                Crear clase
+              <Link href="/login?next=/app/planificar">
+                Ingresar para crear clase
                 <Sparkles className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>

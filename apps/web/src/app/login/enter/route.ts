@@ -1,76 +1,65 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-import { getSupabaseEnv, hasSupabaseEnv } from "../../../lib/supabase/env";
-
-type CookieToSet = {
-  name: string;
-  value: string;
-  options: CookieOptions;
-};
-
-function parseCookies(request: Request) {
-  const cookieHeader = new Headers(request.headers).get("cookie") ?? "";
-
-  return cookieHeader
-    .split(/;\s*/u)
-    .filter(Boolean)
-    .map((entry) => {
-      const separator = entry.indexOf("=");
-      const name = separator >= 0 ? entry.slice(0, separator) : entry;
-      const value = separator >= 0 ? entry.slice(separator + 1) : "";
-      return { name, value };
-    });
-}
+import { hasSupabaseEnv } from "../../../lib/supabase/env";
+import { signInWithPasswordRedirect } from "../../../lib/supabase/password-session";
 
 function readFormValue(formData: FormData, field: string) {
   const value = formData.get(field);
   return typeof value === "string" ? value.trim() : "";
 }
 
+function safeNextPath(value: string) {
+  if (!value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+
+  if (value.startsWith("/app")) {
+    return value;
+  }
+
+  return null;
+}
+
+function redirectToLogin(request: Request, params: Record<string, string>) {
+  const loginUrl = new URL("/login", request.url);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      loginUrl.searchParams.set(key, value);
+    }
+  });
+  return NextResponse.redirect(loginUrl, { status: 303 });
+}
+
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
-    return NextResponse.redirect(new URL("/login?error=config", request.url), { status: 303 });
+    return redirectToLogin(request, { error: "config" });
   }
 
   const formData = await request.formData();
   const email = readFormValue(formData, "email");
   const password = readFormValue(formData, "password");
+  const nextPath = safeNextPath(readFormValue(formData, "next"));
 
   if (!email || !password) {
-    return NextResponse.redirect(new URL("/login?error=missing", request.url), { status: 303 });
+    return redirectToLogin(request, { error: "missing", next: nextPath ?? "" });
   }
 
-  const { url, anonKey } = getSupabaseEnv();
-  const redirectUrl = new URL("/app", request.url);
-  const response = NextResponse.redirect(redirectUrl, { status: 303 });
-  const requestCookies = parseCookies(request);
-  const supabase = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return requestCookies;
-      },
-      setAll(cookiesToSet: CookieToSet[]) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const redirectUrl = new URL(nextPath ?? "/app", request.url);
+  const auth = await signInWithPasswordRedirect(request, { email, password, redirectUrl });
 
-  if (error) {
-    return NextResponse.redirect(new URL("/login?error=invalid", request.url), { status: 303 });
+  if (!auth) {
+    return redirectToLogin(request, { error: "invalid", next: nextPath ?? "" });
   }
 
   const metadata = {
-    ...(data.user?.user_metadata ?? {}),
-    ...(data.user?.app_metadata ?? {}),
+    ...(auth.user.user_metadata ?? {}),
+    ...(auth.user.app_metadata ?? {}),
   } as Record<string, unknown>;
   if (metadata.role === "PARENT") {
     redirectUrl.pathname = "/familia";
+    redirectUrl.search = "";
   }
-  response.headers.set("location", redirectUrl.toString());
+  auth.response.headers.set("location", redirectUrl.toString());
 
-  return response;
+  return auth.response;
 }

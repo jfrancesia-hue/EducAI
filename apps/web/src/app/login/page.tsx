@@ -26,6 +26,12 @@ export default function LoginPage({
       : Array.isArray(searchParams?.error)
         ? searchParams.error[0]
         : undefined;
+  const nextPath =
+    typeof searchParams?.next === "string"
+      ? searchParams.next
+      : Array.isArray(searchParams?.next)
+        ? searchParams.next[0]
+        : "";
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
 
   return (
@@ -89,6 +95,9 @@ export default function LoginPage({
               </p>
               <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">Ingresar</h2>
               <form action="/login/enter" method="post" className="mt-6 space-y-4">
+                {nextPath?.startsWith("/app") ? (
+                  <input type="hidden" name="next" value={nextPath} />
+                ) : null}
                 <label className="block">
                   <span className="text-sm font-medium text-[#5f5647]">Email</span>
                   <span className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-[#ded6c7] bg-[#fbfaf5] px-3 text-[#7b725f]">
