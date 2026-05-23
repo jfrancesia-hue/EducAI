@@ -380,6 +380,12 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             </div>
           )}
         </section>
+        <p className="mt-5 text-center text-sm font-medium text-slate-600">
+          Ya tenes cuenta?{" "}
+          <Link href="/login" className="font-bold text-[#075f53] underline">
+            Ingresar
+          </Link>
+        </p>
       </div>
     </main>
   );

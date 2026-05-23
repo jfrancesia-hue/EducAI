@@ -120,6 +120,8 @@ const heroTagStyles = [
   "border-white/25 bg-white/12",
 ];
 
+const educatorRegisterUrl = "/registro?producto=educai&plan=free";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f8f3] text-slate-950">
@@ -169,7 +171,7 @@ export default function HomePage() {
               size="sm"
               className="hidden bg-[#ff7a1a] text-white shadow-[0_12px_28px_rgba(255,122,26,0.28)] hover:bg-[#ea6508] sm:inline-flex"
             >
-              <Link href="/login">Ingresar</Link>
+              <Link href={educatorRegisterUrl}>Registrarse</Link>
             </Button>
             <Button
               asChild
@@ -219,8 +221,8 @@ export default function HomePage() {
                 pill
                 className="bg-[#f8d95c] text-slate-950 shadow-float hover:bg-[#f3ce36]"
               >
-                <Link href="/login">
-                  Ingresar ahora <Sparkles className="h-5 w-5" aria-hidden="true" />
+                <Link href={educatorRegisterUrl}>
+                  Registrarse gratis <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button
@@ -450,8 +452,8 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" pill className="bg-slate-950 text-white hover:bg-slate-800">
-                <Link href="/login">
-                  Ir al acceso <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                <Link href={educatorRegisterUrl}>
+                  Crear cuenta <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button

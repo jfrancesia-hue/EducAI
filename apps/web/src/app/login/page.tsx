@@ -15,6 +15,11 @@ const errorMessages: Record<string, string> = {
   missing: "Completa email y contrasena para iniciar sesion.",
 };
 
+const registeredMessages: Record<string, string> = {
+  educai: "Cuenta docente creada. Ya podes ingresar a EducAI.",
+  apoyoai: "Cuenta familiar creada. Ya podes ingresar a ApoyoAI.",
+};
+
 export default function LoginPage({
   searchParams,
 }: {
@@ -33,7 +38,20 @@ export default function LoginPage({
       : Array.isArray(searchParams?.next)
         ? searchParams.next[0]
         : "";
+  const email =
+    typeof searchParams?.email === "string"
+      ? searchParams.email
+      : Array.isArray(searchParams?.email)
+        ? searchParams.email[0]
+        : "";
+  const registered =
+    typeof searchParams?.registered === "string"
+      ? searchParams.registered
+      : Array.isArray(searchParams?.registered)
+        ? searchParams.registered[0]
+        : undefined;
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
+  const registeredMessage = registered ? (registeredMessages[registered] ?? null) : null;
 
   return (
     <main className="min-h-screen bg-[#62dcca] p-4 text-slate-950 sm:p-6">
@@ -95,6 +113,11 @@ export default function LoginPage({
                 Cuenta institucional
               </p>
               <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">Ingresar</h2>
+              {registeredMessage ? (
+                <p className="mt-4 rounded-lg border border-[#18b6a4]/35 bg-[#e7fbf7] px-3 py-2 text-sm font-medium text-[#075c50]">
+                  {registeredMessage}
+                </p>
+              ) : null}
               <form action="/login/enter" method="post" className="mt-6 space-y-4">
                 {nextPath?.startsWith("/app") ? (
                   <input type="hidden" name="next" value={nextPath} />
@@ -108,6 +131,7 @@ export default function LoginPage({
                       name="email"
                       placeholder="docente@colegio.edu.ar"
                       autoComplete="email"
+                      defaultValue={email}
                       disabled={!authReady}
                       className="h-full w-full border-0 bg-transparent p-0 text-[#14120f] outline-none placeholder:text-[#9b917f]"
                     />
@@ -140,6 +164,25 @@ export default function LoginPage({
                 Usamos tu cuenta institucional para mostrarte las herramientas y la informacion que
                 corresponden a tu rol.
               </p>
+              <div className="mt-5 grid gap-3 border-t border-[#ded6c7] pt-5">
+                <p className="text-sm font-semibold text-[#4f5f58]">Todavia no tenes cuenta?</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-[#d5e1dc] bg-[#fbfaf5] text-[#075f53] hover:bg-[#e7fbf7]"
+                  >
+                    <Link href="/registro?producto=educai&plan=free">Registrarme como docente</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-[#d5e1dc] bg-[#fbfaf5] text-[#075f53] hover:bg-[#e7fbf7]"
+                  >
+                    <Link href="/registro?producto=apoyoai&plan=free">Crear cuenta familiar</Link>
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
