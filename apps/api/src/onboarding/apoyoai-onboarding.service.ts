@@ -1,10 +1,20 @@
-import { ConflictException, Injectable, ServiceUnavailableException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
-import type { RegisterApoyoAiFamilyDto } from "./dto/register-apoyoai-family.dto.js";
+import type {
+  RegisterApoyoAiFamilyDto,
+  RegisterApoyoAiFamilyWithGoogleDto,
+} from "./dto/register-apoyoai-family.dto.js";
 
 type ApoyoAiPlanCode = RegisterApoyoAiFamilyDto["plan"];
+type ApoyoAiFamilySignupInput = Omit<RegisterApoyoAiFamilyDto, "parentEmail" | "password">;
 
 const PLAN_TO_LEGACY_ENUM: Record<ApoyoAiPlanCode, "FREE" | "BASIC" | "PREMIUM" | "FAMILY"> = {
   free: "FREE",
@@ -35,12 +45,31 @@ export class ApoyoAiOnboardingService {
 
   async registerFamily(dto: RegisterApoyoAiFamilyDto) {
     const email = dto.parentEmail.trim().toLowerCase();
+    const authUserId = await this.createSupabaseUser(email, dto.password, dto.parentFullName);
+    return this.createFamilyWorkspace(dto, email, authUserId);
+  }
+
+  async registerFamilyWithGoogle(
+    dto: RegisterApoyoAiFamilyWithGoogleDto,
+    authUser?: AuthenticatedUser,
+  ) {
+    if (!authUser?.id || !authUser.email) {
+      throw new ForbiddenException("La cuenta Google no tiene email confirmado");
+    }
+
+    return this.createFamilyWorkspace(dto, authUser.email.trim().toLowerCase(), authUser.id);
+  }
+
+  private async createFamilyWorkspace(
+    dto: ApoyoAiFamilySignupInput,
+    email: string,
+    authUserId: string,
+  ) {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new ConflictException("Ya existe una cuenta EducAI/ApoyoAI con ese email");
     }
 
-    const authUserId = await this.createSupabaseUser(email, dto.password, dto.parentFullName);
     const normalizedParentPhone = this.normalizePhone(dto.parentWhatsappPhone);
     const slug = await this.uniqueFamilySlug(dto.parentFullName);
     const status = this.initialStatus(dto.plan);

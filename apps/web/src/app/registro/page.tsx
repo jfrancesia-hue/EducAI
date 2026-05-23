@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { PasswordField } from "../_components/password-field";
 
 type RegisterPageProps = {
   searchParams?: Promise<{
@@ -35,9 +36,13 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const errorMessage =
     params.error === "exists"
       ? "Ya existe una cuenta con ese email. Inicia sesion o usa otro correo."
-      : params.error
-        ? "No pudimos completar el registro. Revisa los datos e intenta de nuevo."
-        : null;
+      : params.error === "terms"
+        ? "Para crear la cuenta tenes que aceptar los terminos y la politica de privacidad."
+        : params.error === "google"
+          ? "No pudimos iniciar el registro con Google. Intenta de nuevo o usa email y contrasena."
+          : params.error
+            ? "No pudimos completar el registro. Revisa los datos e intenta de nuevo."
+            : null;
 
   return (
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -81,6 +86,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
 
           {isApoyoAi ? (
             <form action="/registro/apoyoai" method="post" className="mt-6 grid gap-5">
+              <input type="hidden" name="producto" value="apoyoai" />
               <input type="hidden" name="plan" value={plan} />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -118,17 +124,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
                   />
                 </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-slate-700">Contrasena</span>
-                  <input
-                    type="password"
-                    name="password"
-                    required
-                    minLength={8}
-                    placeholder="Minimo 8 caracteres"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
-                  />
-                </label>
+                <PasswordField
+                  label="Contrasena"
+                  placeholder="Minimo 8 caracteres"
+                  autoComplete="new-password"
+                />
               </div>
 
               <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
@@ -176,10 +176,45 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 </label>
               </div>
 
+              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm leading-6 text-slate-700">
+                <input
+                  type="checkbox"
+                  name="termsAccepted"
+                  value="yes"
+                  required
+                  className="mt-1 h-4 w-4 shrink-0 accent-[#087968]"
+                />
+                <span>
+                  Acepto los{" "}
+                  <Link href="/terminos" className="font-semibold text-[#075f53] underline">
+                    Terminos y condiciones
+                  </Link>{" "}
+                  y la{" "}
+                  <Link href="/privacidad" className="font-semibold text-[#075f53] underline">
+                    Politica de privacidad
+                  </Link>
+                  . Declaro que soy adulto responsable y autorizo el uso de los datos cargados para
+                  prestar el servicio educativo.
+                </span>
+              </label>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
                   Crear familia ApoyoAI
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
+                </Button>
+                <Button
+                  size="lg"
+                  pill
+                  variant="outline"
+                  formAction="/registro/google"
+                  formNoValidate
+                  className="border-[#d5e1dc] bg-white"
+                >
+                  Registrarme con Google
+                  <span className="font-display text-lg font-bold" aria-hidden="true">
+                    G
+                  </span>
                 </Button>
                 <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
                   <Link href={`/contacto?producto=apoyoai&plan=${plan}`}>
@@ -191,6 +226,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
             </form>
           ) : isEducAiSelfService ? (
             <form action="/registro/educai" method="post" className="mt-6 grid gap-5">
+              <input type="hidden" name="producto" value="educai" />
               <input type="hidden" name="plan" value={plan} />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -224,17 +260,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
                   />
                 </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-slate-700">Contrasena</span>
-                  <input
-                    type="password"
-                    name="password"
-                    required
-                    minLength={8}
-                    placeholder="Minimo 8 caracteres"
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 outline-none"
-                  />
-                </label>
+                <PasswordField
+                  label="Contrasena"
+                  placeholder="Minimo 8 caracteres"
+                  autoComplete="new-password"
+                />
               </div>
 
               <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
@@ -285,10 +315,45 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 </div>
               </div>
 
+              <label className="flex gap-3 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 text-sm leading-6 text-slate-700">
+                <input
+                  type="checkbox"
+                  name="termsAccepted"
+                  value="yes"
+                  required
+                  className="mt-1 h-4 w-4 shrink-0 accent-[#087968]"
+                />
+                <span>
+                  Acepto los{" "}
+                  <Link href="/terminos" className="font-semibold text-[#075f53] underline">
+                    Terminos y condiciones
+                  </Link>{" "}
+                  y la{" "}
+                  <Link href="/privacidad" className="font-semibold text-[#075f53] underline">
+                    Politica de privacidad
+                  </Link>
+                  . Entiendo que EducAI genera borradores pedagogicos que deben ser revisados antes
+                  de usarse con estudiantes.
+                </span>
+              </label>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button size="lg" pill className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
                   Crear cuenta docente
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
+                </Button>
+                <Button
+                  size="lg"
+                  pill
+                  variant="outline"
+                  formAction="/registro/google"
+                  formNoValidate
+                  className="border-[#d5e1dc] bg-white"
+                >
+                  Registrarme con Google
+                  <span className="font-display text-lg font-bold" aria-hidden="true">
+                    G
+                  </span>
                 </Button>
                 <Button asChild size="lg" pill variant="outline" className="border-[#d5e1dc]">
                   <Link href={`/contacto?producto=educai&plan=${plan}`}>

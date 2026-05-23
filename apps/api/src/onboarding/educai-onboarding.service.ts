@@ -1,8 +1,19 @@
-import { ConflictException, Injectable, ServiceUnavailableException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
-import type { RegisterEducAiTeacherDto } from "./dto/register-educai-teacher.dto.js";
+import type {
+  RegisterEducAiTeacherDto,
+  RegisterEducAiTeacherWithGoogleDto,
+} from "./dto/register-educai-teacher.dto.js";
+
+type EducAiTeacherSignupInput = Omit<RegisterEducAiTeacherDto, "email" | "password">;
 
 @Injectable()
 export class EducAiOnboardingService {
@@ -12,12 +23,31 @@ export class EducAiOnboardingService {
 
   async registerTeacher(dto: RegisterEducAiTeacherDto) {
     const email = dto.email.trim().toLowerCase();
+    const authUserId = await this.createSupabaseUser(email, dto.password, dto.fullName);
+    return this.createTeacherWorkspace(dto, email, authUserId);
+  }
+
+  async registerTeacherWithGoogle(
+    dto: RegisterEducAiTeacherWithGoogleDto,
+    authUser?: AuthenticatedUser,
+  ) {
+    if (!authUser?.id || !authUser.email) {
+      throw new ForbiddenException("La cuenta Google no tiene email confirmado");
+    }
+
+    return this.createTeacherWorkspace(dto, authUser.email.trim().toLowerCase(), authUser.id);
+  }
+
+  private async createTeacherWorkspace(
+    dto: EducAiTeacherSignupInput,
+    email: string,
+    authUserId: string,
+  ) {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new ConflictException("Ya existe una cuenta EducAI con ese email");
     }
 
-    const authUserId = await this.createSupabaseUser(email, dto.password, dto.fullName);
     const schoolName = dto.schoolName?.trim() || `Espacio docente de ${dto.fullName}`;
     const slug = await this.uniqueSchoolSlug(schoolName, dto.fullName);
     const subjects = this.parseSubjects(dto.subjects);

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "@educai/ui";
+import { PasswordField } from "../_components/password-field";
 import { hasSupabaseEnv } from "../../lib/supabase/env";
 
 const loginHeroImage =
@@ -112,20 +113,7 @@ export default function LoginPage({
                     />
                   </span>
                 </label>
-                <label className="block">
-                  <span className="text-sm font-medium text-[#5f5647]">Contrasena</span>
-                  <span className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-[#ded6c7] bg-[#fbfaf5] px-3 text-[#7b725f]">
-                    <LockKeyhole className="h-4 w-4" aria-hidden="true" />
-                    <input
-                      type="password"
-                      name="password"
-                      placeholder="Tu contrasena"
-                      autoComplete="current-password"
-                      disabled={!authReady}
-                      className="h-full w-full border-0 bg-transparent p-0 text-[#14120f] outline-none placeholder:text-[#9b917f]"
-                    />
-                  </span>
-                </label>
+                <PasswordField disabled={!authReady} />
                 {errorMessage ? (
                   <p className="rounded-lg border border-[#f0c9c9] bg-[#fff4f4] px-3 py-2 text-sm text-[#a33b3b]">
                     {errorMessage}

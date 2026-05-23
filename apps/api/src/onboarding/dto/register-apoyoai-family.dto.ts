@@ -57,3 +57,20 @@ export class RegisterApoyoAiFamilyDto {
   @Type(() => RegisterApoyoAiStudentDto)
   students!: RegisterApoyoAiStudentDto[];
 }
+
+export class RegisterApoyoAiFamilyWithGoogleDto {
+  @IsIn(["free", "basico", "plus", "familiar", "intensivo"])
+  plan!: "free" | "basico" | "plus" | "familiar" | "intensivo";
+
+  @IsString()
+  parentFullName!: string;
+
+  @IsString()
+  parentWhatsappPhone!: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => RegisterApoyoAiStudentDto)
+  students!: RegisterApoyoAiStudentDto[];
+}

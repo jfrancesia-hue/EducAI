@@ -28,6 +28,14 @@ export async function POST(request: Request) {
   const plan = read(formData, "plan") || "free";
   const parentEmail = read(formData, "parentEmail");
   const password = read(formData, "password");
+  const termsAccepted = read(formData, "termsAccepted") === "yes";
+
+  if (!termsAccepted) {
+    return NextResponse.redirect(
+      new URL(`/registro?producto=apoyoai&plan=${plan}&error=terms`, request.url),
+      { status: 303 },
+    );
+  }
 
   const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/onboarding/apoyoai/families`, {
     method: "POST",
