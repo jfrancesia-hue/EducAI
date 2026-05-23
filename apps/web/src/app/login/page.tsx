@@ -9,8 +9,8 @@ const loginHeroImage =
   "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=85";
 
 const errorMessages: Record<string, string> = {
-  config: "Falta configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en web.",
-  invalid: "Las credenciales no son validas o el usuario no existe en Supabase Auth.",
+  config: "El acceso no esta disponible en este momento. Reintenta en unos minutos.",
+  invalid: "Email o contrasena incorrectos.",
   missing: "Completa email y contrasena para iniciar sesion.",
 };
 
@@ -57,11 +57,11 @@ export default function LoginPage({
               Acceso seguro
             </p>
             <h1 className="mt-5 font-display text-5xl font-bold leading-tight tracking-tight">
-              Entra con tu cuenta real de EducAI.
+              Entra a tu espacio de trabajo.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Este acceso ya no usa una cookie demo. La sesion vive en Supabase Auth y es la base
-              para cerrar permisos, roles y aislamiento real por tenant.
+              Planifica clases, revisa estudiantes y organiza recursos pedagogicos desde un entorno
+              privado para tu institucion.
             </p>
           </div>
 
@@ -69,13 +69,13 @@ export default function LoginPage({
             <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <ShieldCheck className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Sesion real respaldada por Supabase Auth.
+                Acceso protegido para equipos docentes.
               </p>
             </div>
             <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Primer paso para conectar RBAC y contexto de tenant.
+                Cada usuario ingresa al espacio que le corresponde.
               </p>
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function LoginPage({
                 ) : null}
                 {!authReady ? (
                   <p className="rounded-lg border border-[#eadca8] bg-[#fff8dd] px-3 py-2 text-sm text-[#7a5c00]">
-                    Configura las variables de Supabase en `apps/web` antes de habilitar login.
+                    El acceso esta temporalmente fuera de servicio.
                   </p>
                 ) : null}
 
@@ -140,8 +140,8 @@ export default function LoginPage({
               </form>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                La cuenta se valida contra Supabase Auth. El siguiente corte es mapear rol y tenant
-                desde la sesion para cerrar permisos reales.
+                Usamos tu cuenta institucional para mostrarte las herramientas y la informacion que
+                corresponden a tu rol.
               </p>
             </div>
           </div>

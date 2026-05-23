@@ -22,7 +22,7 @@ export default async function ReportsModulePage() {
     {
       label: "Estudiantes",
       value: dashboard?.metrics.studentCount ?? 0,
-      note: "alcance cargado en el tenant",
+      note: "en seguimiento",
       icon: BarChart3,
       color: "bg-[#e7fbf7] text-[#087968]",
     },
@@ -47,13 +47,13 @@ export default async function ReportsModulePage() {
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.82fr]">
         <section className="grid content-start gap-5">
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-            <Badge className="bg-[#efedff] text-[#4f3ee2]">Analitica real</Badge>
+            <Badge className="bg-[#e7fbf7] text-[#087968]">Analitica educativa</Badge>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
               Indicadores del trabajo pedagogico
             </h2>
             <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-              Esta vista resume datos reales de estudiantes, diagnosticos, planificaciones y uso por
-              materia.
+              Esta vista resume estudiantes, diagnosticos, planificaciones y uso por materia para
+              acompanar decisiones pedagogicas.
             </p>
           </div>
 
@@ -104,7 +104,7 @@ export default async function ReportsModulePage() {
         </section>
 
         <aside className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-whisper">
+          <div className="rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-whisper">
             <div className="flex items-center gap-3">
               <Brain className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Lectura rapida</h2>

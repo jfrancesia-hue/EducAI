@@ -6,10 +6,10 @@ export default function SecurityPage() {
   return (
     <SimplePage
       badge="Seguridad"
-      title="La confianza se diseña antes de escalar."
-      description="El producto ya comunica seguridad; el siguiente tramo técnico es cerrar auth, RBAC, rate limiting, auditoría, monitoreo y validaciones de webhooks antes de abrir a usuarios reales."
+      title="La confianza se disena desde el primer acceso."
+      description="EducAI protege el ingreso, ordena los permisos por rol y cuida que cada escuela trabaje dentro de su propio espacio."
       icon={LockKeyhole}
-      primaryLabel="Ver checklist"
+      primaryLabel="Hablar con el equipo"
     />
   );
 }

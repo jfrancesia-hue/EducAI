@@ -105,10 +105,10 @@ const journeys = [
 ];
 
 const safeguards = [
-  "Aislamiento multi-tenant preparado para escuelas, equipos docentes e instituciones.",
+  "Espacios separados para escuelas, equipos docentes e instituciones.",
   "Prompts pedagogicos orientados a planificacion, evaluacion y produccion de recursos.",
   "Control docente sobre consignas, rubricas, feedback y mensajes antes de compartir.",
-  "Auditoria y datos estructurados para evolucionar hacia cumplimiento institucional.",
+  "Informacion organizada para acompanar decisiones pedagogicas con responsabilidad.",
 ];
 
 const heroTags = ["Agente docente", "Docentes", "Planificacion", "Datos cuidados"];
@@ -445,9 +445,8 @@ export default function HomePage() {
               dias.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-              El siguiente salto es cerrar auth, CI, deploy y observabilidad. La experiencia visual
-              ya empieza a contar una historia fuerte: aprendizaje posible, datos cuidados y apoyo
-              real.
+              Una experiencia pensada para que el trabajo docente sea mas claro, mas liviano y mas
+              facil de sostener todos los dias.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" pill className="bg-slate-950 text-white hover:bg-slate-800">
@@ -471,16 +470,16 @@ export default function HomePage() {
           <div className="rounded-lg border border-white/55 bg-white/76 p-5 shadow-float backdrop-blur-xl">
             <div className="flex items-center gap-3 border-b border-[#087968]/16 pb-4">
               <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
-              <p className="font-display text-lg font-semibold">Checklist pre-produccion</p>
+              <p className="font-display text-lg font-semibold">Lo que cuida EducAI</p>
             </div>
             <div className="mt-5 grid gap-3">
               {[
-                "Auth + roles",
-                "CI verde",
-                "Deploy real",
-                "Rate limiting",
-                "Sentry/PostHog",
-                "Tests de negocio",
+                "Acceso por rol",
+                "Datos cuidados",
+                "Planes editables",
+                "Seguimiento claro",
+                "Acompanamiento docente",
+                "Mejora continua",
               ].map((item) => (
                 <div
                   key={item}

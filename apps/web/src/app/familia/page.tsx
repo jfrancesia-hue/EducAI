@@ -99,8 +99,8 @@ export default async function FamilyHomePage() {
               <h2 className="mt-4 font-display text-2xl font-bold">No pudimos cargar la cuenta</h2>
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
                 {error === "missing_api_url"
-                  ? "Falta configurar la conexion del frontend con la API. Revisar NEXT_PUBLIC_API_URL."
-                  : "La API no respondio como esperabamos. Reintenta en unos minutos o contacta soporte."}
+                  ? "No pudimos cargar la informacion familiar en este momento."
+                  : "El servicio no respondio como esperabamos. Reintenta en unos minutos o contacta soporte."}
               </p>
             </article>
           ) : students.length ? (

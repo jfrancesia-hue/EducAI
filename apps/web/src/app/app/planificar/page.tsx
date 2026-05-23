@@ -15,11 +15,11 @@ type PlanningModulePageProps = {
 };
 
 const errorMessages: Record<string, string> = {
-  config: "Falta NEXT_PUBLIC_API_URL para conectar con el API.",
-  auth: "No se encontro una sesion valida. Volve a ingresar.",
+  config: "No pudimos preparar el generador en este momento.",
+  auth: "Tu sesion expiro. Volve a ingresar.",
   invalid: "Revisa nivel, anio, materia, tema, cantidad de clases y duracion.",
-  api: "El API no pudo generar la clase. Revisar logs del backend.",
-  network: "No se pudo conectar con el API.",
+  api: "No pudimos generar la clase. Reintenta en unos minutos.",
+  network: "La conexion fallo. Reintenta en unos minutos.",
 };
 
 const outputItems = [
@@ -47,7 +47,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
     <AppShell
       title="Crear clase"
       eyebrow="Planificacion docente"
-      statusNote="EducAI genera un borrador editable. El docente siempre revisa antes de usarlo."
+      statusNote="EducAI prepara un borrador editable para que el docente lo revise, ajuste y use."
     >
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid content-start gap-5">
@@ -79,7 +79,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
         </section>
 
         <aside className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-whisper">
+          <div className="rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-whisper">
             <div className="flex items-center gap-3">
               <FileText className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Salida esperada</h2>

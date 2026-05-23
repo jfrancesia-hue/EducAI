@@ -149,13 +149,13 @@ export function LessonPlanForm() {
     <form
       action="/app/planificar/generar"
       method="post"
-      className="rounded-lg border border-[#d5e1dc] bg-white shadow-whisper"
+      className="rounded-lg border border-[#18b6a4]/25 bg-white shadow-whisper"
     >
       <input type="hidden" name="educationLevel" value={educationLevel} />
       <input type="hidden" name="lessonIntent" value={lessonIntent} />
 
       <div className="border-b border-[#e3ebe7] p-5">
-        <Badge className="bg-[#e7fbf7] text-[#087968]">Nuevo borrador</Badge>
+        <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificacion</Badge>
         <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
           Datos minimos de la clase
         </h2>
@@ -474,7 +474,7 @@ export function LessonPlanForm() {
 
         <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[15px] font-medium leading-6 text-[#4f5f58]">
-            Se guarda como planificacion del tenant autenticado.
+            La clase queda disponible en tu espacio docente.
           </p>
           <Button
             type="submit"

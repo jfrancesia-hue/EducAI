@@ -29,7 +29,7 @@ function metricCards(data: NonNullable<Awaited<ReturnType<typeof fetchInstitutio
     {
       label: "Clases generadas",
       value: data.metrics.lessonPlanCount,
-      note: "planes cargados en el tenant",
+      note: "borradores disponibles",
       icon: ClipboardList,
       tone: "bg-[#fff8d7] text-[#876100]",
     },
@@ -66,34 +66,45 @@ export default async function EducAiAppPage() {
     <AppShell title="Inicio">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.08fr_0.92fr]">
         <section className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-6 text-white shadow-float">
-            <Badge className="bg-[#f8d95c] text-[#11231f]">EducAI docente</Badge>
-            <h2 className="mt-5 max-w-3xl font-display text-4xl font-bold tracking-tight sm:text-5xl">
-              Crear clases, seguir estudiantes y revisar indicadores en un solo lugar.
-            </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/82">
-              El flujo principal es generar una clase editable. Desde ahi podes mirar estudiantes y
-              reportes sin pasar por pantallas duplicadas.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                <Link href="/app/planificar">
-                  <Sparkles className="h-4 w-4" aria-hidden="true" />
-                  Crear clase
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white">
-                <Link href="/app/estudiantes">
-                  <UsersRound className="h-4 w-4" aria-hidden="true" />
-                  Ver estudiantes
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="border-white/20 bg-white/10 text-white">
-                <Link href="/app/reportes">
-                  <LineChart className="h-4 w-4" aria-hidden="true" />
-                  Ver reportes
-                </Link>
-              </Button>
+          <div className="relative overflow-hidden rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-6 text-white shadow-float">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(98,220,202,0.34)_0%,rgba(7,95,83,0)_42%),linear-gradient(22deg,rgba(248,217,92,0.16)_0%,rgba(255,122,26,0.12)_100%)]" />
+            <div className="relative z-10">
+              <Badge className="bg-[#f8d95c] text-[#075f53]">EducAI docente</Badge>
+              <h2 className="mt-5 max-w-3xl font-display text-4xl font-bold tracking-tight sm:text-5xl">
+                Tu mesa de trabajo para crear mejores clases.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/82">
+                Empeza por una planificacion editable, revisa el seguimiento de estudiantes y mira
+                indicadores utiles sin cambiar de herramienta.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button asChild className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
+                  <Link href="/app/planificar" prefetch={false}>
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    Crear clase
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-white/20 bg-white/10 text-white"
+                >
+                  <Link href="/app/estudiantes">
+                    <UsersRound className="h-4 w-4" aria-hidden="true" />
+                    Ver estudiantes
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-white/20 bg-white/10 text-white"
+                >
+                  <Link href="/app/reportes">
+                    <LineChart className="h-4 w-4" aria-hidden="true" />
+                    Ver reportes
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -199,8 +210,7 @@ export default async function EducAiAppPage() {
               <AlertTriangle className="h-6 w-6 text-[#b82170]" aria-hidden="true" />
               <h2 className="mt-4 font-display text-2xl font-bold">No pudimos cargar el panel</h2>
               <p className="mt-2 text-[15px] leading-6 text-[#4f5f58]">
-                Revisa `NEXT_PUBLIC_API_URL` o la sesion actual. El frontend no recibio resumen del
-                API.
+                No pudimos traer la informacion de tu espacio. Reintenta en unos minutos.
               </p>
             </article>
           )}
@@ -259,7 +269,7 @@ export default async function EducAiAppPage() {
               {[
                 { label: "Crear una clase editable", href: "/app/planificar" as Route },
                 { label: "Revisar estudiantes", href: "/app/estudiantes" as Route },
-                { label: "Revisar indicadores reales", href: "/app/reportes" as Route },
+                { label: "Revisar indicadores", href: "/app/reportes" as Route },
               ].map(({ label, href }) => (
                 <Button
                   key={href}

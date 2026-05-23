@@ -101,7 +101,7 @@ export function AgentWorkspace() {
                 Necesidad docente
               </h2>
             </div>
-            <Badge className="bg-[#f8d95c] text-[#11231f]">Demo</Badge>
+            <Badge className="bg-[#f8d95c] text-[#11231f]">Ejemplo de uso</Badge>
           </div>
 
           <div className="mt-5 grid gap-3">
@@ -164,7 +164,7 @@ export function AgentWorkspace() {
               className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
             >
               <Link href="/app/planificar">
-                Ejecutar Agente IA
+                Crear clase
                 <Sparkles className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>

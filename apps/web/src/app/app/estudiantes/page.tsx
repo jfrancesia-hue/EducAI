@@ -22,8 +22,8 @@ export default async function StudentsModulePage() {
     <AppShell title="Estudiantes" eyebrow="Seguimiento">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.05fr_0.95fr]">
         <section className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-            <Badge className="bg-[#e7fbf7] text-[#087968]">Datos reales del tenant</Badge>
+          <div className="rounded-lg border border-[#18b6a4]/25 bg-white p-5 shadow-whisper">
+            <Badge className="bg-[#e7fbf7] text-[#087968]">Seguimiento actualizado</Badge>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
               Estudiantes y pulso de aprendizaje
             </h2>
@@ -81,7 +81,7 @@ export default async function StudentsModulePage() {
         </section>
 
         <aside className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-whisper">
+          <div className="rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-whisper">
             <div className="flex items-center gap-3">
               <UsersRound className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Resumen</h2>
