@@ -14,21 +14,28 @@ import { LessonPlanService } from "./lesson-plan.service.js";
 @ApiBearerAuth()
 @Controller("lesson-plans")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
-@Roles("TEACHER")
+@Roles("SCHOOL_ADMIN", "TEACHER")
 export class LessonPlanController {
   constructor(private readonly lessonPlans: LessonPlanService) {}
 
   @Post("generate")
-  generate(@Body() body: GenerateLessonPlanDto, @CurrentUser() user: AuthenticatedUser) {
+  async generate(@Body() body: GenerateLessonPlanDto, @CurrentUser() user: AuthenticatedUser) {
     return this.lessonPlans.generate({
       ...body,
       tenantId: requireUserClaim(user, "tenantId"),
-      teacherId: requireUserClaim(user, "teacherId"),
+      teacherId: await this.lessonPlans.resolveTeacherIdForPlanning(user),
     });
   }
 
   @Get(":id")
   findOne(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
+    if (user.role === "SCHOOL_ADMIN") {
+      return this.lessonPlans.findOne(id, {
+        tenantId: requireUserClaim(user, "tenantId"),
+        schoolId: requireUserClaim(user, "schoolId"),
+      });
+    }
+
     return this.lessonPlans.findOne(id, {
       tenantId: requireUserClaim(user, "tenantId"),
       teacherId: requireUserClaim(user, "teacherId"),

@@ -31,6 +31,14 @@ const prismaMock = {
     createMany: vi.fn(),
     findMany: vi.fn(),
   },
+  user: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+  },
+  teacher: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+  },
   lessonPlan: {
     create: vi.fn(),
     findUnique: vi.fn(),
@@ -486,6 +494,57 @@ describe("Students API (e2e)", () => {
       }),
     );
     expect(response.body.data.id).toBe("plan_1");
+  });
+
+  it("POST /lesson-plans/generate permite al admin escolar crear plan con perfil docente asociado", async () => {
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: "usr_school_1",
+      tenantId: "tnt_school_1",
+      email: "escuela1@educai.local",
+    });
+    prismaMock.teacher.findUnique.mockResolvedValueOnce(null);
+    prismaMock.teacher.create.mockResolvedValueOnce({
+      id: "tea_school_admin_1",
+      tenantId: "tnt_school_1",
+      schoolId: "sch_1",
+    });
+    prismaMock.lessonPlan.create.mockResolvedValueOnce({
+      id: "plan_school_admin_1",
+      tenantId: "tnt_school_1",
+      teacherId: "tea_school_admin_1",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("Authorization", "Bearer token:school-1")
+      .send({
+        educationLevel: "secundaria",
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.teacher.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tnt_school_1",
+          schoolId: "sch_1",
+          userId: "usr_school_1",
+        }),
+      }),
+    );
+    expect(prismaMock.lessonPlan.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tnt_school_1",
+          teacherId: "tea_school_admin_1",
+        }),
+      }),
+    );
+    expect(response.body.data.id).toBe("plan_school_admin_1");
   });
 
   it("GET /lesson-plans/:id con tenant o teacher incorrectos devuelve 404", async () => {

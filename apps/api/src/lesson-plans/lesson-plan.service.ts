@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { AnthropicLlmClient, PlanGeneratorAgent } from "@educai/ai";
+import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 @Injectable()
@@ -10,6 +11,88 @@ export class LessonPlanService {
     this.generator = process.env.ANTHROPIC_API_KEY?.trim()
       ? new PlanGeneratorAgent(new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY }))
       : new PlanGeneratorAgent();
+  }
+
+  async resolveTeacherIdForPlanning(user: AuthenticatedUser) {
+    if (user.teacherId) {
+      return user.teacherId;
+    }
+
+    if (user.role !== "SCHOOL_ADMIN") {
+      throw new ForbiddenException({
+        code: "TEACHERID_CONTEXT_MISSING",
+        message: "Falta el claim teacherId en la sesion autenticada",
+      });
+    }
+
+    if (!user.tenantId) {
+      throw new ForbiddenException({
+        code: "TENANTID_CONTEXT_MISSING",
+        message: "Falta el claim tenantId en la sesion autenticada",
+      });
+    }
+
+    if (!user.schoolId) {
+      throw new ForbiddenException({
+        code: "SCHOOLID_CONTEXT_MISSING",
+        message: "Falta el claim schoolId en la sesion autenticada",
+      });
+    }
+
+    if (!user.email) {
+      throw new ForbiddenException({
+        code: "EMAIL_CONTEXT_MISSING",
+        message: "Falta el email en la sesion autenticada",
+      });
+    }
+
+    const appUser =
+      (await this.prisma.user.findUnique({ where: { email: user.email } })) ??
+      (await this.prisma.user.create({
+        data: {
+          tenantId: user.tenantId,
+          email: user.email,
+          fullName: user.email.split("@")[0] || "Administrador escolar",
+          role: "SCHOOL_ADMIN",
+        },
+      }));
+
+    if (appUser.tenantId && appUser.tenantId !== user.tenantId) {
+      throw new ForbiddenException({
+        code: "TENANT_CONTEXT_MISMATCH",
+        message: "El usuario autenticado no pertenece al tenant solicitado",
+      });
+    }
+
+    const existingTeacher = await this.prisma.teacher.findUnique({
+      where: { userId: appUser.id },
+    });
+
+    if (existingTeacher) {
+      if (
+        existingTeacher.tenantId !== user.tenantId ||
+        existingTeacher.schoolId !== user.schoolId
+      ) {
+        throw new ForbiddenException({
+          code: "SCHOOL_CONTEXT_MISMATCH",
+          message: "El perfil docente no pertenece a la escuela autenticada",
+        });
+      }
+
+      return existingTeacher.id;
+    }
+
+    const teacher = await this.prisma.teacher.create({
+      data: {
+        tenantId: user.tenantId,
+        schoolId: user.schoolId,
+        userId: appUser.id,
+        title: "Administrador escolar",
+        subjects: [],
+      },
+    });
+
+    return teacher.id;
   }
 
   async generate(input: {
@@ -80,12 +163,13 @@ export class LessonPlanService {
     return { data: { id: created.id, plan } };
   }
 
-  async findOne(id: string, access: { tenantId: string; teacherId: string }) {
+  async findOne(id: string, access: { tenantId: string; teacherId?: string; schoolId?: string }) {
     const lessonPlan = await this.prisma.lessonPlan.findFirst({
       where: {
         id,
         tenantId: access.tenantId,
-        teacherId: access.teacherId,
+        ...(access.teacherId ? { teacherId: access.teacherId } : {}),
+        ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
       },
     });
 
