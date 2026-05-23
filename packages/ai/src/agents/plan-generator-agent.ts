@@ -62,22 +62,11 @@ export class PlanGeneratorAgent {
   constructor(private readonly llm: LlmClient = new DeterministicLlmClient()) {}
 
   async generate(input: PlanGeneratorInput): Promise<LessonPlanOutput> {
-    const result = await this.llm.generate({
-      model: getEducAIModelForPlan("pro"),
-      responseFormat: "json",
-      maxTokens: 2200,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Adapta vocabulario, complejidad, evaluacion y autonomia al nivel educativo indicado: primaria, secundaria, terciario o universitario. Ajusta la clase a la intencion didactica si viene informada: introducir, practicar, profundizar, integrar, evaluar, repasar o proyecto. Si hay fecha tentativa, usala solo para contextualizar tiempos, efemerides o calendario escolar cuando aporte. Si hay carrera, orientacion, eje, trayecto, plan de estudios, curso, comision o institucion, usalos para dar precision sin inventar datos. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify(input),
-        },
-      ],
-    });
+    const result = await this.tryGenerateWithLlm(input);
+
+    if (!result) {
+      return this.buildFallbackPlan(input);
+    }
 
     const parsed = this.tryParseLlmPlan(result.content);
     if (parsed) {
@@ -85,6 +74,29 @@ export class PlanGeneratorAgent {
     }
 
     return this.buildFallbackPlan(input);
+  }
+
+  private async tryGenerateWithLlm(input: PlanGeneratorInput) {
+    try {
+      return await this.llm.generate({
+        model: getEducAIModelForPlan("pro"),
+        responseFormat: "json",
+        maxTokens: 2200,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Adapta vocabulario, complejidad, evaluacion y autonomia al nivel educativo indicado: primaria, secundaria, terciario o universitario. Ajusta la clase a la intencion didactica si viene informada: introducir, practicar, profundizar, integrar, evaluar, repasar o proyecto. Si hay fecha tentativa, usala solo para contextualizar tiempos, efemerides o calendario escolar cuando aporte. Si hay carrera, orientacion, eje, trayecto, plan de estudios, curso, comision o institucion, usalos para dar precision sin inventar datos. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify(input),
+          },
+        ],
+      });
+    } catch {
+      return null;
+    }
   }
 
   private tryParseLlmPlan(content: string): LessonPlanOutput | null {
