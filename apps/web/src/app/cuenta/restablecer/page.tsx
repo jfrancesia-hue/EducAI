@@ -6,6 +6,8 @@ import { Button } from "@educai/ui";
 import { PasswordField } from "../../_components/password-field";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type ResetPasswordPageProps = {
   searchParams?: Promise<{
     password?: string;
