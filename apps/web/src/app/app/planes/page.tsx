@@ -63,9 +63,9 @@ export default function AppPricingPage() {
                   canal y tipo de contenido.
                 </p>
               </div>
-              <Button asChild className="bg-[#11231f] text-white hover:bg-[#1b342e]">
-                <Link href="/planes">
-                  Ver pagina publica
+              <Button asChild className="bg-[#18b6a4] text-white hover:bg-[#119b8c]">
+                <Link href="/precios">
+                  Ver precios publicos
                   <LineChart className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>

@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
+import { PublicPricingPage } from "../_components/public-pricing-page";
 
-export default function LegacyPricingPage() {
-  redirect("/apoyoai/precios");
-}
+export default PublicPricingPage;
