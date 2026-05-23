@@ -6,7 +6,7 @@ export class CreateStudentDto {
   @IsString()
   firstName!: string;
 
-  @ApiProperty({ example: "Demo" })
+  @ApiProperty({ example: "Francesia" })
   @IsString()
   lastName!: string;
 

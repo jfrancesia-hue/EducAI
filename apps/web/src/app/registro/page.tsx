@@ -1,4 +1,3 @@
-import type { Route } from "next";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -31,11 +30,14 @@ const educaiSelfServicePlans = educaiPublicPlans.filter((plan) =>
 );
 
 function registerHref(product: ProductId, plan = "free") {
-  return `/registro?producto=${product}&plan=${plan}` as Route;
+  return {
+    pathname: "/registro",
+    query: { producto: product, plan },
+  };
 }
 
 function pricingHref(product: ProductId) {
-  return (product === "apoyoai" ? "/precios#apoyoai" : "/precios") as Route;
+  return product === "apoyoai" ? "/precios#apoyoai" : "/precios";
 }
 
 function normalizeProduct(value?: string): ProductId {

@@ -141,8 +141,8 @@ export class StudentService {
   }
 
   /**
-   * Inicia o retoma un diagnóstico. Si ya hay state in-progress en DB lo
-   * retoma y devuelve la última pregunta sin respuesta. Si no, arranca uno nuevo.
+   * Inicia o retoma un diagnostico. Si ya hay state in-progress en DB lo
+   * retoma y devuelve la ultima pregunta sin respuesta. Si no, arranca uno nuevo.
    */
   async startDiagnostic(id: string, context: { tenantId: string; familyId: string }) {
     const student = await this.ensureExists(id, context);

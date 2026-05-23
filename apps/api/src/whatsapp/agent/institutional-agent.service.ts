@@ -33,14 +33,14 @@ export class InstitutionalAgentService {
     if (ESCALATION_PATTERN.test(message)) {
       return this.responsePolicy.finalize({
         replyText: [
-          `Puedo ayudarte con la información registrada de ${student.studentName}, pero este caso conviene derivarlo a una persona del equipo.`,
-          "Si querés, respondé con el detalle del problema y lo dejamos listo para seguimiento humano.",
+          `Puedo ayudarte con la informacion registrada de ${student.studentName}, pero este caso conviene derivarlo a una persona del equipo.`,
+          "Si queres, responde con el detalle del problema y lo dejamos listo para seguimiento humano.",
         ].join("\n\n"),
         modelUsed: "policy-escalation",
         tokensUsed: 0,
         shouldEscalate: true,
         toolEvents: [
-          { tool: "human_handoff", ok: true, summary: "Se activó derivación a humano." },
+          { tool: "human_handoff", ok: true, summary: "Se activo derivacion a humano." },
         ],
       });
     }
@@ -81,12 +81,12 @@ export class InstitutionalAgentService {
   private buildSystemPrompt(): string {
     return [
       "Sos el asistente institucional de EducAI por WhatsApp.",
-      "Respondé en español rioplatense, de forma clara, breve y profesional.",
-      "Solo podés responder con la información del contexto y de las tools entregadas.",
+      "Responde en espanol rioplatense, de forma clara, breve y profesional.",
+      "Solo podes responder con la informacion del contexto y de las tools entregadas.",
       "No inventes pagos, fechas, docentes, horarios ni estados administrativos.",
-      "Si falta un dato, decilo explícitamente y ofrecé derivación humana.",
-      "No hagas promesas de gestión humana no confirmadas.",
-      "Mantené respuestas de menos de 6 líneas salvo que el usuario pida detalle.",
+      "Si falta un dato, decilo explicitamente y ofrece derivacion humana.",
+      "No hagas promesas de gestion humana no confirmadas.",
+      "Mantene respuestas de menos de 6 lineas salvo que el usuario pida detalle.",
     ].join("\n");
   }
 
@@ -113,7 +113,7 @@ export class InstitutionalAgentService {
       "Resultados de tools:",
       JSON.stringify(toolResults, null, 2),
       "",
-      "Redactá una respuesta lista para WhatsApp. Si la información no alcanza, indicá qué falta y sugerí derivación humana.",
+      "Redacta una respuesta lista para WhatsApp. Si la informacion no alcanza, indica que falta y sugeri derivacion humana.",
     ].join("\n");
   }
 }

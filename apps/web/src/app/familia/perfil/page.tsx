@@ -258,7 +258,7 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
               <ShieldCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
               <h2 className="mt-4 font-display text-2xl font-bold">Editable ahora</h2>
               <div className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-[#33423c]">
-                {["Nombre visible", "Contrasena de acceso"].map((item) => (
+                {["Nombre visible", "Contrasena de acceso", "Hijos desde el panel"].map((item) => (
                   <p key={item} className="flex gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#18b6a4]" />
                     {item}

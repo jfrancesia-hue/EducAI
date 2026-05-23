@@ -177,6 +177,7 @@ export class ApoyoAiOnboardingService {
       tenantId: result.tenant.id,
       familyId: result.family.id,
       product: "apoyoai",
+      plan: dto.plan,
     });
 
     const checkout = await this.createCheckoutPreferenceSafely({

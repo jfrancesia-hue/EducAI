@@ -17,7 +17,7 @@ export type PublicPricingPlan = {
 
 export const billingCopy = {
   title: "Cobro mensual por debito automatico",
-  body: "Cobramos por debito automatico cada mes. Si el pago falla, tu cuenta pasa automaticamente al plan Free, sin cancelaciones, sin llamadas, sin drama. Cuando regularizas, volves a tu plan en el momento.",
+  body: "Cobramos por debito automatico cada mes. Si el pago falla, tu cuenta pasa automaticamente al plan Free, sin cancelaciones ni gestiones innecesarias. Cuando regularizas, volves a tu plan en el momento.",
   faqs: [
     {
       question: "Que pasa si un mes no puedo pagar?",

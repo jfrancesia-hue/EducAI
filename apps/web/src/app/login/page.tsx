@@ -108,8 +108,8 @@ export default function LoginPage({
               Entra a tu espacio de trabajo.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Planifica clases, revisa estudiantes y organiza recursos pedagogicos desde un entorno
-              privado para tu institucion.
+              Entra a EducAI para preparar clases o a ApoyoAI para acompanar el aprendizaje desde
+              casa, siempre con el acceso que corresponde a tu rol.
             </p>
           </div>
 
@@ -117,13 +117,13 @@ export default function LoginPage({
             <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <ShieldCheck className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Acceso protegido para equipos docentes.
+                Acceso protegido para docentes, familias e instituciones.
               </p>
             </div>
             <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Cada usuario ingresa al espacio que le corresponde.
+                Cada usuario entra al panel que le corresponde.
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export default function LoginPage({
           <div className="w-full max-w-md">
             <div className="rounded-lg border border-[#ded6c7] bg-white p-6 shadow-whisper">
               <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#4f5f58]">
-                Cuenta institucional
+                Cuenta EducAI o ApoyoAI
               </p>
               <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">Ingresar</h2>
               {registeredMessage || passwordMessage ? (
@@ -152,7 +152,7 @@ export default function LoginPage({
                     <input
                       type="email"
                       name="email"
-                      placeholder="docente@colegio.edu.ar"
+                      placeholder="tu@email.com"
                       autoComplete="email"
                       defaultValue={email}
                       disabled={!authReady}
@@ -192,8 +192,8 @@ export default function LoginPage({
               </form>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                Usamos tu cuenta institucional para mostrarte las herramientas y la informacion que
-                corresponden a tu rol.
+                Usamos tu cuenta para mostrarte las herramientas y la informacion que corresponden a
+                tu rol.
               </p>
               <div className="mt-5 grid gap-3 border-t border-[#ded6c7] pt-5">
                 <p className="text-sm font-semibold text-[#4f5f58]">Todavia no tenes cuenta?</p>
