@@ -53,7 +53,7 @@ export function PublicPricingCard({ plan }: { plan: PublicPricingPlan }) {
           "mt-auto w-full",
           plan.featured
             ? "bg-[#ff7a1a] text-white hover:bg-[#ea6508]"
-            : "bg-[#11231f] text-white hover:bg-[#1b342e]",
+            : "bg-[#18b6a4] text-white hover:bg-[#119b8c]",
         ].join(" ")}
       >
         <Link href={plan.ctaHref}>{plan.ctaLabel}</Link>
