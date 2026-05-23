@@ -11,6 +11,7 @@ import {
   LineChart,
   LogOut,
   Sparkles,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ const navItems = [
   { label: "Crear clase", icon: ClipboardList, href: "/app/planificar" },
   { label: "Estudiantes", icon: UsersRound, href: "/app/estudiantes" },
   { label: "Reportes", icon: LineChart, href: "/app/reportes" },
+  { label: "Mi perfil", icon: UserRound, href: "/app/perfil" },
 ] satisfies Array<{ label: string; icon: typeof Home; href: Route }>;
 
 type AppShellProps = {

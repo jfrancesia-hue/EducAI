@@ -13,7 +13,7 @@ function safeNextPath(value: string) {
     return null;
   }
 
-  if (value.startsWith("/app")) {
+  if (value.startsWith("/app") || value.startsWith("/familia")) {
     return value;
   }
 

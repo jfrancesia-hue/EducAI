@@ -20,6 +20,10 @@ const registeredMessages: Record<string, string> = {
   apoyoai: "Cuenta familiar creada. Ya podes ingresar a ApoyoAI.",
 };
 
+const passwordMessages: Record<string, string> = {
+  updated: "Contrasena actualizada. Ya podes ingresar con la nueva clave.",
+};
+
 export default function LoginPage({
   searchParams,
 }: {
@@ -56,6 +60,12 @@ export default function LoginPage({
       : Array.isArray(searchParams?.payment)
         ? searchParams.payment[0]
         : undefined;
+  const password =
+    typeof searchParams?.password === "string"
+      ? searchParams.password
+      : Array.isArray(searchParams?.password)
+        ? searchParams.password[0]
+        : undefined;
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
   const registeredMessage = registered
     ? payment === "success"
@@ -64,6 +74,7 @@ export default function LoginPage({
         ? "Tu pago esta pendiente. Cuando se confirme, vas a poder usar el plan contratado."
         : (registeredMessages[registered] ?? null)
     : null;
+  const passwordMessage = password ? (passwordMessages[password] ?? null) : null;
 
   return (
     <main className="min-h-screen bg-[#62dcca] p-4 text-slate-950 sm:p-6">
@@ -125,13 +136,13 @@ export default function LoginPage({
                 Cuenta institucional
               </p>
               <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">Ingresar</h2>
-              {registeredMessage ? (
+              {registeredMessage || passwordMessage ? (
                 <p className="mt-4 rounded-lg border border-[#18b6a4]/35 bg-[#e7fbf7] px-3 py-2 text-sm font-medium text-[#075c50]">
-                  {registeredMessage}
+                  {registeredMessage ?? passwordMessage}
                 </p>
               ) : null}
               <form action="/login/enter" method="post" className="mt-6 space-y-4">
-                {nextPath?.startsWith("/app") ? (
+                {nextPath?.startsWith("/app") || nextPath?.startsWith("/familia") ? (
                   <input type="hidden" name="next" value={nextPath} />
                 ) : null}
                 <label className="block">
@@ -150,6 +161,14 @@ export default function LoginPage({
                   </span>
                 </label>
                 <PasswordField disabled={!authReady} />
+                <div className="flex justify-end">
+                  <Link
+                    href="/recuperar-password"
+                    className="text-sm font-bold text-[#075f53] underline"
+                  >
+                    Olvide mi contrasena
+                  </Link>
+                </div>
                 {errorMessage ? (
                   <p className="rounded-lg border border-[#f0c9c9] bg-[#fff4f4] px-3 py-2 text-sm text-[#a33b3b]">
                     {errorMessage}

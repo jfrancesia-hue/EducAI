@@ -47,7 +47,7 @@ export default async function StudentsModulePage() {
                       </h3>
                       <p className="mt-1 text-[15px] leading-6 text-[#4f5f58]">
                         Grado {student.grade}
-                        {student.schoolName ? ` · ${student.schoolName}` : ""}
+                        {student.schoolName ? ` - ${student.schoolName}` : ""}
                       </p>
                       <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
                         {student.opportunities.length

@@ -35,7 +35,7 @@ function registerHref(product: ProductId, plan = "free") {
 }
 
 function pricingHref(product: ProductId) {
-  return (product === "apoyoai" ? "/apoyoai/precios" : "/precios") as Route;
+  return (product === "apoyoai" ? "/precios#apoyoai" : "/precios") as Route;
 }
 
 function normalizeProduct(value?: string): ProductId {

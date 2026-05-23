@@ -3,56 +3,11 @@ import { redirect } from "next/navigation";
 import { CheckCircle2, MessageCircle, Phone, UserRound } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
+import { fetchFamilyStudents } from "../../lib/api/family-students";
 import { extractRoleFromMetadata } from "../../lib/supabase/roles";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-type StudentResponse = {
-  data: Array<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    grade: number;
-    profile?: {
-      whatsappPhone?: string | null;
-      whatsappContacts?: Array<{
-        id: string;
-        role: "STUDENT" | "PARENT" | "GUARDIAN";
-        phone: string;
-        displayName?: string | null;
-      }>;
-    } | null;
-  }>;
-};
-
-type StudentFetchResult = {
-  students: StudentResponse["data"];
-  error: "missing_api_url" | "request_failed" | null;
-};
-
-async function fetchStudents(accessToken: string): Promise<StudentFetchResult> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    return { students: [], error: "missing_api_url" };
-  }
-
-  try {
-    const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/students`, {
-      headers: { authorization: `Bearer ${accessToken}` },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return { students: [], error: "request_failed" };
-    }
-
-    const payload = (await response.json()) as StudentResponse;
-    return { students: payload.data ?? [], error: null };
-  } catch {
-    return { students: [], error: "request_failed" };
-  }
-}
 
 export default async function FamilyHomePage() {
   const supabase = createSupabaseServerClient();
@@ -72,7 +27,7 @@ export default async function FamilyHomePage() {
     redirect("/app");
   }
 
-  const { students, error } = await fetchStudents(session.access_token);
+  const { students, error } = await fetchFamilyStudents(session.access_token);
 
   return (
     <main className="min-h-screen bg-[#eef5f3] p-4 text-[#14120f] sm:p-6">
@@ -86,9 +41,14 @@ export default async function FamilyHomePage() {
                 Aca ves los alumnos vinculados y los telefonos que el tutor reconoce por WhatsApp.
               </p>
             </div>
-            <Button asChild className="bg-[#11231f] text-white hover:bg-[#1b342e]">
-              <Link href="/login/salir">Salir</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild className="bg-[#18b6a4] text-white hover:bg-[#119b8c]">
+                <Link href="/familia/perfil">Mi perfil</Link>
+              </Button>
+              <Button asChild className="bg-[#11231f] text-white hover:bg-[#1b342e]">
+                <Link href="/login/salir">Salir</Link>
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -148,7 +108,7 @@ export default async function FamilyHomePage() {
                 Crea el primer alumno desde el registro ApoyoAI o pedinos ayuda para vincularlo.
               </p>
               <Button asChild className="mt-5 bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
-                <Link href="/apoyoai/precios">Ir a planes ApoyoAI</Link>
+                <Link href="/precios#apoyoai">Ir a planes ApoyoAI</Link>
               </Button>
             </article>
           )}
