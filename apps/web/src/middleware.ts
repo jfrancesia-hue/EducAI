@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { updateSession } from "./src/lib/supabase/middleware";
-import { extractRoleFromMetadata } from "./src/lib/supabase/roles";
+import { updateSession } from "./lib/supabase/middleware";
+import { extractRoleFromMetadata } from "./lib/supabase/roles";
 
 const WEB_ALLOWED_ROLES = new Set(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
 
