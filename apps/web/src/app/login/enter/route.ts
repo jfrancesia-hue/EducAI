@@ -30,6 +30,12 @@ function redirectToLogin(request: Request, params: Record<string, string>) {
   return NextResponse.redirect(loginUrl, { status: 303 });
 }
 
+function redirectToTransition(request: Request, nextPath: string) {
+  const url = new URL("/login/entrando", request.url);
+  url.searchParams.set("next", nextPath);
+  return url;
+}
+
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
     return redirectToLogin(request, { error: "config" });
@@ -41,14 +47,14 @@ export async function POST(request: Request) {
   const nextPath = safeNextPath(readFormValue(formData, "next"));
 
   if (!email || !password) {
-    return redirectToLogin(request, { error: "missing", next: nextPath ?? "" });
+    return redirectToLogin(request, { error: "missing", next: nextPath ?? "", email });
   }
 
   const redirectUrl = new URL(nextPath ?? "/app", request.url);
   const auth = await signInWithPasswordRedirect(request, { email, password, redirectUrl });
 
   if (!auth) {
-    return redirectToLogin(request, { error: "invalid", next: nextPath ?? "" });
+    return redirectToLogin(request, { error: "invalid", next: nextPath ?? "", email });
   }
 
   const metadata = {
@@ -59,7 +65,10 @@ export async function POST(request: Request) {
     redirectUrl.pathname = "/familia";
     redirectUrl.search = "";
   }
-  auth.response.headers.set("location", redirectUrl.toString());
+  auth.response.headers.set(
+    "location",
+    redirectToTransition(request, `${redirectUrl.pathname}${redirectUrl.search}`).toString(),
+  );
 
   return auth.response;
 }

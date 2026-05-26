@@ -18,11 +18,21 @@ function safeNext(value: string | null) {
   return value;
 }
 
+function transitionUrl(request: NextRequest, next: string) {
+  if (!next.startsWith("/app") && !next.startsWith("/familia")) {
+    return new URL(next, request.url);
+  }
+
+  const url = new URL("/login/entrando", request.url);
+  url.searchParams.set("next", next);
+  return url;
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = safeNext(requestUrl.searchParams.get("next"));
-  const response = NextResponse.redirect(new URL(next, request.url), { status: 303 });
+  const response = NextResponse.redirect(transitionUrl(request, next), { status: 303 });
 
   if (!code) {
     return NextResponse.redirect(new URL("/login?error=invalid", request.url), { status: 303 });
