@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   BookOpenCheck,
@@ -27,7 +26,9 @@ type RegisterPageProps = {
 
 type ProductId = "educai" | "apoyoai";
 
-const educaiSelfServicePlans = educaiPublicPlans.filter((plan) => plan.id === "free");
+const educaiSelfServicePlans = educaiPublicPlans.filter((plan) =>
+  ["free", "docente-individual", "docente-pro"].includes(plan.id),
+);
 
 function registerHref(product: ProductId, plan = "free") {
   return {
@@ -46,10 +47,6 @@ function normalizeProduct(value?: string): ProductId {
 
 function normalizePlan(plans: PublicPricingPlan[], value?: string) {
   return plans.some((plan) => plan.id === value) ? (value ?? "free") : "free";
-}
-
-function isEducaiPaidPlan(value?: string) {
-  return value === "docente-individual" || value === "docente-pro";
 }
 
 function planHighlights(plan: PublicPricingPlan) {
@@ -109,8 +106,8 @@ function PlanChooser({
         })}
       </div>
       <p className="text-sm font-semibold leading-6 text-[#075f53]">
-        Free crea la cuenta sin tarjeta. Los planes pagos docentes se coordinan por contacto para
-        activarlos correctamente.
+        Free crea la cuenta sin tarjeta. Si elegis un plan pago, guardamos tus datos y despues te
+        llevamos a Mercado Pago para completar la contratacion.
       </p>
     </fieldset>
   );
@@ -120,9 +117,6 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const params = (await searchParams) ?? {};
   const product = normalizeProduct(params.producto);
   const isApoyoAi = product === "apoyoai";
-  if (!isApoyoAi && isEducaiPaidPlan(params.plan)) {
-    redirect(`/contacto?producto=educai&plan=${params.plan}`);
-  }
   const plans = isApoyoAi ? apoyoAiPublicPlans : educaiSelfServicePlans;
   const plan = normalizePlan(plans, params.plan);
   const selectedPlan = plans.find((item) => item.id === plan) ?? plans[0];

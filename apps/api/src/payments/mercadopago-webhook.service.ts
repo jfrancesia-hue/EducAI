@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -36,6 +37,8 @@ interface MercadoPagoWebhookInput {
 
 @Injectable()
 export class MercadoPagoWebhookService {
+  private supabase?: SupabaseClient;
+
   constructor(
     private readonly config: ConfigService,
     private readonly logger: AppLogger,
@@ -66,7 +69,21 @@ export class MercadoPagoWebhookService {
     }
 
     const reference = this.parseExternalReference(externalReference);
-    if (!reference || reference.product !== "apoyoai") {
+    if (!reference) {
+      return {
+        received: true,
+        processed: false,
+        reason: "unsupported_external_reference",
+        externalReference,
+        paymentId,
+      };
+    }
+
+    if (reference.product === "educai") {
+      return this.handleEducAiPayment({ externalReference, payment, paymentId, reference });
+    }
+
+    if (reference.product !== "apoyoai") {
       return {
         received: true,
         processed: false,
@@ -79,7 +96,7 @@ export class MercadoPagoWebhookService {
     const subscription = await this.prisma.subscription.findFirst({
       where: {
         provider: "mercadopago",
-        OR: [{ externalReference }, { familyId: reference.familyId, product: "APOYOAI" }],
+        OR: [{ externalReference }, { familyId: reference.resourceId, product: "APOYOAI" }],
       },
     });
 
@@ -151,6 +168,152 @@ export class MercadoPagoWebhookService {
     };
   }
 
+  private async handleEducAiPayment(input: {
+    externalReference: string;
+    payment: MercadoPagoPayment;
+    paymentId: string;
+    reference: {
+      product: string;
+      resourceId: string;
+      planCode: string;
+    };
+  }) {
+    const mappedStatus = this.mapPaymentStatus(input.payment.status);
+    if (!mappedStatus) {
+      return {
+        received: true,
+        processed: false,
+        reason: "unsupported_payment_status",
+        paymentId: input.paymentId,
+        status: input.payment.status,
+      };
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.reference.resourceId },
+      select: {
+        id: true,
+        metadata: true,
+        school: {
+          select: {
+            id: true,
+            settings: true,
+          },
+        },
+        users: {
+          where: {
+            deletedAt: null,
+            role: {
+              in: ["TEACHER", "SCHOOL_ADMIN"],
+            },
+          },
+          select: {
+            email: true,
+            role: true,
+            teacher: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!tenant || !tenant.school) {
+      this.logger.warn(
+        { externalReference: input.externalReference, paymentId: input.paymentId },
+        "mercadopago.webhook.educai_tenant_not_found",
+      );
+      return { received: true, processed: false, reason: "educai_tenant_not_found" };
+    }
+
+    const now = new Date();
+    const nextPlan = mappedStatus === "ACTIVE" ? input.reference.planCode : "free";
+    const paymentStatus = this.paymentStatusLabel(mappedStatus);
+    const billingState = {
+      provider: "mercadopago",
+      externalReference: input.externalReference,
+      paymentId: String(input.payment.id),
+      payerEmail: input.payment.payer?.email ?? null,
+      payerId: input.payment.payer?.id ? String(input.payment.payer.id) : null,
+      status: input.payment.status ?? null,
+      statusDetail: input.payment.status_detail ?? null,
+      approvedAt: mappedStatus === "ACTIVE" ? now.toISOString() : null,
+      updatedAt: now.toISOString(),
+    };
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.tenant.update({
+        where: { id: tenant.id },
+        data: {
+          metadata: {
+            ...(this.asRecord(tenant.metadata) ?? {}),
+            product: "educai",
+            plan: nextPlan,
+            requestedPlan: input.reference.planCode,
+            paymentStatus,
+            billing: billingState,
+          },
+        },
+      });
+
+      await tx.school.update({
+        where: { id: tenant.school!.id },
+        data: {
+          settings: {
+            ...(this.asRecord(tenant.school!.settings) ?? {}),
+            product: "educai",
+            plan: nextPlan,
+            requestedPlan: input.reference.planCode,
+            paymentStatus,
+            billing: billingState,
+          },
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          tenantId: tenant.id,
+          action: "mercadopago.webhook.educai.payment.updated",
+          entity: "Tenant",
+          entityId: tenant.id,
+          metadata: {
+            paymentId: String(input.payment.id),
+            status: input.payment.status,
+            statusDetail: input.payment.status_detail,
+            externalReference: input.externalReference,
+            plan: nextPlan,
+            requestedPlan: input.reference.planCode,
+            paymentStatus,
+          },
+        },
+      });
+    });
+
+    for (const user of tenant.users) {
+      await this.updateSupabaseUserPlanByEmail(user.email, {
+        role: user.role,
+        tenantId: tenant.id,
+        schoolId: tenant.school.id,
+        teacherId: user.teacher?.id,
+        product: "educai",
+        plan: nextPlan,
+        requestedPlan: input.reference.planCode,
+        paymentStatus,
+      });
+    }
+
+    return {
+      received: true,
+      processed: true,
+      paymentId: String(input.payment.id),
+      tenantId: tenant.id,
+      plan: nextPlan,
+      paymentStatus,
+    };
+  }
+
   private assertValidSignature(input: {
     dataId?: string;
     requestId?: string;
@@ -214,15 +377,15 @@ export class MercadoPagoWebhookService {
   private parseExternalReference(reference: string):
     | {
         product: string;
-        familyId: string;
+        resourceId: string;
         planCode: string;
       }
     | undefined {
-    const [product, familyId, planCode] = reference.split(":");
-    if (!product || !familyId || !planCode) {
+    const [product, resourceId, planCode] = reference.split(":");
+    if (!product || !resourceId || !planCode) {
       return undefined;
     }
-    return { product: product.toLowerCase(), familyId, planCode };
+    return { product: product.toLowerCase(), resourceId, planCode };
   }
 
   private mapPaymentStatus(
@@ -247,5 +410,114 @@ export class MercadoPagoWebhookService {
 
   private addDays(date: Date, days: number): Date {
     return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+  }
+
+  private paymentStatusLabel(status: "ACTIVE" | "PAST_DUE" | "CANCELED") {
+    switch (status) {
+      case "ACTIVE":
+        return "active";
+      case "PAST_DUE":
+        return "pending";
+      case "CANCELED":
+        return "canceled";
+    }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private getSupabase(): SupabaseClient {
+    if (this.supabase) {
+      return this.supabase;
+    }
+
+    const url = this.config.get<string>("SUPABASE_URL")?.trim();
+    const secretKey =
+      this.config.get<string>("SUPABASE_SECRET_KEY")?.trim() ??
+      this.config.get<string>("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+    if (!url || !secretKey) {
+      throw new ServiceUnavailableException("Supabase admin no esta configurado");
+    }
+
+    this.supabase = createClient(url, secretKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    return this.supabase;
+  }
+
+  private async updateSupabaseUserPlanByEmail(
+    email: string,
+    appMetadata: {
+      role: string;
+      tenantId: string;
+      schoolId: string;
+      teacherId?: string;
+      product: string;
+      plan: string;
+      requestedPlan: string;
+      paymentStatus: string;
+    },
+  ) {
+    const user = await this.findSupabaseUserByEmail(email);
+    if (!user) {
+      this.logger.warn({ email }, "mercadopago.webhook.supabase_user_not_found");
+      return;
+    }
+
+    const nextMetadata: Record<string, string> = {
+      role: appMetadata.role,
+      tenantId: appMetadata.tenantId,
+      schoolId: appMetadata.schoolId,
+      product: appMetadata.product,
+      plan: appMetadata.plan,
+      requestedPlan: appMetadata.requestedPlan,
+      paymentStatus: appMetadata.paymentStatus,
+    };
+    if (appMetadata.teacherId) {
+      nextMetadata.teacherId = appMetadata.teacherId;
+    }
+
+    const { error } = await this.getSupabase().auth.admin.updateUserById(user.id, {
+      app_metadata: nextMetadata,
+    });
+    if (error) {
+      throw new ServiceUnavailableException(
+        `No se pudo actualizar metadata de Supabase: ${error.message}`,
+      );
+    }
+  }
+
+  private async findSupabaseUserByEmail(email: string) {
+    let page = 1;
+
+    while (true) {
+      const { data, error } = await this.getSupabase().auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+
+      if (error) {
+        throw new ServiceUnavailableException(
+          `No se pudo listar usuarios de Supabase: ${error.message}`,
+        );
+      }
+
+      const user = data.users.find(
+        (candidate) => candidate.email?.toLowerCase() === email.toLowerCase(),
+      );
+      if (user) {
+        return user;
+      }
+
+      if (data.users.length < 200) {
+        return null;
+      }
+
+      page += 1;
+    }
   }
 }

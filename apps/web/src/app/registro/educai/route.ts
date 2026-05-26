@@ -30,13 +30,6 @@ export async function POST(request: Request) {
   const password = read(formData, "password");
   const termsAccepted = read(formData, "termsAccepted") === "yes";
 
-  if (plan !== "free") {
-    return NextResponse.redirect(
-      new URL(`/contacto?producto=educai&plan=${encodeURIComponent(plan)}`, request.url),
-      { status: 303 },
-    );
-  }
-
   if (!termsAccepted) {
     return NextResponse.redirect(
       new URL(`/registro?producto=educai&plan=${plan}&error=terms`, request.url),

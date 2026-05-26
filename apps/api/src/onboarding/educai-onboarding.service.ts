@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -56,12 +55,6 @@ export class EducAiOnboardingService {
     email: string,
     authUserId: string,
   ) {
-    if (dto.plan !== "free") {
-      throw new BadRequestException(
-        "Los planes pagos docentes se activan por contacto mientras terminamos la automatizacion",
-      );
-    }
-
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       const recovered = await this.recoverExistingTeacherWorkspace(
@@ -138,7 +131,9 @@ export class EducAiOnboardingService {
       schoolId: result.school.id,
       teacherId: result.teacher.id,
       product: "educai",
-      plan: dto.plan,
+      plan: dto.plan === "free" ? "free" : "free",
+      requestedPlan: dto.plan,
+      paymentStatus: dto.plan === "free" ? "active" : "pending",
     });
 
     const checkout = await this.createCheckoutPreferenceSafely({
@@ -200,7 +195,9 @@ export class EducAiOnboardingService {
       schoolId: school.id,
       teacherId: teacher.id,
       product: "educai",
-      plan: dto.plan,
+      plan: dto.plan === "free" ? "free" : "free",
+      requestedPlan: dto.plan,
+      paymentStatus: dto.plan === "free" ? "active" : "pending",
     });
 
     const checkout = await this.createCheckoutPreferenceSafely({

@@ -57,12 +57,6 @@ export async function GET(request: Request) {
     return redirectWithClearedCookie(new URL("/registro?error=signup", request.url));
   }
 
-  if (pending.product === "educai" && pending.plan !== "free") {
-    return redirectWithClearedCookie(
-      new URL(`/contacto?producto=educai&plan=${encodeURIComponent(pending.plan)}`, request.url),
-    );
-  }
-
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
     return redirectWithClearedCookie(

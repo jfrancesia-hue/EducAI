@@ -42,13 +42,6 @@ export async function POST(request: Request) {
     return redirectToRegister(request, product, plan, "terms");
   }
 
-  if (product === "educai" && plan !== "free") {
-    return NextResponse.redirect(
-      new URL(`/contacto?producto=educai&plan=${encodeURIComponent(plan)}`, request.url),
-      { status: 303 },
-    );
-  }
-
   const payload =
     product === "educai"
       ? {
