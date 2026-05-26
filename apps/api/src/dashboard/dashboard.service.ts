@@ -57,92 +57,79 @@ export class DashboardService {
       ...(input.schoolId ? { schoolId: input.schoolId } : {}),
     };
 
-    const [
-      studentCount,
-      profileCount,
-      diagnosticCompletedCount,
-      lessonPlanCount,
-      curriculumCount,
-      recentStudents,
-      recentLessonPlans,
-      lessonPlanBySubject,
-      handoffLogs,
-      recentSessions,
-    ] = await Promise.all([
-      prisma.student.count({ where: studentWhere }),
-      prisma.studentProfile.count({ where: profileWhere }),
-      prisma.studentProfile.count({
-        where: {
-          ...profileWhere,
-          diagnosticCompleted: true,
-        },
-      }),
-      prisma.lessonPlan.count({ where: lessonPlanWhere }),
-      prisma.curriculum.count({ where: curriculumWhere }),
-      prisma.student.findMany({
-        where: studentWhere,
-        orderBy: { createdAt: "desc" },
-        take: 24,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          grade: true,
-          school: { select: { name: true } },
-          profile: {
-            select: {
-              learningStyle: true,
-              diagnosticCompleted: true,
-              strongSubjects: true,
-              weakSubjects: true,
-            },
+    const studentCount = await prisma.student.count({ where: studentWhere });
+    const profileCount = await prisma.studentProfile.count({ where: profileWhere });
+    const diagnosticCompletedCount = await prisma.studentProfile.count({
+      where: {
+        ...profileWhere,
+        diagnosticCompleted: true,
+      },
+    });
+    const lessonPlanCount = await prisma.lessonPlan.count({ where: lessonPlanWhere });
+    const curriculumCount = await prisma.curriculum.count({ where: curriculumWhere });
+    const recentStudents = await prisma.student.findMany({
+      where: studentWhere,
+      orderBy: { createdAt: "desc" },
+      take: 24,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        grade: true,
+        school: { select: { name: true } },
+        profile: {
+          select: {
+            learningStyle: true,
+            diagnosticCompleted: true,
+            strongSubjects: true,
+            weakSubjects: true,
           },
         },
-      }),
-      prisma.lessonPlan.findMany({
-        where: lessonPlanWhere,
-        orderBy: { createdAt: "desc" },
-        take: 12,
-        select: {
-          id: true,
-          grade: true,
-          subject: true,
-          topic: true,
-          status: true,
-          durationMinutes: true,
-          generatedByAI: true,
-          createdAt: true,
-        },
-      }),
-      prisma.lessonPlan.groupBy({
-        by: ["subject"],
-        where: lessonPlanWhere,
-        _count: { _all: true },
-        orderBy: { _count: { subject: "desc" } },
-        take: 6,
-      }),
-      prisma.auditLog.findMany({
-        where: {
-          tenantId: input.tenantId,
-          action: HANDOFF_ACTION,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-        select: {
-          id: true,
-          createdAt: true,
-          metadata: true,
-        },
-      }),
-      prisma.learningSession.aggregate({
-        where: {
-          tenantId: input.tenantId,
-          ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
-          createdAt: { gte: this.startOfWeek() },
-        },
-        _sum: { durationMinutes: true },
-      }),
-    ]);
+      },
+    });
+    const recentLessonPlans = await prisma.lessonPlan.findMany({
+      where: lessonPlanWhere,
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: {
+        id: true,
+        grade: true,
+        subject: true,
+        topic: true,
+        status: true,
+        durationMinutes: true,
+        generatedByAI: true,
+        createdAt: true,
+      },
+    });
+    const lessonPlanBySubject = await prisma.lessonPlan.groupBy({
+      by: ["subject"],
+      where: lessonPlanWhere,
+      _count: { _all: true },
+      orderBy: { _count: { subject: "desc" } },
+      take: 6,
+    });
+    const handoffLogs = await prisma.auditLog.findMany({
+      where: {
+        tenantId: input.tenantId,
+        action: HANDOFF_ACTION,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        createdAt: true,
+        metadata: true,
+      },
+    });
+    const recentSessions = await prisma.learningSession.aggregate({
+      where: {
+        tenantId: input.tenantId,
+        ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
+        createdAt: { gte: this.startOfWeek() },
+      },
+      _sum: { durationMinutes: true },
+    });
 
     const openHandoffs = handoffLogs.filter(
       (log) => this.getHandoffStatus(log.metadata) !== "closed",
