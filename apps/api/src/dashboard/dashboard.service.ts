@@ -22,6 +22,21 @@ type InstitutionalInput = {
 
 type PrismaTx = Prisma.TransactionClient;
 type SubjectCountRow = { subject: string; _count: { _all: number } };
+type RecentLessonPlanRow = {
+  id: string;
+  grade: number;
+  subject: string;
+  topic: string;
+  status: string;
+  durationMinutes: number;
+  generatedByAI: boolean;
+  createdAt: Date;
+};
+type LessonPlanSummary = {
+  count: number;
+  recent: RecentLessonPlanRow[];
+  subjectMix: SubjectCountRow[];
+};
 
 @Injectable()
 export class DashboardService {
@@ -61,11 +76,9 @@ export class DashboardService {
       studentCount,
       profileCount,
       diagnosticCompletedCount,
-      lessonPlanCount,
+      lessonPlanSummary,
       curriculumCount,
       recentStudents,
-      recentLessonPlans,
-      lessonPlanBySubject,
       handoffLogs,
       recentSessions,
     ] = await Promise.all([
@@ -83,8 +96,43 @@ export class DashboardService {
           },
         }),
       ),
-      this.readDashboardValue("lessonPlanCount", 0, (prisma) =>
-        prisma.lessonPlan.count({ where: lessonPlanWhere }),
+      this.readDashboardValue<LessonPlanSummary>(
+        "lessonPlanSummary",
+        { count: 0, recent: [], subjectMix: [] },
+        async (prisma) => {
+          const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
+          const recent = await prisma.lessonPlan.findMany({
+            where: lessonPlanWhere,
+            orderBy: { createdAt: "desc" },
+            take: 12,
+            select: {
+              id: true,
+              grade: true,
+              subject: true,
+              topic: true,
+              status: true,
+              durationMinutes: true,
+              generatedByAI: true,
+              createdAt: true,
+            },
+          });
+          const rows = await prisma.lessonPlan.groupBy({
+            by: ["subject"],
+            where: lessonPlanWhere,
+            _count: { _all: true },
+            orderBy: { _count: { subject: "desc" } },
+            take: 6,
+          });
+
+          return {
+            count,
+            recent,
+            subjectMix: rows.map((row) => ({
+              subject: row.subject,
+              _count: { _all: row._count._all },
+            })),
+          };
+        },
       ),
       this.readDashboardValue("curriculumCount", 0, (prisma) =>
         prisma.curriculum.count({ where: curriculumWhere }),
@@ -111,34 +159,6 @@ export class DashboardService {
           },
         }),
       ),
-      this.readDashboardValue("recentLessonPlans", [], (prisma) =>
-        prisma.lessonPlan.findMany({
-          where: lessonPlanWhere,
-          orderBy: { createdAt: "desc" },
-          take: 12,
-          select: {
-            id: true,
-            grade: true,
-            subject: true,
-            topic: true,
-            status: true,
-            durationMinutes: true,
-            generatedByAI: true,
-            createdAt: true,
-          },
-        }),
-      ),
-      this.readDashboardValue<SubjectCountRow[]>("lessonPlanBySubject", [], async (prisma) => {
-        const rows = await prisma.lessonPlan.groupBy({
-          by: ["subject"],
-          where: lessonPlanWhere,
-          _count: { _all: true },
-          orderBy: { _count: { subject: "desc" } },
-          take: 6,
-        });
-
-        return rows.map((row) => ({ subject: row.subject, _count: { _all: row._count._all } }));
-      }),
       this.readDashboardValue("handoffLogs", [], (prisma) =>
         prisma.auditLog.findMany({
           where: {
@@ -179,7 +199,7 @@ export class DashboardService {
         scope: input.role === "TEACHER" ? "teacher" : "institution",
         metrics: {
           studentCount,
-          lessonPlanCount,
+          lessonPlanCount: lessonPlanSummary.count,
           curriculumCount,
           openHandoffCount: openHandoffs.length,
           diagnosticCompletionRate: diagnosticRate,
@@ -195,11 +215,11 @@ export class DashboardService {
           strengths: student.profile?.strongSubjects ?? [],
           opportunities: student.profile?.weakSubjects ?? [],
         })),
-        recentLessonPlans: recentLessonPlans.map((plan) => ({
+        recentLessonPlans: lessonPlanSummary.recent.map((plan) => ({
           ...plan,
           createdAt: plan.createdAt.toISOString(),
         })),
-        subjectMix: lessonPlanBySubject.map((item) => ({
+        subjectMix: lessonPlanSummary.subjectMix.map((item) => ({
           subject: item.subject,
           count: item._count._all,
         })),
