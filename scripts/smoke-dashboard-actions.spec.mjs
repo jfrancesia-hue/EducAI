@@ -32,4 +32,15 @@ test("login and use dashboard action buttons", async ({ page }) => {
     await page.waitForTimeout(2_000);
     await expect(page).not.toHaveURL(/\/login/);
   }
+
+  await page.goto("https://www.educai.com.ar/app", { waitUntil: "domcontentloaded" });
+  await expect(page).not.toHaveURL(/\/login/);
+  await expect(page.getByText("Planificaciones recientes")).toBeVisible();
+
+  const recentLesson = page.locator('a[href*="/app/planificar?created="]').first();
+  await expect(recentLesson).toBeVisible({ timeout: 60_000 });
+  await recentLesson.click();
+  await page.waitForURL(/\/app\/planificar\?created=/, { timeout: 60_000 });
+  await expect(page.getByText("Guia generada")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("Secuencia")).toBeVisible();
 });
