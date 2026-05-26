@@ -11,7 +11,7 @@ function safeNextPath(value: string | null) {
     return null;
   }
 
-  if (value.startsWith("/app")) {
+  if (value.startsWith("/app") || value.startsWith("/familia")) {
     return value;
   }
 
@@ -31,11 +31,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname.startsWith("/familia") && !hasSession) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
   if (pathname.startsWith("/app") && hasSession && role === "PARENT") {
     return NextResponse.redirect(new URL("/familia", request.url));
   }
 
   if (pathname.startsWith("/app") && hasSession && (!role || !WEB_ALLOWED_ROLES.has(role))) {
+    return NextResponse.redirect(new URL("/acceso-denegado", request.url));
+  }
+
+  if (pathname.startsWith("/familia") && hasSession && role && WEB_ALLOWED_ROLES.has(role)) {
+    return NextResponse.redirect(new URL("/app", request.url));
+  }
+
+  if (pathname.startsWith("/familia") && hasSession && role !== "PARENT") {
     return NextResponse.redirect(new URL("/acceso-denegado", request.url));
   }
 
@@ -48,9 +62,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(nextPath ?? "/app", request.url));
   }
 
+  if (pathname === "/acceso-denegado" && hasSession && role === "PARENT") {
+    return NextResponse.redirect(new URL("/familia", request.url));
+  }
+
+  if (pathname === "/acceso-denegado" && hasSession && role && WEB_ALLOWED_ROLES.has(role)) {
+    return NextResponse.redirect(new URL("/app", request.url));
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login", "/acceso-denegado"],
+  matcher: ["/app/:path*", "/familia/:path*", "/login", "/acceso-denegado"],
 };

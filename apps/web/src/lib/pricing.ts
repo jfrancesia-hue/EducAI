@@ -85,8 +85,8 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     audience: "Para uso semanal",
     price: "$9.900/mes",
     description: "Herramientas esenciales para preparar clases y recursos todos los meses.",
-    ctaLabel: "Elegir Individual",
-    ctaHref: "/registro?producto=educai&plan=docente-individual",
+    ctaLabel: "Consultar Individual",
+    ctaHref: "/contacto?producto=educai&plan=docente-individual",
     includes: [
       "10 planificaciones por mes",
       "20 actividades o recursos",
@@ -96,6 +96,7 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
       "Reporte mensual",
       "Soporte por email",
     ],
+    note: "Por ahora se activa con acompanamiento manual del equipo.",
   },
   {
     id: "docente-pro",
@@ -106,8 +107,8 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     description:
       "Produccion docente mas profunda para planificar, evaluar y reutilizar materiales.",
     featured: true,
-    ctaLabel: "Elegir Docente Pro",
-    ctaHref: "/registro?producto=educai&plan=docente-pro",
+    ctaLabel: "Consultar Docente Pro",
+    ctaHref: "/contacto?producto=educai&plan=docente-pro",
     includes: [
       "40 planificaciones por mes",
       "80 actividades o recursos",
@@ -119,6 +120,7 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
       "Reporte semanal",
       "Soporte prioritario",
     ],
+    note: "Por ahora se activa con acompanamiento manual del equipo.",
   },
   {
     id: "colegio",

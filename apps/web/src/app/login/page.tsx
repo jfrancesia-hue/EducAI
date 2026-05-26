@@ -69,9 +69,13 @@ export default function LoginPage({
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
   const registeredMessage = registered
     ? payment === "success"
-      ? "Pago confirmado. Ya podes ingresar."
+      ? registered === "educai"
+        ? "Pago recibido. Vamos a activar tu plan docente y, si no ves cambios, escribinos."
+        : "Pago confirmado. Ya podes ingresar."
       : payment === "pending"
-        ? "Tu pago esta pendiente. Cuando se confirme, vas a poder usar el plan contratado."
+        ? registered === "educai"
+          ? "Tu pago docente esta pendiente. Cuando se confirme, activamos el plan y te avisamos."
+          : "Tu pago esta pendiente. Cuando se confirme, vas a poder usar el plan contratado."
         : (registeredMessages[registered] ?? null)
     : null;
   const passwordMessage = password ? (passwordMessages[password] ?? null) : null;

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -55,6 +56,12 @@ export class EducAiOnboardingService {
     email: string,
     authUserId: string,
   ) {
+    if (dto.plan !== "free") {
+      throw new BadRequestException(
+        "Los planes pagos docentes se activan por contacto mientras terminamos la automatizacion",
+      );
+    }
+
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       const recovered = await this.recoverExistingTeacherWorkspace(
