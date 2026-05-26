@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   CheckCircle2,
   GraduationCap,
@@ -96,17 +95,13 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  const appMetadata = session.user.app_metadata as Record<string, unknown>;
+  const appMetadata = (session?.user.app_metadata ?? {}) as Record<string, unknown>;
   const plan = metadataValue(appMetadata, "plan") || "free";
   const role = metadataValue(appMetadata, "role") || "TEACHER";
   const schoolLinked = Boolean(metadataValue(appMetadata, "schoolId"));
   const teacherLinked = Boolean(metadataValue(appMetadata, "teacherId"));
   const message = passwordMessage(params.password);
-  const visibleName = displayName(session.user.user_metadata, session.user.email);
+  const visibleName = displayName(session?.user.user_metadata, session?.user.email);
   const profileStatus = profileMessage(params.profile);
 
   return (
@@ -124,7 +119,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                   <h2 className="font-display text-3xl font-bold tracking-tight">{visibleName}</h2>
                   <p className="mt-2 flex items-center gap-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
                     <Mail className="h-4 w-4 text-[#087968]" aria-hidden="true" />
-                    {session.user.email}
+                    {session?.user.email ?? "Email no disponible"}
                   </p>
                 </div>
               </div>

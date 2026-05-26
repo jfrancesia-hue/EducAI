@@ -1,7 +1,34 @@
 const serviceWorker = `
-const CACHE_NAME = "educai-shell-v1";
-const ASSET_CACHE = "educai-assets-v1";
+const CACHE_NAME = "educai-shell-v2";
+const ASSET_CACHE = "educai-assets-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/pwa-icon.svg", "/icons/pwa-maskable.svg"];
+
+function isProtectedOrAuthPath(pathname) {
+  return (
+    pathname.startsWith("/app") ||
+    pathname.startsWith("/familia") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/cuenta") ||
+    pathname.startsWith("/registro/google")
+  );
+}
+
+function isNextRscRequest(request, url) {
+  return request.headers.get("RSC") === "1" || url.searchParams.has("_rsc");
+}
+
+function isCacheableAsset(request, url) {
+  return (
+    request.destination === "style" ||
+    request.destination === "script" ||
+    request.destination === "font" ||
+    request.destination === "image" ||
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname === "/manifest.webmanifest"
+  );
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -35,6 +62,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (isProtectedOrAuthPath(url.pathname) || isNextRscRequest(request, url)) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -45,6 +77,11 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(async () => (await caches.match(request)) || caches.match("/")),
     );
+    return;
+  }
+
+  if (!isCacheableAsset(request, url)) {
+    event.respondWith(fetch(request));
     return;
   }
 

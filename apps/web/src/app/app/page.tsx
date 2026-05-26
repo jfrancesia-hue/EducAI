@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { redirect } from "next/navigation";
 import {
   AlertTriangle,
   BookOpenCheck,
@@ -56,11 +55,9 @@ export default async function EducAiAppPage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session?.access_token) {
-    redirect("/login");
-  }
-
-  const dashboard = await fetchInstitutionalDashboard(session.access_token);
+  const dashboard = session?.access_token
+    ? await fetchInstitutionalDashboard(session.access_token)
+    : null;
 
   return (
     <AppShell title="Inicio">
@@ -89,7 +86,7 @@ export default async function EducAiAppPage() {
                   variant="outline"
                   className="border-white/20 bg-white/10 text-white"
                 >
-                  <Link href="/app/estudiantes">
+                  <Link href="/app/estudiantes" prefetch={false}>
                     <UsersRound className="h-4 w-4" aria-hidden="true" />
                     Ver estudiantes
                   </Link>
@@ -99,7 +96,7 @@ export default async function EducAiAppPage() {
                   variant="outline"
                   className="border-white/20 bg-white/10 text-white"
                 >
-                  <Link href="/app/reportes">
+                  <Link href="/app/reportes" prefetch={false}>
                     <LineChart className="h-4 w-4" aria-hidden="true" />
                     Ver reportes
                   </Link>
@@ -259,7 +256,9 @@ export default async function EducAiAppPage() {
               ))}
             </div>
             <Button asChild variant="ghost" size="sm" className="mt-4 px-0 text-[#11231f]">
-              <Link href="/app/estudiantes">Abrir modulo de estudiantes</Link>
+              <Link href="/app/estudiantes" prefetch={false}>
+                Abrir modulo de estudiantes
+              </Link>
             </Button>
           </section>
 

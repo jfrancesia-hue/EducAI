@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { AlertCircle, BookOpenCheck, CheckCircle2, Clock, FileText } from "lucide-react";
 
 import { Badge } from "@educai/ui";
@@ -37,11 +36,9 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session?.access_token) {
-    redirect("/login");
-  }
-
-  const dashboard = await fetchInstitutionalDashboard(session.access_token);
+  const dashboard = session?.access_token
+    ? await fetchInstitutionalDashboard(session.access_token)
+    : null;
   const createdId = searchParams?.created;
   const error = searchParams?.error;
 
