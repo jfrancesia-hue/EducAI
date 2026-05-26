@@ -35,7 +35,6 @@ type RecentLessonPlanRow = {
 type LessonPlanSummary = {
   count: number;
   recent: RecentLessonPlanRow[];
-  subjectMix: SubjectCountRow[];
 };
 
 @Injectable()
@@ -79,6 +78,7 @@ export class DashboardService {
       lessonPlanSummary,
       curriculumCount,
       recentStudents,
+      lessonPlanBySubject,
       handoffLogs,
       recentSessions,
     ] = await Promise.all([
@@ -98,7 +98,7 @@ export class DashboardService {
       ),
       this.readDashboardValue<LessonPlanSummary>(
         "lessonPlanSummary",
-        { count: 0, recent: [], subjectMix: [] },
+        { count: 0, recent: [] },
         async (prisma) => {
           const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
           const recent = await prisma.lessonPlan.findMany({
@@ -116,22 +116,8 @@ export class DashboardService {
               createdAt: true,
             },
           });
-          const rows = await prisma.lessonPlan.groupBy({
-            by: ["subject"],
-            where: lessonPlanWhere,
-            _count: { _all: true },
-            orderBy: { _count: { subject: "desc" } },
-            take: 6,
-          });
 
-          return {
-            count,
-            recent,
-            subjectMix: rows.map((row) => ({
-              subject: row.subject,
-              _count: { _all: row._count._all },
-            })),
-          };
+          return { count, recent };
         },
       ),
       this.readDashboardValue("curriculumCount", 0, (prisma) =>
@@ -159,6 +145,17 @@ export class DashboardService {
           },
         }),
       ),
+      this.readDashboardValue<SubjectCountRow[]>("lessonPlanBySubject", [], async (prisma) => {
+        const rows = await prisma.lessonPlan.groupBy({
+          by: ["subject"],
+          where: lessonPlanWhere,
+          _count: { _all: true },
+          orderBy: { _count: { subject: "desc" } },
+          take: 6,
+        });
+
+        return rows.map((row) => ({ subject: row.subject, _count: { _all: row._count._all } }));
+      }),
       this.readDashboardValue("handoffLogs", [], (prisma) =>
         prisma.auditLog.findMany({
           where: {
@@ -219,7 +216,7 @@ export class DashboardService {
           ...plan,
           createdAt: plan.createdAt.toISOString(),
         })),
-        subjectMix: lessonPlanSummary.subjectMix.map((item) => ({
+        subjectMix: lessonPlanBySubject.map((item) => ({
           subject: item.subject,
           count: item._count._all,
         })),
