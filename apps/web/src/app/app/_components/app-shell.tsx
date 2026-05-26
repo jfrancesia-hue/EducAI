@@ -100,6 +100,7 @@ export function AppShell({
             </Link>
             <Link
               href="/login/salir"
+              prefetch={false}
               className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white/10 text-sm font-semibold text-white/72 transition hover:bg-white/15 hover:text-white"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -135,7 +136,7 @@ export function AppShell({
                 variant="outline"
                 className="border-[#d5e1dc] bg-white text-[#11231f] hover:bg-[#e7fbf7]"
               >
-                <Link href="/login/salir">
+                <Link href="/login/salir" prefetch={false}>
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                   Salir
                 </Link>
