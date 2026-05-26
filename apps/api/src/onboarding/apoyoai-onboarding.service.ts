@@ -45,7 +45,7 @@ export class ApoyoAiOnboardingService {
 
   async registerFamily(dto: RegisterApoyoAiFamilyDto) {
     const email = dto.parentEmail.trim().toLowerCase();
-    const authUserId = await this.createSupabaseUser(email, dto.password, dto.parentFullName);
+    const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.parentFullName);
     return this.createFamilyWorkspace(dto, email, authUserId);
   }
 
@@ -67,6 +67,15 @@ export class ApoyoAiOnboardingService {
   ) {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
+      const recovered = await this.recoverExistingFamilyWorkspace(
+        existingUser,
+        authUserId,
+        email,
+        dto,
+      );
+      if (recovered) {
+        return recovered;
+      }
       throw new ConflictException("Ya existe una cuenta EducAI/ApoyoAI con ese email");
     }
 
@@ -212,6 +221,82 @@ export class ApoyoAiOnboardingService {
     };
   }
 
+  private async recoverExistingFamilyWorkspace(
+    existingUser: {
+      id: string;
+      tenantId: string | null;
+      role: string;
+    },
+    authUserId: string,
+    email: string,
+    dto: ApoyoAiFamilySignupInput,
+  ) {
+    if (existingUser.role !== "PARENT" || !existingUser.tenantId) {
+      return null;
+    }
+
+    const [parent, family, subscription] = await Promise.all([
+      this.prisma.parent.findUnique({
+        where: { userId: existingUser.id },
+        select: { id: true },
+      }),
+      this.prisma.family.findUnique({
+        where: { tenantId: existingUser.tenantId },
+        select: { id: true },
+      }),
+      this.prisma.subscription.findFirst({
+        where: { tenantId: existingUser.tenantId },
+        select: {
+          id: true,
+          product: true,
+          planCode: true,
+          status: true,
+          externalReference: true,
+        },
+      }),
+    ]);
+
+    if (!parent || !family) {
+      return null;
+    }
+
+    await this.updateSupabaseMetadata(authUserId, {
+      role: "PARENT",
+      tenantId: existingUser.tenantId,
+      familyId: family.id,
+      product: "apoyoai",
+      plan: dto.plan,
+    });
+
+    const checkout = await this.createCheckoutPreferenceSafely({
+      plan: dto.plan,
+      parentEmail: email,
+      parentName: dto.parentFullName,
+      externalReference: subscription?.externalReference ?? `apoyoai:${family.id}:${dto.plan}`,
+    });
+
+    return {
+      data: {
+        familyId: family.id,
+        tenantId: existingUser.tenantId,
+        parentId: parent.id,
+        subscription: subscription
+          ? {
+              id: subscription.id,
+              product: "apoyoai",
+              plan: subscription.planCode,
+              status: subscription.status,
+              externalReference: subscription.externalReference,
+            }
+          : undefined,
+        checkout,
+        students: [],
+        nextStep:
+          dto.plan === "free" ? "login" : checkout ? "mercadopago_checkout_pending" : "login",
+      },
+    };
+  }
+
   private async createCheckoutPreferenceSafely(input: {
     plan: ApoyoAiPlanCode;
     parentEmail: string;
@@ -314,7 +399,7 @@ export class ApoyoAiOnboardingService {
     return this.supabase;
   }
 
-  private async createSupabaseUser(
+  private async ensureSupabaseUser(
     email: string,
     password: string,
     fullName: string,
@@ -327,16 +412,35 @@ export class ApoyoAiOnboardingService {
       user_metadata: { fullName },
     });
 
-    if (error || !data.user) {
-      if (error?.message.toLowerCase().includes("already")) {
-        throw new ConflictException("Ya existe una cuenta Supabase con ese email");
-      }
-      throw new ServiceUnavailableException(
-        `No se pudo crear el usuario Supabase: ${error?.message ?? "sin detalle"}`,
-      );
+    if (!error && data.user) {
+      return data.user.id;
     }
 
-    return data.user.id;
+    if (error?.message.toLowerCase().includes("already")) {
+      const existing = await this.findSupabaseUserByEmail(email);
+      if (!existing) {
+        throw new ConflictException("Ya existe una cuenta Supabase con ese email");
+      }
+
+      const { error: updateError } = await supabase.auth.admin.updateUserById(existing.id, {
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { fullName },
+      });
+
+      if (updateError) {
+        throw new ServiceUnavailableException(
+          `No se pudo reparar la cuenta Supabase existente: ${updateError.message}`,
+        );
+      }
+
+      return existing.id;
+    }
+
+    throw new ServiceUnavailableException(
+      `No se pudo crear el usuario Supabase: ${error?.message ?? "sin detalle"}`,
+    );
   }
 
   private async updateSupabaseMetadata(
@@ -351,6 +455,36 @@ export class ApoyoAiOnboardingService {
       throw new ServiceUnavailableException(
         `Cuenta creada, pero no se pudieron guardar claims Supabase: ${error.message}`,
       );
+    }
+  }
+
+  private async findSupabaseUserByEmail(email: string) {
+    let page = 1;
+
+    while (true) {
+      const { data, error } = await this.getSupabase().auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+
+      if (error) {
+        throw new ServiceUnavailableException(
+          `No se pudo listar usuarios de Supabase: ${error.message}`,
+        );
+      }
+
+      const user = data.users.find(
+        (candidate) => candidate.email?.toLowerCase() === email.toLowerCase(),
+      );
+      if (user) {
+        return user;
+      }
+
+      if (data.users.length < 200) {
+        return null;
+      }
+
+      page += 1;
     }
   }
 

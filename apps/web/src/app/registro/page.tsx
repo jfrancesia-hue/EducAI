@@ -14,6 +14,7 @@ import {
 import { Badge, Button } from "@educai/ui";
 import { apoyoAiPublicPlans, educaiPublicPlans, type PublicPricingPlan } from "../../lib/pricing";
 import { PasswordField } from "../_components/password-field";
+import { BackButton } from "../_components/back-button";
 
 type RegisterPageProps = {
   searchParams?: Promise<{
@@ -135,12 +136,28 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   return (
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <Button asChild variant="outline" pill className="border-[#d5e1dc] bg-white text-slate-900">
-          <Link href={pricingHref(product)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Ver planes
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <BackButton fallbackHref="/" label="Volver" />
+          <Button
+            asChild
+            variant="outline"
+            pill
+            className="border-[#d5e1dc] bg-white text-slate-900"
+          >
+            <Link href={pricingHref(product)}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Ver planes
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            pill
+            className="border-[#d5e1dc] bg-white text-slate-900"
+          >
+            <Link href="/login">Ingresar</Link>
+          </Button>
+        </div>
 
         <section className="mt-8 rounded-lg border border-[#d5e1dc] bg-white p-6 shadow-whisper sm:p-8">
           <div className="grid gap-3 rounded-lg bg-[#f7f8f3] p-2 sm:grid-cols-2">

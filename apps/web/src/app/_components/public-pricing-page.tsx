@@ -137,11 +137,37 @@ export async function PublicPricingPage() {
               Cobro
             </Link>
           </nav>
-          <Button asChild size="sm" pill className="bg-white text-[#075f53] hover:bg-white/90">
-            <Link href={accountHref ?? "/registro?producto=educai&plan=free"}>
-              {accountLabel ?? "Registrarse"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {sessionTarget ? (
+              <Button asChild size="sm" pill className="bg-white text-[#075f53] hover:bg-white/90">
+                <Link href={accountHref ?? "/app"}>
+                  {accountLabel} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  size="sm"
+                  pill
+                  variant="outline"
+                  className="border-white/30 bg-white/10 text-white hover:bg-white/18"
+                >
+                  <Link href="/login">Ingresar</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  pill
+                  className="bg-white text-[#075f53] hover:bg-white/90"
+                >
+                  <Link href="/registro?producto=educai&plan=free">
+                    Registrarse <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </>
+            )}
+          </div>
         </header>
 
         <div className="relative z-10 mx-auto grid max-w-7xl gap-10 py-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-end lg:py-24">

@@ -35,7 +35,7 @@ export class EducAiOnboardingService {
 
   async registerTeacher(dto: RegisterEducAiTeacherDto) {
     const email = dto.email.trim().toLowerCase();
-    const authUserId = await this.createSupabaseUser(email, dto.password, dto.fullName);
+    const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.fullName);
     return this.createTeacherWorkspace(dto, email, authUserId);
   }
 
@@ -57,6 +57,15 @@ export class EducAiOnboardingService {
   ) {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
+      const recovered = await this.recoverExistingTeacherWorkspace(
+        existingUser,
+        authUserId,
+        email,
+        dto,
+      );
+      if (recovered) {
+        return recovered;
+      }
       throw new ConflictException("Ya existe una cuenta EducAI con ese email");
     }
 
@@ -137,6 +146,68 @@ export class EducAiOnboardingService {
         tenantId: result.tenant.id,
         schoolId: result.school.id,
         teacherId: result.teacher.id,
+        plan: dto.plan,
+        checkout,
+        nextStep:
+          dto.plan === "free"
+            ? "login"
+            : checkout
+              ? "mercadopago_checkout_pending"
+              : "payment_unavailable",
+      },
+    };
+  }
+
+  private async recoverExistingTeacherWorkspace(
+    existingUser: {
+      id: string;
+      tenantId: string | null;
+      role: string;
+    },
+    authUserId: string,
+    email: string,
+    dto: EducAiTeacherSignupInput,
+  ) {
+    if (existingUser.role !== "TEACHER" || !existingUser.tenantId) {
+      return null;
+    }
+
+    const [teacher, school] = await Promise.all([
+      this.prisma.teacher.findUnique({
+        where: { userId: existingUser.id },
+        select: { id: true },
+      }),
+      this.prisma.school.findUnique({
+        where: { tenantId: existingUser.tenantId },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!teacher || !school) {
+      return null;
+    }
+
+    await this.updateSupabaseMetadata(authUserId, {
+      role: "TEACHER",
+      tenantId: existingUser.tenantId,
+      schoolId: school.id,
+      teacherId: teacher.id,
+      product: "educai",
+      plan: dto.plan,
+    });
+
+    const checkout = await this.createCheckoutPreferenceSafely({
+      plan: dto.plan,
+      email,
+      fullName: dto.fullName,
+      externalReference: `educai:${existingUser.tenantId}:${dto.plan}`,
+    });
+
+    return {
+      data: {
+        tenantId: existingUser.tenantId,
+        schoolId: school.id,
+        teacherId: teacher.id,
         plan: dto.plan,
         checkout,
         nextStep:
@@ -248,28 +319,48 @@ export class EducAiOnboardingService {
     return this.supabase;
   }
 
-  private async createSupabaseUser(
+  private async ensureSupabaseUser(
     email: string,
     password: string,
     fullName: string,
   ): Promise<string> {
-    const { data, error } = await this.getSupabase().auth.admin.createUser({
+    const supabase = this.getSupabase();
+    const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { fullName },
     });
 
-    if (error || !data.user) {
-      if (error?.message.toLowerCase().includes("already")) {
-        throw new ConflictException("Ya existe una cuenta Supabase con ese email");
-      }
-      throw new ServiceUnavailableException(
-        `No se pudo crear el usuario Supabase: ${error?.message ?? "sin detalle"}`,
-      );
+    if (!error && data.user) {
+      return data.user.id;
     }
 
-    return data.user.id;
+    if (error?.message.toLowerCase().includes("already")) {
+      const existing = await this.findSupabaseUserByEmail(email);
+      if (!existing) {
+        throw new ConflictException("Ya existe una cuenta Supabase con ese email");
+      }
+
+      const { error: updateError } = await supabase.auth.admin.updateUserById(existing.id, {
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { fullName },
+      });
+
+      if (updateError) {
+        throw new ServiceUnavailableException(
+          `No se pudo reparar la cuenta Supabase existente: ${updateError.message}`,
+        );
+      }
+
+      return existing.id;
+    }
+
+    throw new ServiceUnavailableException(
+      `No se pudo crear el usuario Supabase: ${error?.message ?? "sin detalle"}`,
+    );
   }
 
   private async updateSupabaseMetadata(
@@ -284,6 +375,36 @@ export class EducAiOnboardingService {
       throw new ServiceUnavailableException(
         `Cuenta creada, pero no se pudieron guardar claims Supabase: ${error.message}`,
       );
+    }
+  }
+
+  private async findSupabaseUserByEmail(email: string) {
+    let page = 1;
+
+    while (true) {
+      const { data, error } = await this.getSupabase().auth.admin.listUsers({
+        page,
+        perPage: 200,
+      });
+
+      if (error) {
+        throw new ServiceUnavailableException(
+          `No se pudo listar usuarios de Supabase: ${error.message}`,
+        );
+      }
+
+      const user = data.users.find(
+        (candidate) => candidate.email?.toLowerCase() === email.toLowerCase(),
+      );
+      if (user) {
+        return user;
+      }
+
+      if (data.users.length < 200) {
+        return null;
+      }
+
+      page += 1;
     }
   }
 
