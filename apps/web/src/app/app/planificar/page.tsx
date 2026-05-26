@@ -74,7 +74,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             </div>
           ) : null}
 
-          <LessonPlanForm />
+          <LessonPlanForm accessToken={session?.access_token} />
         </section>
 
         <aside className="grid content-start gap-5">

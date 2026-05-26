@@ -40,16 +40,17 @@ export async function POST(request: NextRequest) {
     return redirectTo(request, { error: "config" });
   }
 
+  const formData = await request.formData();
   const { supabase, withAuthCookies } = createSupabaseRouteClient(request);
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const accessToken = session?.access_token ?? readString(formData, "accessToken");
 
-  if (!session?.access_token) {
+  if (!accessToken) {
     return withAuthCookies(redirectTo(request, { error: "auth" }));
   }
 
-  const formData = await request.formData();
   const payload = {
     educationLevel: readString(formData, "educationLevel"),
     grade: readInteger(formData, "grade"),
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${apiBaseUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
