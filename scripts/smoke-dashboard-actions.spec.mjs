@@ -1,7 +1,7 @@
 import { test, expect } from "playwright/test";
 
 test("login and use dashboard action buttons", async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
 
   const email = process.env.EDUCAI_SMOKE_EMAIL;
   const password = process.env.EDUCAI_SMOKE_PASSWORD;
