@@ -25,18 +25,6 @@ export async function middleware(request: NextRequest) {
   const role =
     extractRoleFromMetadata(user?.app_metadata) ?? extractRoleFromMetadata(user?.user_metadata);
 
-  if (pathname.startsWith("/app") && !hasSession) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (pathname.startsWith("/familia") && !hasSession) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return NextResponse.redirect(loginUrl);
-  }
-
   if (pathname.startsWith("/app") && hasSession && role === "PARENT") {
     return NextResponse.redirect(new URL("/familia", request.url));
   }

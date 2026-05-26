@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 import { extractRoleFromMetadata } from "../../lib/supabase/roles";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
@@ -15,7 +16,9 @@ export default async function ProtectedAppLayout({ children }: { children: React
   } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect("/login?next=/app");
+    const pathname = headers().get("x-educai-pathname");
+    const next = pathname?.startsWith("/app") ? pathname : "/app";
+    redirect(`/login?next=${encodeURIComponent(next)}`);
   }
 
   const role =

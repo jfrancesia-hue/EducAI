@@ -15,7 +15,13 @@ export async function updateSession(request: NextRequest): Promise<{
   response: NextResponse;
   user: User | null;
 }> {
-  const response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-educai-pathname", request.nextUrl.pathname);
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   if (!hasSupabaseEnv()) {
     return { response, user: null };
