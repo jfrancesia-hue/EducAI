@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
   BookOpenCheck,
   Building2,
   GraduationCap,
@@ -137,17 +136,14 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     <main className="min-h-screen bg-[#f7f8f3] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-center gap-3">
-          <BackButton fallbackHref="/" label="Volver" />
+          <BackButton fallbackHref="/" label="Volver" showIcon />
           <Button
             asChild
             variant="outline"
             pill
             className="border-[#d5e1dc] bg-white text-slate-900"
           >
-            <Link href={pricingHref(product)}>
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Ver planes
-            </Link>
+            <Link href={pricingHref(product)}>Ver planes</Link>
           </Button>
           <Button
             asChild
