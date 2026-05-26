@@ -6,29 +6,67 @@ type CookieSetter = {
   set(name: string, value: string, options: CookieOptions): unknown;
 };
 
-export function withSharedAuthCookieDomain(options: CookieOptions): CookieOptions {
-  if (process.env.NODE_ENV !== "production") {
-    return options;
-  }
-
+export function withHostOnlyAuthCookieOptions(options: CookieOptions): CookieOptions {
   return {
     ...options,
-    domain: options.domain ?? SHARED_AUTH_COOKIE_DOMAIN,
+    domain: undefined,
     path: options.path ?? "/",
   };
 }
 
-export function setSupabaseAuthCookie(
-  cookies: CookieSetter,
+type CookieResponse = {
+  cookies: CookieSetter;
+  headers: {
+    append(name: string, value: string): unknown;
+  };
+};
+
+function expireSharedDomainCookie(response: CookieResponse, name: string, options: CookieOptions) {
+  if (process.env.NODE_ENV !== "production") {
+    return;
+  }
+
+  const path = options.path ?? "/";
+  const sameSite = typeof options.sameSite === "string" ? options.sameSite : "lax";
+  response.headers.append(
+    "Set-Cookie",
+    [
+      `${name}=`,
+      `Path=${path}`,
+      "Max-Age=0",
+      `Domain=${SHARED_AUTH_COOKIE_DOMAIN}`,
+      "Secure",
+      options.httpOnly === false ? "" : "HttpOnly",
+      `SameSite=${sameSite}`,
+    ]
+      .filter(Boolean)
+      .join("; "),
+  );
+}
+
+export function setSupabaseAuthResponseCookie(
+  response: CookieResponse,
   name: string,
   value: string,
   options: CookieOptions,
 ) {
-  const hostOptions = { ...options, path: options.path ?? "/" };
+  response.cookies.set(name, value, withHostOnlyAuthCookieOptions(options));
+  expireSharedDomainCookie(response, name, options);
+}
 
-  if (process.env.NODE_ENV === "production") {
-    cookies.set(name, value, withSharedAuthCookieDomain(options));
+export function parseCookieHeader(cookieHeader: string | null) {
+  const deduped = new Map<string, string>();
+
+  for (const entry of (cookieHeader ?? "").split(/;\s*/u)) {
+    if (!entry) {
+      continue;
+    }
+
+    const separator = entry.indexOf("=");
+    const name = separator >= 0 ? entry.slice(0, separator) : entry;
+    const value = separator >= 0 ? entry.slice(separator + 1) : "";
+    deduped.set(name, value);
   }
 
-  cookies.set(name, value, hostOptions);
+  return Array.from(deduped, ([name, value]) => ({ name, value }));
 }

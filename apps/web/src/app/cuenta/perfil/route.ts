@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { createSupabaseRouteClient } from "../../../lib/supabase/route";
 
 function read(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -31,13 +31,13 @@ export async function POST(request: Request) {
     return redirectWithStatus(request, next, "short");
   }
 
-  const supabase = createSupabaseServerClient();
+  const { supabase, withAuthCookies } = createSupabaseRouteClient(request);
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
+    return withAuthCookies(NextResponse.redirect(new URL("/login", request.url), { status: 303 }));
   }
 
   const { error } = await supabase.auth.updateUser({
@@ -49,8 +49,8 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    return redirectWithStatus(request, next, "error");
+    return withAuthCookies(redirectWithStatus(request, next, "error"));
   }
 
-  return redirectWithStatus(request, next, "updated");
+  return withAuthCookies(redirectWithStatus(request, next, "updated"));
 }

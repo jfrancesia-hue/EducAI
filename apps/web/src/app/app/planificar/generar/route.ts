@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createSupabaseServerClient } from "../../../../lib/supabase/server";
+import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
 const GRADE_RANGES: Record<string, { min: number; max: number }> = {
   primaria: { min: 1, max: 7 },
@@ -40,13 +40,13 @@ export async function POST(request: NextRequest) {
     return redirectTo(request, { error: "config" });
   }
 
-  const supabase = createSupabaseServerClient();
+  const { supabase, withAuthCookies } = createSupabaseRouteClient(request);
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
-    return redirectTo(request, { error: "auth" });
+    return withAuthCookies(redirectTo(request, { error: "auth" }));
   }
 
   const formData = await request.formData();
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     payload.totalDurationMinutes < 10 ||
     payload.totalDurationMinutes > 600
   ) {
-    return redirectTo(request, { error: "invalid" });
+    return withAuthCookies(redirectTo(request, { error: "invalid" }));
   }
 
   try {
@@ -106,15 +106,15 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const code = await readApiErrorCode(response);
       if (code === "TEACHER_PROFILE_MISSING") {
-        return redirectTo(request, { error: "teacher_profile" });
+        return withAuthCookies(redirectTo(request, { error: "teacher_profile" }));
       }
 
-      return redirectTo(request, { error: "api" });
+      return withAuthCookies(redirectTo(request, { error: "api" }));
     }
 
     const body = (await response.json()) as { data?: { id?: string } };
-    return redirectTo(request, { created: body.data?.id ?? "ok" });
+    return withAuthCookies(redirectTo(request, { created: body.data?.id ?? "ok" }));
   } catch {
-    return redirectTo(request, { error: "network" });
+    return withAuthCookies(redirectTo(request, { error: "network" }));
   }
 }

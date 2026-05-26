@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { extractRoleFromMetadata } from "../../../../lib/supabase/roles";
-import { createSupabaseServerClient } from "../../../../lib/supabase/server";
+import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
 type TutorPayload = {
   studentId?: string;
@@ -10,13 +10,13 @@ type TutorPayload = {
 };
 
 export async function POST(request: Request) {
-  const supabase = createSupabaseServerClient();
+  const { supabase, withAuthCookies } = createSupabaseRouteClient(request);
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return withAuthCookies(NextResponse.json({ error: "unauthorized" }, { status: 401 }));
   }
 
   const role =
@@ -24,12 +24,12 @@ export async function POST(request: Request) {
     extractRoleFromMetadata(session.user.user_metadata);
 
   if (role !== "PARENT") {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    return withAuthCookies(NextResponse.json({ error: "forbidden" }, { status: 403 }));
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiUrl) {
-    return NextResponse.json({ error: "api_unavailable" }, { status: 503 });
+    return withAuthCookies(NextResponse.json({ error: "api_unavailable" }, { status: 503 }));
   }
 
   const payload = (await request.json().catch(() => ({}))) as TutorPayload;
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const message = payload.message?.trim();
 
   if (!studentId || !message || message.length < 2) {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    return withAuthCookies(NextResponse.json({ error: "invalid_request" }, { status: 400 }));
   }
 
   const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/students/${studentId}/tutor`, {
@@ -54,5 +54,5 @@ export async function POST(request: Request) {
   });
 
   const body = (await response.json().catch(() => ({}))) as unknown;
-  return NextResponse.json(body, { status: response.status });
+  return withAuthCookies(NextResponse.json(body, { status: response.status }));
 }

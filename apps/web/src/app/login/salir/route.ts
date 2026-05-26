@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-import { setSupabaseAuthCookie } from "../../../lib/supabase/cookies";
+import { parseCookieHeader, setSupabaseAuthResponseCookie } from "../../../lib/supabase/cookies";
 import { getSupabaseEnv, hasSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -9,20 +9,6 @@ type CookieToSet = {
   value: string;
   options: CookieOptions;
 };
-
-function parseCookies(request: Request) {
-  const cookieHeader = new Headers(request.headers).get("cookie") ?? "";
-
-  return cookieHeader
-    .split(/;\s*/u)
-    .filter(Boolean)
-    .map((entry) => {
-      const separator = entry.indexOf("=");
-      const name = separator >= 0 ? entry.slice(0, separator) : entry;
-      const value = separator >= 0 ? entry.slice(separator + 1) : "";
-      return { name, value };
-    });
-}
 
 export async function GET(request: Request) {
   const redirectUrl = new URL("/login", request.url);
@@ -33,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   const { url, anonKey } = getSupabaseEnv();
-  const requestCookies = parseCookies(request);
+  const requestCookies = parseCookieHeader(new Headers(request.headers).get("cookie"));
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
@@ -41,7 +27,7 @@ export async function GET(request: Request) {
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          setSupabaseAuthCookie(response.cookies, name, value, options);
+          setSupabaseAuthResponseCookie(response, name, value, options);
         });
       },
     },

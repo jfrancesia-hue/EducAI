@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-import { setSupabaseAuthCookie } from "../../../lib/supabase/cookies";
+import { setSupabaseAuthResponseCookie } from "../../../lib/supabase/cookies";
 import { getSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
   const response = NextResponse.redirect(data.url, { status: 303 });
   cookiesToSet.forEach(({ name, value, options }) => {
-    setSupabaseAuthCookie(response.cookies, name, value, options);
+    setSupabaseAuthResponseCookie(response, name, value, options);
   });
 
   return response;
