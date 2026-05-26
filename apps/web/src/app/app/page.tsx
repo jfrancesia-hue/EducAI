@@ -14,7 +14,7 @@ import {
 import { Badge, Button } from "@educai/ui";
 import { AppShell } from "./_components/app-shell";
 import { fetchInstitutionalDashboard } from "../../lib/api/institutional-dashboard";
-import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../lib/supabase/app-auth";
 
 function metricCards(data: NonNullable<Awaited<ReturnType<typeof fetchInstitutionalDashboard>>>) {
   return [
@@ -50,14 +50,9 @@ function metricCards(data: NonNullable<Awaited<ReturnType<typeof fetchInstitutio
 }
 
 export default async function EducAiAppPage() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = session?.access_token
-    ? await fetchInstitutionalDashboard(session.access_token)
-    : null;
+  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
 
   return (
     <AppShell title="Inicio">

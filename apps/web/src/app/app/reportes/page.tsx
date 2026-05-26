@@ -3,17 +3,12 @@ import { BarChart3, Brain, CheckCircle2, TrendingUp } from "lucide-react";
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 export default async function ReportsModulePage() {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = session?.access_token
-    ? await fetchInstitutionalDashboard(session.access_token)
-    : null;
+  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
 
   const cards = [
     {

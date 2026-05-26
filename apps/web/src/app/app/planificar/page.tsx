@@ -4,7 +4,7 @@ import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 type PlanningModulePageProps = {
   searchParams?: {
@@ -31,14 +31,9 @@ const outputItems = [
 ];
 
 export default async function PlanningModulePage({ searchParams }: PlanningModulePageProps) {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = session?.access_token
-    ? await fetchInstitutionalDashboard(session.access_token)
-    : null;
+  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
   const createdId = searchParams?.created;
   const error = searchParams?.error;
 
@@ -74,7 +69,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             </div>
           ) : null}
 
-          <LessonPlanForm accessToken={session?.access_token} />
+          <LessonPlanForm accessToken={accessToken} />
         </section>
 
         <aside className="grid content-start gap-5">

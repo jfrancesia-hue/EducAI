@@ -10,7 +10,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { PasswordField } from "../../_components/password-field";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 import { AppShell } from "../_components/app-shell";
 
 type ProfilePageProps = {
@@ -90,18 +90,15 @@ function profileMessage(code?: string) {
 
 export default async function EducAiProfilePage({ searchParams }: ProfilePageProps) {
   const params = (await searchParams) ?? {};
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { user } = await getEducaiAppAuth();
 
-  const appMetadata = (session?.user.app_metadata ?? {}) as Record<string, unknown>;
+  const appMetadata = (user?.app_metadata ?? {}) as Record<string, unknown>;
   const plan = metadataValue(appMetadata, "plan") || "free";
   const role = metadataValue(appMetadata, "role") || "TEACHER";
   const schoolLinked = Boolean(metadataValue(appMetadata, "schoolId"));
   const teacherLinked = Boolean(metadataValue(appMetadata, "teacherId"));
   const message = passwordMessage(params.password);
-  const visibleName = displayName(session?.user.user_metadata, session?.user.email);
+  const visibleName = displayName(user?.user_metadata, user?.email);
   const profileStatus = profileMessage(params.profile);
 
   return (
@@ -119,7 +116,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                   <h2 className="font-display text-3xl font-bold tracking-tight">{visibleName}</h2>
                   <p className="mt-2 flex items-center gap-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
                     <Mail className="h-4 w-4 text-[#087968]" aria-hidden="true" />
-                    {session?.user.email ?? "Email no disponible"}
+                    {user?.email ?? "Email no disponible"}
                   </p>
                 </div>
               </div>
