@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { EDUCAI_ACCESS_TOKEN_COOKIE, readCookieValue } from "../../../../lib/supabase/cookies";
+import {
+  EDUCAI_ACCESS_TOKEN_COOKIE,
+  readCookieValue,
+  setEducaiAccessTokenCookie,
+} from "../../../../lib/supabase/cookies";
 import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
 const GRADE_RANGES: Record<string, { min: number; max: number }> = {
@@ -24,6 +28,16 @@ function redirectTo(request: NextRequest, params: Record<string, string>) {
   const url = new URL("/app/planificar", request.url);
   Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
   return NextResponse.redirect(url, { status: 303 });
+}
+
+function redirectWithAccessToken(
+  request: NextRequest,
+  params: Record<string, string>,
+  accessToken: string,
+) {
+  const response = redirectTo(request, params);
+  setEducaiAccessTokenCookie(response, accessToken);
+  return response;
 }
 
 async function readApiErrorCode(response: Response) {
@@ -94,7 +108,7 @@ export async function POST(request: NextRequest) {
     payload.totalDurationMinutes < 10 ||
     payload.totalDurationMinutes > 600
   ) {
-    return withAuthCookies(redirectTo(request, { error: "invalid" }));
+    return withAuthCookies(redirectWithAccessToken(request, { error: "invalid" }, accessToken));
   }
 
   try {
@@ -111,15 +125,19 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const code = await readApiErrorCode(response);
       if (code === "TEACHER_PROFILE_MISSING") {
-        return withAuthCookies(redirectTo(request, { error: "teacher_profile" }));
+        return withAuthCookies(
+          redirectWithAccessToken(request, { error: "teacher_profile" }, accessToken),
+        );
       }
 
-      return withAuthCookies(redirectTo(request, { error: "api" }));
+      return withAuthCookies(redirectWithAccessToken(request, { error: "api" }, accessToken));
     }
 
     const body = (await response.json()) as { data?: { id?: string } };
-    return withAuthCookies(redirectTo(request, { created: body.data?.id ?? "ok" }));
+    return withAuthCookies(
+      redirectWithAccessToken(request, { created: body.data?.id ?? "ok" }, accessToken),
+    );
   } catch {
-    return withAuthCookies(redirectTo(request, { error: "network" }));
+    return withAuthCookies(redirectWithAccessToken(request, { error: "network" }, accessToken));
   }
 }
