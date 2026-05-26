@@ -11,6 +11,18 @@ export type EducaiAppAuth = {
 
 export async function getEducaiAppAuth(): Promise<EducaiAppAuth> {
   const supabase = createSupabaseServerClient();
+  const accessToken = cookies().get(EDUCAI_ACCESS_TOKEN_COOKIE)?.value ?? "";
+  if (accessToken) {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(accessToken);
+
+    if (!error && user) {
+      return { accessToken, user };
+    }
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -19,19 +31,5 @@ export async function getEducaiAppAuth(): Promise<EducaiAppAuth> {
     return { accessToken: session.access_token, user: session.user };
   }
 
-  const accessToken = cookies().get(EDUCAI_ACCESS_TOKEN_COOKIE)?.value ?? "";
-  if (!accessToken) {
-    return { accessToken: "", user: null };
-  }
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(accessToken);
-
-  if (error || !user) {
-    return { accessToken: "", user: null };
-  }
-
-  return { accessToken, user };
+  return { accessToken: "", user: null };
 }
