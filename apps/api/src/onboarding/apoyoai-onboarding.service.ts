@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { Prisma } from "@educai/database";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -15,6 +16,7 @@ import type {
 
 type ApoyoAiPlanCode = RegisterApoyoAiFamilyDto["plan"];
 type ApoyoAiFamilySignupInput = Omit<RegisterApoyoAiFamilyDto, "parentEmail" | "password">;
+type PrismaTx = Prisma.TransactionClient;
 
 const PLAN_TO_LEGACY_ENUM: Record<ApoyoAiPlanCode, "FREE" | "BASIC" | "PREMIUM" | "FAMILY"> = {
   free: "FREE",
@@ -65,7 +67,7 @@ export class ApoyoAiOnboardingService {
     email: string,
     authUserId: string,
   ) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.findUserByEmailBypassingRls(email);
     if (existingUser) {
       const recovered = await this.recoverExistingFamilyWorkspace(
         existingUser,
@@ -84,6 +86,8 @@ export class ApoyoAiOnboardingService {
     const status = this.initialStatus(dto.plan);
 
     const result = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
       const tenant = await tx.tenant.create({
         data: {
           type: "FAMILY",
@@ -234,27 +238,38 @@ export class ApoyoAiOnboardingService {
     if (existingUser.role !== "PARENT" || !existingUser.tenantId) {
       return null;
     }
+    const tenantId = existingUser.tenantId;
 
-    const [parent, family, subscription] = await Promise.all([
-      this.prisma.parent.findUnique({
-        where: { userId: existingUser.id },
-        select: { id: true },
-      }),
-      this.prisma.family.findUnique({
-        where: { tenantId: existingUser.tenantId },
-        select: { id: true },
-      }),
-      this.prisma.subscription.findFirst({
-        where: { tenantId: existingUser.tenantId },
-        select: {
-          id: true,
-          product: true,
-          planCode: true,
-          status: true,
-          externalReference: true,
-        },
-      }),
-    ]);
+    const { parent, family, subscription } = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
+      const [parentResult, familyResult, subscriptionResult] = await Promise.all([
+        tx.parent.findUnique({
+          where: { userId: existingUser.id },
+          select: { id: true },
+        }),
+        tx.family.findUnique({
+          where: { tenantId },
+          select: { id: true },
+        }),
+        tx.subscription.findFirst({
+          where: { tenantId },
+          select: {
+            id: true,
+            product: true,
+            planCode: true,
+            status: true,
+            externalReference: true,
+          },
+        }),
+      ]);
+
+      return {
+        parent: parentResult,
+        family: familyResult,
+        subscription: subscriptionResult,
+      };
+    });
 
     if (!parent || !family) {
       return null;
@@ -262,7 +277,7 @@ export class ApoyoAiOnboardingService {
 
     await this.updateSupabaseMetadata(authUserId, {
       role: "PARENT",
-      tenantId: existingUser.tenantId,
+      tenantId,
       familyId: family.id,
       product: "apoyoai",
       plan: dto.plan,
@@ -278,7 +293,7 @@ export class ApoyoAiOnboardingService {
     return {
       data: {
         familyId: family.id,
-        tenantId: existingUser.tenantId,
+        tenantId,
         parentId: parent.id,
         subscription: subscription
           ? {
@@ -488,6 +503,32 @@ export class ApoyoAiOnboardingService {
     }
   }
 
+  private async findUserByEmailBypassingRls(email: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.user.findUnique({
+        where: { email },
+        select: { id: true, tenantId: true, role: true },
+      });
+    });
+  }
+
+  private async tenantSlugExists(slug: string): Promise<boolean> {
+    const tenant = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.tenant.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+    });
+
+    return Boolean(tenant);
+  }
+
+  private async enableRlsBypass(tx: PrismaTx): Promise<void> {
+    await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
+  }
+
   private buildContacts(input: {
     tenantId: string;
     parentPhone: string;
@@ -534,8 +575,7 @@ export class ApoyoAiOnboardingService {
     for (let index = 0; index < 20; index += 1) {
       const suffix = index === 0 ? "" : `-${index + 1}`;
       const slug = `${base}${suffix}`;
-      const existing = await this.prisma.tenant.findUnique({ where: { slug } });
-      if (!existing) {
+      if (!(await this.tenantSlugExists(slug))) {
         return slug;
       }
     }

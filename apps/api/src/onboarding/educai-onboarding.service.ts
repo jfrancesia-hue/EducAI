@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { Prisma } from "@educai/database";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -15,6 +16,7 @@ import type {
 
 type EducAiTeacherSignupInput = Omit<RegisterEducAiTeacherDto, "email" | "password">;
 type EducAiPlanCode = RegisterEducAiTeacherDto["plan"];
+type PrismaTx = Prisma.TransactionClient;
 
 const MERCADOPAGO_PLAN_PRICES: Record<Exclude<EducAiPlanCode, "free">, number> = {
   "docente-individual": 9900,
@@ -55,7 +57,7 @@ export class EducAiOnboardingService {
     email: string,
     authUserId: string,
   ) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.findUserByEmailBypassingRls(email);
     if (existingUser) {
       const recovered = await this.recoverExistingTeacherWorkspace(
         existingUser,
@@ -74,6 +76,8 @@ export class EducAiOnboardingService {
     const subjects = this.parseSubjects(dto.subjects);
 
     const result = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
       const tenant = await tx.tenant.create({
         data: {
           type: "SCHOOL",
@@ -173,17 +177,24 @@ export class EducAiOnboardingService {
     if (existingUser.role !== "TEACHER" || !existingUser.tenantId) {
       return null;
     }
+    const tenantId = existingUser.tenantId;
 
-    const [teacher, school] = await Promise.all([
-      this.prisma.teacher.findUnique({
-        where: { userId: existingUser.id },
-        select: { id: true },
-      }),
-      this.prisma.school.findUnique({
-        where: { tenantId: existingUser.tenantId },
-        select: { id: true },
-      }),
-    ]);
+    const { teacher, school } = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
+      const [teacherResult, schoolResult] = await Promise.all([
+        tx.teacher.findUnique({
+          where: { userId: existingUser.id },
+          select: { id: true },
+        }),
+        tx.school.findUnique({
+          where: { tenantId },
+          select: { id: true },
+        }),
+      ]);
+
+      return { teacher: teacherResult, school: schoolResult };
+    });
 
     if (!teacher || !school) {
       return null;
@@ -191,7 +202,7 @@ export class EducAiOnboardingService {
 
     await this.updateSupabaseMetadata(authUserId, {
       role: "TEACHER",
-      tenantId: existingUser.tenantId,
+      tenantId,
       schoolId: school.id,
       teacherId: teacher.id,
       product: "educai",
@@ -204,12 +215,12 @@ export class EducAiOnboardingService {
       plan: dto.plan,
       email,
       fullName: dto.fullName,
-      externalReference: `educai:${existingUser.tenantId}:${dto.plan}`,
+      externalReference: `educai:${tenantId}:${dto.plan}`,
     });
 
     return {
       data: {
-        tenantId: existingUser.tenantId,
+        tenantId,
         schoolId: school.id,
         teacherId: teacher.id,
         plan: dto.plan,
@@ -222,6 +233,32 @@ export class EducAiOnboardingService {
               : "payment_unavailable",
       },
     };
+  }
+
+  private async findUserByEmailBypassingRls(email: string) {
+    return this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.user.findUnique({
+        where: { email },
+        select: { id: true, tenantId: true, role: true },
+      });
+    });
+  }
+
+  private async tenantSlugExists(slug: string): Promise<boolean> {
+    const tenant = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.tenant.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+    });
+
+    return Boolean(tenant);
+  }
+
+  private async enableRlsBypass(tx: PrismaTx): Promise<void> {
+    await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
   }
 
   private async createCheckoutPreferenceSafely(input: {
@@ -425,8 +462,7 @@ export class EducAiOnboardingService {
     for (let index = 0; index < 20; index += 1) {
       const suffix = index === 0 ? "" : `-${index + 1}`;
       const slug = `${base}${suffix}`;
-      const existing = await this.prisma.tenant.findUnique({ where: { slug } });
-      if (!existing) {
+      if (!(await this.tenantSlugExists(slug))) {
         return slug;
       }
     }
