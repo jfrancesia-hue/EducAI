@@ -57,72 +57,78 @@ export class DashboardService {
       ...(input.schoolId ? { schoolId: input.schoolId } : {}),
     };
 
-    const studentCount = await this.readDashboardValue("studentCount", 0, (prisma) =>
-      prisma.student.count({ where: studentWhere }),
-    );
-    const profileCount = await this.readDashboardValue("profileCount", 0, (prisma) =>
-      prisma.studentProfile.count({ where: profileWhere }),
-    );
-    const diagnosticCompletedCount = await this.readDashboardValue(
-      "diagnosticCompletedCount",
-      0,
-      (prisma) =>
+    const [
+      studentCount,
+      profileCount,
+      diagnosticCompletedCount,
+      lessonPlanCount,
+      curriculumCount,
+      recentStudents,
+      recentLessonPlans,
+      lessonPlanBySubject,
+      handoffLogs,
+      recentSessions,
+    ] = await Promise.all([
+      this.readDashboardValue("studentCount", 0, (prisma) =>
+        prisma.student.count({ where: studentWhere }),
+      ),
+      this.readDashboardValue("profileCount", 0, (prisma) =>
+        prisma.studentProfile.count({ where: profileWhere }),
+      ),
+      this.readDashboardValue("diagnosticCompletedCount", 0, (prisma) =>
         prisma.studentProfile.count({
           where: {
             ...profileWhere,
             diagnosticCompleted: true,
           },
         }),
-    );
-    const lessonPlanCount = await this.readDashboardValue("lessonPlanCount", 0, (prisma) =>
-      prisma.lessonPlan.count({ where: lessonPlanWhere }),
-    );
-    const curriculumCount = await this.readDashboardValue("curriculumCount", 0, (prisma) =>
-      prisma.curriculum.count({ where: curriculumWhere }),
-    );
-    const recentStudents = await this.readDashboardValue("recentStudents", [], (prisma) =>
-      prisma.student.findMany({
-        where: studentWhere,
-        orderBy: { createdAt: "desc" },
-        take: 24,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          grade: true,
-          school: { select: { name: true } },
-          profile: {
-            select: {
-              learningStyle: true,
-              diagnosticCompleted: true,
-              strongSubjects: true,
-              weakSubjects: true,
+      ),
+      this.readDashboardValue("lessonPlanCount", 0, (prisma) =>
+        prisma.lessonPlan.count({ where: lessonPlanWhere }),
+      ),
+      this.readDashboardValue("curriculumCount", 0, (prisma) =>
+        prisma.curriculum.count({ where: curriculumWhere }),
+      ),
+      this.readDashboardValue("recentStudents", [], (prisma) =>
+        prisma.student.findMany({
+          where: studentWhere,
+          orderBy: { createdAt: "desc" },
+          take: 24,
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            grade: true,
+            school: { select: { name: true } },
+            profile: {
+              select: {
+                learningStyle: true,
+                diagnosticCompleted: true,
+                strongSubjects: true,
+                weakSubjects: true,
+              },
             },
           },
-        },
-      }),
-    );
-    const recentLessonPlans = await this.readDashboardValue("recentLessonPlans", [], (prisma) =>
-      prisma.lessonPlan.findMany({
-        where: lessonPlanWhere,
-        orderBy: { createdAt: "desc" },
-        take: 12,
-        select: {
-          id: true,
-          grade: true,
-          subject: true,
-          topic: true,
-          status: true,
-          durationMinutes: true,
-          generatedByAI: true,
-          createdAt: true,
-        },
-      }),
-    );
-    const lessonPlanBySubject = await this.readDashboardValue<SubjectCountRow[]>(
-      "lessonPlanBySubject",
-      [],
-      async (prisma) => {
+        }),
+      ),
+      this.readDashboardValue("recentLessonPlans", [], (prisma) =>
+        prisma.lessonPlan.findMany({
+          where: lessonPlanWhere,
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: {
+            id: true,
+            grade: true,
+            subject: true,
+            topic: true,
+            status: true,
+            durationMinutes: true,
+            generatedByAI: true,
+            createdAt: true,
+          },
+        }),
+      ),
+      this.readDashboardValue<SubjectCountRow[]>("lessonPlanBySubject", [], async (prisma) => {
         const rows = await prisma.lessonPlan.groupBy({
           by: ["subject"],
           where: lessonPlanWhere,
@@ -132,33 +138,35 @@ export class DashboardService {
         });
 
         return rows.map((row) => ({ subject: row.subject, _count: { _all: row._count._all } }));
-      },
-    );
-    const handoffLogs = await this.readDashboardValue("handoffLogs", [], (prisma) =>
-      prisma.auditLog.findMany({
-        where: {
-          tenantId: input.tenantId,
-          action: HANDOFF_ACTION,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-        select: {
-          id: true,
-          createdAt: true,
-          metadata: true,
-        },
       }),
-    );
-    const recentSessions = await this.readDashboardValue("recentSessions", null, (prisma) =>
-      prisma.learningSession.aggregate({
-        where: {
-          tenantId: input.tenantId,
-          ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
-          createdAt: { gte: this.startOfWeek() },
-        },
-        _sum: { durationMinutes: true },
-      }),
-    );
+      this.readDashboardValue("handoffLogs", [], (prisma) =>
+        prisma.auditLog.findMany({
+          where: {
+            tenantId: input.tenantId,
+            action: HANDOFF_ACTION,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 200,
+          select: {
+            id: true,
+            createdAt: true,
+            metadata: true,
+          },
+        }),
+      ),
+      this.readDashboardValue("recentSessions", null, (prisma) =>
+        prisma.learningSession.aggregate({
+          where: {
+            tenantId: input.tenantId,
+            ...(input.schoolId
+              ? { studentProfile: { student: { schoolId: input.schoolId } } }
+              : {}),
+            createdAt: { gte: this.startOfWeek() },
+          },
+          _sum: { durationMinutes: true },
+        }),
+      ),
+    ]);
 
     const openHandoffs = handoffLogs.filter(
       (log) => this.getHandoffStatus(log.metadata) !== "closed",
