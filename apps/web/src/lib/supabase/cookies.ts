@@ -65,7 +65,6 @@ export function setSupabaseAuthResponseCookie(
   options: CookieOptions,
 ) {
   response.cookies.set(name, value, withHostOnlyAuthCookieOptions(options));
-  expireSharedDomainCookie(response, name, options);
 }
 
 export function parseCookieHeader(cookieHeader: string | null) {
