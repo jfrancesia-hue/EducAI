@@ -42,5 +42,5 @@ test("login and use dashboard action buttons", async ({ page }) => {
   await recentLesson.click();
   await page.waitForURL(/\/app\/planificar\?created=/, { timeout: 60_000 });
   await expect(page.getByText("Guia generada")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText("Secuencia")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Secuencia" })).toBeVisible();
 });

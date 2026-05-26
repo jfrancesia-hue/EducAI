@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@educai/database";
 
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -21,19 +21,19 @@ type InstitutionalInput = {
 };
 
 type PrismaTx = Prisma.TransactionClient;
+type SubjectCountRow = { subject: string; _count: { _all: number } };
 
 @Injectable()
 export class DashboardService {
+  private readonly logger = new Logger(DashboardService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getInstitutionalOverview(input: InstitutionalInput) {
-    return this.prisma.$transaction(async (tx) => {
-      await this.enableRlsBypass(tx);
-      return this.getInstitutionalOverviewWithClient(tx, input);
-    });
+    return this.getInstitutionalOverviewWithClient(input);
   }
 
-  private async getInstitutionalOverviewWithClient(prisma: PrismaTx, input: InstitutionalInput) {
+  private async getInstitutionalOverviewWithClient(input: InstitutionalInput) {
     const studentWhere = {
       tenantId: input.tenantId,
       deletedAt: null,
@@ -57,79 +57,108 @@ export class DashboardService {
       ...(input.schoolId ? { schoolId: input.schoolId } : {}),
     };
 
-    const studentCount = await prisma.student.count({ where: studentWhere });
-    const profileCount = await prisma.studentProfile.count({ where: profileWhere });
-    const diagnosticCompletedCount = await prisma.studentProfile.count({
-      where: {
-        ...profileWhere,
-        diagnosticCompleted: true,
-      },
-    });
-    const lessonPlanCount = await prisma.lessonPlan.count({ where: lessonPlanWhere });
-    const curriculumCount = await prisma.curriculum.count({ where: curriculumWhere });
-    const recentStudents = await prisma.student.findMany({
-      where: studentWhere,
-      orderBy: { createdAt: "desc" },
-      take: 24,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        grade: true,
-        school: { select: { name: true } },
-        profile: {
-          select: {
-            learningStyle: true,
+    const studentCount = await this.readDashboardValue("studentCount", 0, (prisma) =>
+      prisma.student.count({ where: studentWhere }),
+    );
+    const profileCount = await this.readDashboardValue("profileCount", 0, (prisma) =>
+      prisma.studentProfile.count({ where: profileWhere }),
+    );
+    const diagnosticCompletedCount = await this.readDashboardValue(
+      "diagnosticCompletedCount",
+      0,
+      (prisma) =>
+        prisma.studentProfile.count({
+          where: {
+            ...profileWhere,
             diagnosticCompleted: true,
-            strongSubjects: true,
-            weakSubjects: true,
+          },
+        }),
+    );
+    const lessonPlanCount = await this.readDashboardValue("lessonPlanCount", 0, (prisma) =>
+      prisma.lessonPlan.count({ where: lessonPlanWhere }),
+    );
+    const curriculumCount = await this.readDashboardValue("curriculumCount", 0, (prisma) =>
+      prisma.curriculum.count({ where: curriculumWhere }),
+    );
+    const recentStudents = await this.readDashboardValue("recentStudents", [], (prisma) =>
+      prisma.student.findMany({
+        where: studentWhere,
+        orderBy: { createdAt: "desc" },
+        take: 24,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          grade: true,
+          school: { select: { name: true } },
+          profile: {
+            select: {
+              learningStyle: true,
+              diagnosticCompleted: true,
+              strongSubjects: true,
+              weakSubjects: true,
+            },
           },
         },
+      }),
+    );
+    const recentLessonPlans = await this.readDashboardValue("recentLessonPlans", [], (prisma) =>
+      prisma.lessonPlan.findMany({
+        where: lessonPlanWhere,
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: {
+          id: true,
+          grade: true,
+          subject: true,
+          topic: true,
+          status: true,
+          durationMinutes: true,
+          generatedByAI: true,
+          createdAt: true,
+        },
+      }),
+    );
+    const lessonPlanBySubject = await this.readDashboardValue<SubjectCountRow[]>(
+      "lessonPlanBySubject",
+      [],
+      async (prisma) => {
+        const rows = await prisma.lessonPlan.groupBy({
+          by: ["subject"],
+          where: lessonPlanWhere,
+          _count: { _all: true },
+          orderBy: { _count: { subject: "desc" } },
+          take: 6,
+        });
+
+        return rows.map((row) => ({ subject: row.subject, _count: { _all: row._count._all } }));
       },
-    });
-    const recentLessonPlans = await prisma.lessonPlan.findMany({
-      where: lessonPlanWhere,
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      select: {
-        id: true,
-        grade: true,
-        subject: true,
-        topic: true,
-        status: true,
-        durationMinutes: true,
-        generatedByAI: true,
-        createdAt: true,
-      },
-    });
-    const lessonPlanBySubject = await prisma.lessonPlan.groupBy({
-      by: ["subject"],
-      where: lessonPlanWhere,
-      _count: { _all: true },
-      orderBy: { _count: { subject: "desc" } },
-      take: 6,
-    });
-    const handoffLogs = await prisma.auditLog.findMany({
-      where: {
-        tenantId: input.tenantId,
-        action: HANDOFF_ACTION,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      select: {
-        id: true,
-        createdAt: true,
-        metadata: true,
-      },
-    });
-    const recentSessions = await prisma.learningSession.aggregate({
-      where: {
-        tenantId: input.tenantId,
-        ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
-        createdAt: { gte: this.startOfWeek() },
-      },
-      _sum: { durationMinutes: true },
-    });
+    );
+    const handoffLogs = await this.readDashboardValue("handoffLogs", [], (prisma) =>
+      prisma.auditLog.findMany({
+        where: {
+          tenantId: input.tenantId,
+          action: HANDOFF_ACTION,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: {
+          id: true,
+          createdAt: true,
+          metadata: true,
+        },
+      }),
+    );
+    const recentSessions = await this.readDashboardValue("recentSessions", null, (prisma) =>
+      prisma.learningSession.aggregate({
+        where: {
+          tenantId: input.tenantId,
+          ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
+          createdAt: { gte: this.startOfWeek() },
+        },
+        _sum: { durationMinutes: true },
+      }),
+    );
 
     const openHandoffs = handoffLogs.filter(
       (log) => this.getHandoffStatus(log.metadata) !== "closed",
@@ -146,7 +175,7 @@ export class DashboardService {
           curriculumCount,
           openHandoffCount: openHandoffs.length,
           diagnosticCompletionRate: diagnosticRate,
-          learningMinutesThisWeek: recentSessions._sum.durationMinutes ?? 0,
+          learningMinutesThisWeek: recentSessions?._sum.durationMinutes ?? 0,
         },
         recentStudents: recentStudents.map((student) => ({
           id: student.id,
@@ -172,6 +201,24 @@ export class DashboardService {
 
   private async enableRlsBypass(tx: PrismaTx): Promise<void> {
     await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
+  }
+
+  private async readDashboardValue<T>(
+    label: string,
+    fallback: T,
+    callback: (prisma: PrismaTx) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await this.enableRlsBypass(tx);
+        return callback(tx);
+      });
+    } catch (error) {
+      this.logger.warn(
+        `dashboard.${label}.failed: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+      return fallback;
+    }
   }
 
   async getMinistryOverview() {

@@ -60,6 +60,6 @@ test("login, fill lesson form and submit", async ({ page }) => {
   console.log(`FINAL ${page.url()}`);
   await expect(page).toHaveURL(/\/app\/planificar\?created=/);
   await expect(page.getByText("Guia generada")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText("Secuencia")).toBeVisible();
-  await expect(page.getByText("Objetivos")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Secuencia" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Objetivos" })).toBeVisible();
 });
