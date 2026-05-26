@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 
 import {
   expireSharedSupabaseCookiesFromHeader,
@@ -30,7 +30,7 @@ export function createSupabaseRouteClient(request: Request): {
         cookiesToSet.push(...nextCookies);
       },
     },
-  });
+  }) as unknown as SupabaseClient;
 
   return {
     supabase,
