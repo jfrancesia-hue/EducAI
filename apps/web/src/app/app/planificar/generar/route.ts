@@ -30,12 +30,7 @@ function redirectTo(request: NextRequest, params: Record<string, string>) {
   return NextResponse.redirect(url, { status: 303 });
 }
 
-function redirectWithAccessToken(
-  request: NextRequest,
-  params: Record<string, string>,
-  accessToken: string,
-) {
-  const response = redirectTo(request, params);
+function withAccessTokenCookie<T extends NextResponse>(response: T, accessToken: string) {
   setEducaiAccessTokenCookie(response, accessToken);
   return response;
 }
@@ -68,6 +63,8 @@ export async function POST(request: NextRequest) {
   if (!accessToken) {
     return withAuthCookies(redirectTo(request, { error: "auth" }));
   }
+  const withStableAuthCookies = <T extends NextResponse>(response: T) =>
+    withAccessTokenCookie(withAuthCookies(response), accessToken);
 
   const payload = {
     educationLevel: readString(formData, "educationLevel"),
@@ -108,7 +105,7 @@ export async function POST(request: NextRequest) {
     payload.totalDurationMinutes < 10 ||
     payload.totalDurationMinutes > 600
   ) {
-    return withAuthCookies(redirectWithAccessToken(request, { error: "invalid" }, accessToken));
+    return withStableAuthCookies(redirectTo(request, { error: "invalid" }));
   }
 
   try {
@@ -125,19 +122,15 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const code = await readApiErrorCode(response);
       if (code === "TEACHER_PROFILE_MISSING") {
-        return withAuthCookies(
-          redirectWithAccessToken(request, { error: "teacher_profile" }, accessToken),
-        );
+        return withStableAuthCookies(redirectTo(request, { error: "teacher_profile" }));
       }
 
-      return withAuthCookies(redirectWithAccessToken(request, { error: "api" }, accessToken));
+      return withStableAuthCookies(redirectTo(request, { error: "api" }));
     }
 
     const body = (await response.json()) as { data?: { id?: string } };
-    return withAuthCookies(
-      redirectWithAccessToken(request, { created: body.data?.id ?? "ok" }, accessToken),
-    );
+    return withStableAuthCookies(redirectTo(request, { created: body.data?.id ?? "ok" }));
   } catch {
-    return withAuthCookies(redirectWithAccessToken(request, { error: "network" }, accessToken));
+    return withStableAuthCookies(redirectTo(request, { error: "network" }));
   }
 }
