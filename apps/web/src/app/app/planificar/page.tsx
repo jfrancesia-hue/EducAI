@@ -45,8 +45,8 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
   return (
     <AppShell
       title="Crear clase"
-      eyebrow="Planificacion docente"
-      statusNote="EducAI prepara un borrador editable para que el docente lo revise, ajuste y use."
+      eyebrow="Planificación docente"
+      statusNote="EducAI prepara un borrador editable para que lo revises, ajustes y uses en clase."
     >
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid content-start gap-5">

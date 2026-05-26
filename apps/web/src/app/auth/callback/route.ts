@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { withSharedAuthCookieDomain } from "../../../lib/supabase/cookies";
+import { setSupabaseAuthCookie } from "../../../lib/supabase/cookies";
 import { getSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, withSharedAuthCookieDomain(options));
+          setSupabaseAuthCookie(response.cookies, name, value, options);
         });
       },
     },

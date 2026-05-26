@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
-import { withSharedAuthCookieDomain } from "./cookies";
+import { setSupabaseAuthCookie } from "./cookies";
 import { hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest): Promise<{
         setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
-            response.cookies.set(name, value, withSharedAuthCookieDomain(options));
+            setSupabaseAuthCookie(response.cookies, name, value, options);
           });
         },
       },

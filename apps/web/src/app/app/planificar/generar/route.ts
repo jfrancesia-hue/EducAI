@@ -2,6 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseServerClient } from "../../../../lib/supabase/server";
 
+const GRADE_RANGES: Record<string, { min: number; max: number }> = {
+  primaria: { min: 1, max: 7 },
+  secundaria: { min: 1, max: 7 },
+  terciario: { min: 1, max: 5 },
+  universitario: { min: 1, max: 8 },
+};
+
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -68,12 +75,13 @@ export async function POST(request: NextRequest) {
     inclusionNeeds: readString(formData, "inclusionNeeds") || undefined,
     outputFormat: readString(formData, "outputFormat") || undefined,
   };
+  const gradeRange = GRADE_RANGES[payload.educationLevel];
 
   if (
-    !["primaria", "secundaria", "terciario", "universitario"].includes(payload.educationLevel) ||
+    !gradeRange ||
     (payload.educationLevel === "universitario" && !payload.careerName) ||
-    payload.grade < 1 ||
-    payload.grade > 12 ||
+    payload.grade < gradeRange.min ||
+    payload.grade > gradeRange.max ||
     !payload.subject ||
     !payload.topic ||
     payload.sessionCount < 1 ||

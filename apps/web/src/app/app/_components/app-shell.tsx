@@ -8,6 +8,7 @@ import {
   ClipboardList,
   GraduationCap,
   Home,
+  Info,
   LineChart,
   LogOut,
   Sparkles,
@@ -165,8 +166,11 @@ export function AppShell({
           </nav>
 
           {statusNote ? (
-            <div className="border-b border-[#f8d95c]/40 bg-[#fff8d7] px-4 py-3 text-sm text-[#5b4a12] sm:px-6">
-              {statusNote}
+            <div className="border-b border-[#18b6a4]/20 bg-[#e7fbf7] px-4 py-3 sm:px-6">
+              <p className="flex items-start gap-2 text-sm font-medium leading-6 text-[#075c50]">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                {statusNote}
+              </p>
             </div>
           ) : null}
 

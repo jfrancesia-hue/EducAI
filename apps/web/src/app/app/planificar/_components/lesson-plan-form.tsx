@@ -57,9 +57,9 @@ const levelLabels: Record<
   secundaria: {
     title: "Secundaria",
     description: "Practica, autonomia y criterios claros",
-    year: "Anio",
+    year: "Año",
     gradeMin: 1,
-    gradeMax: 6,
+    gradeMax: 7,
     defaultGrade: 2,
     subject: "Materia",
     subjects: ["Matematica", "Lengua", "Biologia", "Fisica", "Quimica", "Historia", "Geografia"],
@@ -76,7 +76,7 @@ const levelLabels: Record<
   terciario: {
     title: "Terciario",
     description: "Aplicacion profesional y practica",
-    year: "Anio",
+    year: "Año",
     gradeMin: 1,
     gradeMax: 5,
     defaultGrade: 1,
@@ -95,7 +95,7 @@ const levelLabels: Record<
   universitario: {
     title: "Universitario",
     description: "Rigor disciplinar y fundamentacion",
-    year: "Anio",
+    year: "Año",
     gradeMin: 1,
     gradeMax: 8,
     defaultGrade: 1,

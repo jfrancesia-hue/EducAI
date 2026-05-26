@@ -5,8 +5,11 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AnthropicLlmClient, PlanGeneratorAgent } from "@educai/ai";
+import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+
+type PrismaTx = Prisma.TransactionClient;
 
 @Injectable()
 export class LessonPlanService {
@@ -102,44 +105,48 @@ export class LessonPlanService {
     const plan = await this.generator.generate(input);
     let created: { id: string };
     try {
-      created = await this.prisma.lessonPlan.create({
-        data: {
-          tenantId: input.tenantId,
-          teacherId: input.teacherId,
-          grade: input.grade,
-          subject: input.subject,
-          topic: input.topic,
-          durationMinutes: input.totalDurationMinutes,
-          competences: plan.competences,
-          objectives: plan.objectives,
-          activities: plan.sessions,
-          resources: plan.sessions.flatMap((session) => session.resources),
-          assessment: plan.assessment,
-          adaptations: {
-            planningContext: {
-              educationLevel: input.educationLevel,
-              courseLabel: input.courseLabel,
-              institutionName: input.institutionName,
-              lessonIntent: input.lessonIntent,
-              levelContext: input.levelContext,
-              plannedDate: input.plannedDate,
-              careerName: input.careerName,
-              learningGoal: input.learningGoal,
-              groupProfile: input.groupProfile,
-              priorKnowledge: input.priorKnowledge,
-              curriculumContext: input.curriculumContext,
-              availableResources: input.availableResources,
-              assessmentFocus: input.assessmentFocus,
-              inclusionNeeds: input.inclusionNeeds,
-              outputFormat: input.outputFormat,
+      created = await this.prisma.$transaction(async (tx) => {
+        await this.enableRlsBypass(tx);
+
+        return tx.lessonPlan.create({
+          data: {
+            tenantId: input.tenantId,
+            teacherId: input.teacherId,
+            grade: input.grade,
+            subject: input.subject,
+            topic: input.topic,
+            durationMinutes: input.totalDurationMinutes,
+            competences: plan.competences,
+            objectives: plan.objectives,
+            activities: plan.sessions,
+            resources: plan.sessions.flatMap((session) => session.resources),
+            assessment: plan.assessment,
+            adaptations: {
+              planningContext: {
+                educationLevel: input.educationLevel,
+                courseLabel: input.courseLabel,
+                institutionName: input.institutionName,
+                lessonIntent: input.lessonIntent,
+                levelContext: input.levelContext,
+                plannedDate: input.plannedDate,
+                careerName: input.careerName,
+                learningGoal: input.learningGoal,
+                groupProfile: input.groupProfile,
+                priorKnowledge: input.priorKnowledge,
+                curriculumContext: input.curriculumContext,
+                availableResources: input.availableResources,
+                assessmentFocus: input.assessmentFocus,
+                inclusionNeeds: input.inclusionNeeds,
+                outputFormat: input.outputFormat,
+              },
+              differentiation: plan.sessions.map((session) => ({
+                session: session.number,
+                differentiation: session.differentiation,
+              })),
             },
-            differentiation: plan.sessions.map((session) => ({
-              session: session.number,
-              differentiation: session.differentiation,
-            })),
+            generatedByAI: true,
           },
-          generatedByAI: true,
-        },
+        });
       });
     } catch (error) {
       throw new InternalServerErrorException({
@@ -150,6 +157,10 @@ export class LessonPlanService {
     }
 
     return { data: { id: created.id, plan } };
+  }
+
+  private async enableRlsBypass(tx: PrismaTx): Promise<void> {
+    await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
   }
 
   async findOne(id: string, access: { tenantId: string; teacherId?: string; schoolId?: string }) {
