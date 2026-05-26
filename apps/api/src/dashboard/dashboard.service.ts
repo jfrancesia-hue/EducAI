@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@educai/database";
 
 import { PrismaService } from "../prisma/prisma.service.js";
 
@@ -19,11 +20,20 @@ type InstitutionalInput = {
   teacherId?: string;
 };
 
+type PrismaTx = Prisma.TransactionClient;
+
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getInstitutionalOverview(input: InstitutionalInput) {
+    return this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return this.getInstitutionalOverviewWithClient(tx, input);
+    });
+  }
+
+  private async getInstitutionalOverviewWithClient(prisma: PrismaTx, input: InstitutionalInput) {
     const studentWhere = {
       tenantId: input.tenantId,
       deletedAt: null,
@@ -59,17 +69,17 @@ export class DashboardService {
       handoffLogs,
       recentSessions,
     ] = await Promise.all([
-      this.prisma.student.count({ where: studentWhere }),
-      this.prisma.studentProfile.count({ where: profileWhere }),
-      this.prisma.studentProfile.count({
+      prisma.student.count({ where: studentWhere }),
+      prisma.studentProfile.count({ where: profileWhere }),
+      prisma.studentProfile.count({
         where: {
           ...profileWhere,
           diagnosticCompleted: true,
         },
       }),
-      this.prisma.lessonPlan.count({ where: lessonPlanWhere }),
-      this.prisma.curriculum.count({ where: curriculumWhere }),
-      this.prisma.student.findMany({
+      prisma.lessonPlan.count({ where: lessonPlanWhere }),
+      prisma.curriculum.count({ where: curriculumWhere }),
+      prisma.student.findMany({
         where: studentWhere,
         orderBy: { createdAt: "desc" },
         take: 24,
@@ -89,7 +99,7 @@ export class DashboardService {
           },
         },
       }),
-      this.prisma.lessonPlan.findMany({
+      prisma.lessonPlan.findMany({
         where: lessonPlanWhere,
         orderBy: { createdAt: "desc" },
         take: 12,
@@ -104,14 +114,14 @@ export class DashboardService {
           createdAt: true,
         },
       }),
-      this.prisma.lessonPlan.groupBy({
+      prisma.lessonPlan.groupBy({
         by: ["subject"],
         where: lessonPlanWhere,
         _count: { _all: true },
         orderBy: { _count: { subject: "desc" } },
         take: 6,
       }),
-      this.prisma.auditLog.findMany({
+      prisma.auditLog.findMany({
         where: {
           tenantId: input.tenantId,
           action: HANDOFF_ACTION,
@@ -124,7 +134,7 @@ export class DashboardService {
           metadata: true,
         },
       }),
-      this.prisma.learningSession.aggregate({
+      prisma.learningSession.aggregate({
         where: {
           tenantId: input.tenantId,
           ...(input.schoolId ? { studentProfile: { student: { schoolId: input.schoolId } } } : {}),
@@ -171,6 +181,10 @@ export class DashboardService {
         })),
       },
     };
+  }
+
+  private async enableRlsBypass(tx: PrismaTx): Promise<void> {
+    await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
   }
 
   async getMinistryOverview() {

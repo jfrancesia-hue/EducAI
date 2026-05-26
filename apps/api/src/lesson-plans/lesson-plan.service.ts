@@ -164,13 +164,17 @@ export class LessonPlanService {
   }
 
   async findOne(id: string, access: { tenantId: string; teacherId?: string; schoolId?: string }) {
-    const lessonPlan = await this.prisma.lessonPlan.findFirst({
-      where: {
-        id,
-        tenantId: access.tenantId,
-        ...(access.teacherId ? { teacherId: access.teacherId } : {}),
-        ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
-      },
+    const lessonPlan = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
+      return tx.lessonPlan.findFirst({
+        where: {
+          id,
+          tenantId: access.tenantId,
+          ...(access.teacherId ? { teacherId: access.teacherId } : {}),
+          ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
+        },
+      });
     });
 
     if (!lessonPlan) {
