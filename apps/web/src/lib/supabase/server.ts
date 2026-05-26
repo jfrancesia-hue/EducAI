@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+import { withSharedAuthCookieDomain } from "./cookies";
 import { getSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -21,7 +22,7 @@ export function createSupabaseServerClient() {
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
           try {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, withSharedAuthCookieDomain(options));
           } catch {
             // Server component contexts can reject cookie writes.
           }

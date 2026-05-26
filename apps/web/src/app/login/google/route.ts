@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+import { withSharedAuthCookieDomain } from "../../../lib/supabase/cookies";
 import { getSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
   const response = NextResponse.redirect(data.url, { status: 303 });
   cookiesToSet.forEach(({ name, value, options }) => {
-    response.cookies.set(name, value, options);
+    response.cookies.set(name, value, withSharedAuthCookieDomain(options));
   });
 
   return response;

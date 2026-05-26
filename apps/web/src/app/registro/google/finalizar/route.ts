@@ -46,7 +46,11 @@ function decode(value: string): PendingGoogleSignup | null {
 
 function redirectWithClearedCookie(url: URL) {
   const response = NextResponse.redirect(url, { status: 303 });
-  response.cookies.set(GOOGLE_SIGNUP_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(GOOGLE_SIGNUP_COOKIE, "", {
+    domain: process.env.NODE_ENV === "production" ? ".educai.com.ar" : undefined,
+    path: "/",
+    maxAge: 0,
+  });
   return response;
 }
 

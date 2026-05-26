@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
+import { withSharedAuthCookieDomain } from "./cookies";
 import { getSupabaseEnv, hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -45,7 +46,7 @@ export async function signInWithPasswordRedirect(
       },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, withSharedAuthCookieDomain(options));
         });
       },
     },
