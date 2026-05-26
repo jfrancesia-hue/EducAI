@@ -59,7 +59,7 @@ const prismaMock = {
   },
 };
 
-prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock));
+prismaMock.$transaction.mockImplementation((callback) => callback(prismaMock));
 
 const authFixtures: Record<string, AuthenticatedUser> = {
   "token:family-1": {
