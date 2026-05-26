@@ -12,6 +12,8 @@ import { PrismaService } from "../src/prisma/prisma.service.js";
 const prismaMock = {
   $connect: vi.fn().mockResolvedValue(undefined),
   $disconnect: vi.fn().mockResolvedValue(undefined),
+  $executeRawUnsafe: vi.fn().mockResolvedValue(undefined),
+  $transaction: vi.fn(),
   student: {
     create: vi.fn(),
     findFirst: vi.fn(),
@@ -56,6 +58,8 @@ const prismaMock = {
     findMany: vi.fn().mockResolvedValue([]),
   },
 };
+
+prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock));
 
 const authFixtures: Record<string, AuthenticatedUser> = {
   "token:family-1": {
