@@ -2,11 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NextResponse } from "next/server";
 
-import {
-  expireSharedSupabaseCookiesFromHeader,
-  parseCookieHeader,
-  setSupabaseAuthResponseCookie,
-} from "./cookies";
+import { parseCookieHeader, setSupabaseAuthResponseCookie } from "./cookies";
 import { getSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -35,7 +31,6 @@ export function createSupabaseRouteClient(request: Request): {
   return {
     supabase,
     withAuthCookies(response) {
-      expireSharedSupabaseCookiesFromHeader(response, request.headers.get("cookie"));
       cookiesToSet.forEach(({ name, value, options }) => {
         setSupabaseAuthResponseCookie(response, name, value, options);
       });
