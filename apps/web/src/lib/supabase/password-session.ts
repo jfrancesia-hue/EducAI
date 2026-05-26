@@ -1,7 +1,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "./cookies";
+import {
+  parseCookieHeader,
+  setEducaiAccessTokenCookie,
+  setSupabaseAuthResponseCookie,
+} from "./cookies";
 import { getSupabaseEnv, hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -43,9 +47,10 @@ export async function signInWithPasswordRedirect(
     password: input.password,
   });
 
-  if (error || !data.user) {
+  if (error || !data.user || !data.session?.access_token) {
     return null;
   }
 
+  setEducaiAccessTokenCookie(response, data.session.access_token, data.session.expires_in);
   return { response, user: data.user };
 }

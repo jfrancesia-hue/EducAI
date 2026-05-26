@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { EDUCAI_ACCESS_TOKEN_COOKIE, readCookieValue } from "../../../../lib/supabase/cookies";
 import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
 const GRADE_RANGES: Record<string, { min: number; max: number }> = {
@@ -45,7 +46,10 @@ export async function POST(request: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const accessToken = session?.access_token ?? readString(formData, "accessToken");
+  const accessToken =
+    session?.access_token ||
+    readString(formData, "accessToken") ||
+    readCookieValue(request.headers.get("cookie"), EDUCAI_ACCESS_TOKEN_COOKIE);
 
   if (!accessToken) {
     return withAuthCookies(redirectTo(request, { error: "auth" }));

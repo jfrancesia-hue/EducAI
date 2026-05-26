@@ -1,7 +1,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "../../../lib/supabase/cookies";
+import {
+  parseCookieHeader,
+  setEducaiAccessTokenCookie,
+  setSupabaseAuthResponseCookie,
+} from "../../../lib/supabase/cookies";
 import { getSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -52,10 +56,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) {
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error || !data.session?.access_token) {
     return NextResponse.redirect(new URL("/login?error=invalid", request.url), { status: 303 });
   }
 
+  setEducaiAccessTokenCookie(response, data.session.access_token, data.session.expires_in);
   return response;
 }

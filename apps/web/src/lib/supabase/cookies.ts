@@ -1,6 +1,7 @@
 import type { CookieOptions } from "@supabase/ssr";
 
 const SHARED_AUTH_COOKIE_DOMAIN = ".educai.com.ar";
+export const EDUCAI_ACCESS_TOKEN_COOKIE = "educai_access_token";
 
 type CookieSetter = {
   set(name: string, value: string, options: CookieOptions): unknown;
@@ -82,4 +83,32 @@ export function parseCookieHeader(cookieHeader: string | null) {
   }
 
   return Array.from(deduped, ([name, value]) => ({ name, value }));
+}
+
+export function readCookieValue(cookieHeader: string | null, name: string) {
+  return parseCookieHeader(cookieHeader).find((cookie) => cookie.name === name)?.value ?? "";
+}
+
+export function setEducaiAccessTokenCookie(
+  response: CookieResponse,
+  accessToken: string,
+  maxAge = 60 * 55,
+) {
+  response.cookies.set(EDUCAI_ACCESS_TOKEN_COOKIE, accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge,
+  });
+}
+
+export function clearEducaiAccessTokenCookie(response: CookieResponse) {
+  response.cookies.set(EDUCAI_ACCESS_TOKEN_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
 }

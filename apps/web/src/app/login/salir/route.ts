@@ -1,7 +1,11 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "../../../lib/supabase/cookies";
+import {
+  clearEducaiAccessTokenCookie,
+  parseCookieHeader,
+  setSupabaseAuthResponseCookie,
+} from "../../../lib/supabase/cookies";
 import { getSupabaseEnv, hasSupabaseEnv } from "../../../lib/supabase/env";
 
 type CookieToSet = {
@@ -13,6 +17,7 @@ type CookieToSet = {
 export async function GET(request: Request) {
   const redirectUrl = new URL("/login", request.url);
   const response = NextResponse.redirect(redirectUrl);
+  clearEducaiAccessTokenCookie(response);
 
   if (!hasSupabaseEnv()) {
     return response;
