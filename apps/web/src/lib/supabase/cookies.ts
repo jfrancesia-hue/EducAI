@@ -44,6 +44,19 @@ function expireSharedDomainCookie(response: CookieResponse, name: string, option
   );
 }
 
+export function expireSharedSupabaseCookiesFromHeader(
+  response: CookieResponse,
+  cookieHeader: string | null,
+) {
+  if (process.env.NODE_ENV !== "production") {
+    return;
+  }
+
+  parseCookieHeader(cookieHeader)
+    .filter(({ name }) => name.startsWith("sb-"))
+    .forEach(({ name }) => expireSharedDomainCookie(response, name, { path: "/" }));
+}
+
 export function setSupabaseAuthResponseCookie(
   response: CookieResponse,
   name: string,

@@ -3,7 +3,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "./cookies";
+import {
+  expireSharedSupabaseCookiesFromHeader,
+  parseCookieHeader,
+  setSupabaseAuthResponseCookie,
+} from "./cookies";
 import { hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -23,6 +27,7 @@ export async function updateSession(request: NextRequest): Promise<{
       headers: requestHeaders,
     },
   });
+  expireSharedSupabaseCookiesFromHeader(response, request.headers.get("cookie"));
 
   if (!hasSupabaseEnv()) {
     return { response, user: null };
