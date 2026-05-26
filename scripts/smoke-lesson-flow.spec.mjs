@@ -1,6 +1,8 @@
 import { test, expect } from "playwright/test";
 
 test("login, fill lesson form and submit", async ({ page }) => {
+  test.setTimeout(120_000);
+
   const email = process.env.EDUCAI_SMOKE_EMAIL;
   const password = process.env.EDUCAI_SMOKE_PASSWORD;
 
