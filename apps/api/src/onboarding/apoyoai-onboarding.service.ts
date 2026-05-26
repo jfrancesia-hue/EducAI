@@ -81,7 +81,7 @@ export class ApoyoAiOnboardingService {
       throw new ConflictException("Ya existe una cuenta EducAI/ApoyoAI con ese email");
     }
 
-    const normalizedParentPhone = this.normalizePhone(dto.parentWhatsappPhone);
+    const normalizedParentPhone = this.normalizePhone(dto.parentWhatsappPhone) ?? "";
     const slug = await this.uniqueFamilySlug(dto.parentFullName);
     const status = this.initialStatus(dto.plan);
 
@@ -164,7 +164,7 @@ export class ApoyoAiOnboardingService {
                 curriculum: child.curriculum ?? "AR-NOA",
                 strongSubjects: [],
                 weakSubjects: [],
-                whatsappPhone: normalizedStudentPhone,
+                whatsappPhone: normalizedStudentPhone ?? null,
                 whatsappContacts: {
                   create: this.buildContacts({
                     tenantId: tenant.id,
@@ -591,8 +591,9 @@ export class ApoyoAiOnboardingService {
       .replace(/^-|-$/g, "");
   }
 
-  private normalizePhone(phone?: string): string {
-    return (phone ?? "").trim().replace(/^whatsapp:/i, "");
+  private normalizePhone(phone?: string): string | undefined {
+    const normalized = (phone ?? "").trim().replace(/^whatsapp:/i, "");
+    return normalized || undefined;
   }
 
   private addDays(date: Date, days: number): Date {
