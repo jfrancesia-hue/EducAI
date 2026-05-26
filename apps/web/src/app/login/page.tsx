@@ -11,6 +11,7 @@ const loginHeroImage =
 
 const errorMessages: Record<string, string> = {
   config: "El acceso no esta disponible en este momento. Reintenta en unos minutos.",
+  google: "No pudimos iniciar sesion con Google. Intenta de nuevo.",
   invalid: "Email o contrasena incorrectos.",
   missing: "Completa email y contrasena para iniciar sesion.",
 };
@@ -192,6 +193,20 @@ export default function LoginPage({
                 >
                   Entrar
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </Button>
+                <Button
+                  type="submit"
+                  size="lg"
+                  formAction="/login/google"
+                  formNoValidate
+                  disabled={!authReady}
+                  variant="outline"
+                  className="w-full border-[#d5e1dc] bg-white text-[#14120f] hover:bg-[#f7f8f3] disabled:cursor-not-allowed disabled:bg-[#ebe4d8]"
+                >
+                  <span className="font-display text-lg font-bold" aria-hidden="true">
+                    G
+                  </span>
+                  Ingresar con Google
                 </Button>
               </form>
 
