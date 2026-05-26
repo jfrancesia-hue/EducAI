@@ -1,9 +1,19 @@
-import { AlertCircle, BookOpenCheck, CheckCircle2, Clock, FileText } from "lucide-react";
+import Link from "next/link";
+import {
+  AlertCircle,
+  BookOpenCheck,
+  CheckCircle2,
+  ClipboardCheck,
+  Clock,
+  FileText,
+  ListChecks,
+} from "lucide-react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
+import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 type PlanningModulePageProps = {
@@ -30,11 +40,190 @@ const outputItems = [
   "Cierre o ticket de salida",
 ];
 
+type LessonSession = {
+  number?: number;
+  duration?: number;
+  phases?: Array<{
+    name?: string;
+    duration?: number;
+    activities?: string[];
+  }>;
+  resources?: string[];
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function toTextList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") {
+          return item;
+        }
+
+        if (isRecord(item)) {
+          const candidate = item.title ?? item.name ?? item.text ?? item.description ?? item.prompt;
+          return typeof candidate === "string" ? candidate : null;
+        }
+
+        return null;
+      })
+      .filter((item): item is string => Boolean(item));
+  }
+
+  if (typeof value === "string") {
+    return [value];
+  }
+
+  return [];
+}
+
+function toSessions(value: unknown): LessonSession[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isRecord).map((session) => ({
+    number: typeof session.number === "number" ? session.number : undefined,
+    duration: typeof session.duration === "number" ? session.duration : undefined,
+    phases: Array.isArray(session.phases)
+      ? session.phases.filter(isRecord).map((phase) => ({
+          name: typeof phase.name === "string" ? phase.name : "Momento",
+          duration: typeof phase.duration === "number" ? phase.duration : undefined,
+          activities: toTextList(phase.activities),
+        }))
+      : [],
+    resources: toTextList(session.resources),
+  }));
+}
+
+function assessmentList(plan: LessonPlanDetail) {
+  if (!isRecord(plan.assessment)) {
+    return [];
+  }
+
+  return [
+    ...toTextList(plan.assessment.rubric),
+    ...toTextList(plan.assessment.instruments).map((item) => `Instrumento: ${item}`),
+  ];
+}
+
+function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
+  const objectives = toTextList(plan.objectives);
+  const sessions = toSessions(plan.activities);
+  const resources = toTextList(plan.resources);
+  const assessment = assessmentList(plan);
+
+  return (
+    <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
+      <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
+        <Badge className="bg-[#e7fbf7] text-[#087968]">Guia generada</Badge>
+        <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
+          {plan.subject} - {plan.topic}
+        </h2>
+        <div className="mt-3 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
+          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
+          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
+        </div>
+      </div>
+
+      <div className="grid gap-5 p-5">
+        {objectives.length ? (
+          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-5 w-5 text-[#087968]" aria-hidden="true" />
+              <h3 className="font-display text-xl font-bold tracking-tight">Objetivos</h3>
+            </div>
+            <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+              {objectives.map((objective) => (
+                <li key={objective} className="rounded-lg bg-white px-3 py-2">
+                  {objective}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {sessions.length ? (
+          <section className="grid gap-3">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5 text-[#087968]" aria-hidden="true" />
+              <h3 className="font-display text-xl font-bold tracking-tight">Secuencia</h3>
+            </div>
+            {sessions.map((session, index) => (
+              <div key={session.number ?? index} className="rounded-lg border border-[#e3ebe7] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-bold">Clase {session.number ?? index + 1}</p>
+                  {session.duration ? (
+                    <span className="text-sm font-semibold text-[#5b6962]">
+                      {session.duration} min
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-3 grid gap-3">
+                  {session.phases?.map((phase, phaseIndex) => (
+                    <div
+                      key={`${phase.name}-${phaseIndex}`}
+                      className="rounded-lg bg-[#fbfffd] p-3"
+                    >
+                      <p className="font-semibold">
+                        {phase.name}
+                        {phase.duration ? ` - ${phase.duration} min` : ""}
+                      </p>
+                      <ul className="mt-2 grid gap-1 text-[15px] leading-6 text-[#33423c]">
+                        {phase.activities?.map((activity) => (
+                          <li key={activity}>{activity}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {resources.length ? (
+            <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+              <h3 className="font-display text-xl font-bold tracking-tight">Recursos</h3>
+              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                {resources.map((resource) => (
+                  <li key={resource}>{resource}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {assessment.length ? (
+            <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+              <h3 className="font-display text-xl font-bold tracking-tight">Evaluacion</h3>
+              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                {assessment.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default async function PlanningModulePage({ searchParams }: PlanningModulePageProps) {
   const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
   const createdId = searchParams?.created;
+  const [dashboard, createdPlan] = accessToken
+    ? await Promise.all([
+        fetchInstitutionalDashboard(accessToken),
+        createdId ? fetchLessonPlan(accessToken, createdId) : Promise.resolve(null),
+      ])
+    : [null, null];
   const error = searchParams?.error;
 
   return (
@@ -56,6 +245,8 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
               </div>
             </div>
           ) : null}
+
+          {createdPlan ? <GeneratedLessonPlan plan={createdPlan} /> : null}
 
           {error ? (
             <div className="rounded-lg border border-[#ef5da8]/35 bg-[#fdeaf4] p-4 text-[#8d174f]">
@@ -99,9 +290,11 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             <div className="mt-5 grid gap-3">
               {dashboard?.recentLessonPlans.length ? (
                 dashboard.recentLessonPlans.slice(0, 5).map((plan) => (
-                  <div
+                  <Link
                     key={plan.id}
-                    className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4"
+                    href={`/app/planificar?created=${encodeURIComponent(plan.id)}`}
+                    prefetch={false}
+                    className="block rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/70 hover:bg-[#f3fffc]"
                   >
                     <p className="font-semibold">
                       {plan.subject} - {plan.topic}
@@ -113,7 +306,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                       </span>
                       <Badge className="w-fit bg-[#eef5f3] text-[#33423c]">{plan.status}</Badge>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-[15px] leading-6 text-[#4f5f58]">

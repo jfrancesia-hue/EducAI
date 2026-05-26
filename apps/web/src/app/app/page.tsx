@@ -141,9 +141,11 @@ export default async function EducAiAppPage() {
                   <div className="mt-5 grid gap-3">
                     {dashboard.recentLessonPlans.length ? (
                       dashboard.recentLessonPlans.slice(0, 6).map((plan) => (
-                        <article
+                        <Link
                           key={plan.id}
-                          className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4"
+                          href={`/app/planificar?created=${encodeURIComponent(plan.id)}`}
+                          prefetch={false}
+                          className="block rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/70 hover:bg-[#f3fffc]"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -156,7 +158,7 @@ export default async function EducAiAppPage() {
                             </div>
                             <Badge className="bg-[#eef5f3] text-[#33423c]">{plan.status}</Badge>
                           </div>
-                        </article>
+                        </Link>
                       ))
                     ) : (
                       <p className="text-[15px] leading-6 text-[#4f5f58]">

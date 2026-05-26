@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { CalendarDays, Sparkles } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
@@ -128,6 +129,21 @@ const lessonIntentOptions: Array<{ value: LessonIntent; label: string }> = [
   { value: "repasar", label: "Repasar" },
   { value: "proyecto", label: "Proyecto" },
 ];
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508] disabled:cursor-wait disabled:bg-[#c85f16] disabled:opacity-85"
+    >
+      <Sparkles className="h-5 w-5" aria-hidden="true" />
+      {pending ? "Generando clase..." : "Crear clase"}
+    </Button>
+  );
+}
 
 export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
   const [educationLevel, setEducationLevel] = useState<EducationLevel>("secundaria");
@@ -475,15 +491,9 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
 
         <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[15px] font-medium leading-6 text-[#4f5f58]">
-            La clase queda disponible en tu espacio docente.
+            La clase queda disponible en tu espacio docente al terminar la generacion.
           </p>
-          <Button
-            type="submit"
-            className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508]"
-          >
-            <Sparkles className="h-5 w-5" aria-hidden="true" />
-            Crear clase
-          </Button>
+          <SubmitButton />
         </div>
       </div>
     </form>
