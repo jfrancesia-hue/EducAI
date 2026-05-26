@@ -276,7 +276,9 @@ export default async function EducAiAppPage() {
                   asChild
                   className="justify-start bg-white/10 text-left text-white hover:bg-white/15"
                 >
-                  <Link href={href}>{label}</Link>
+                  <Link href={href} prefetch={false}>
+                    {label}
+                  </Link>
                 </Button>
               ))}
             </div>

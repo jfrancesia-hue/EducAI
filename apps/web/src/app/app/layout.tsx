@@ -15,7 +15,7 @@ export default async function ProtectedAppLayout({ children }: { children: React
   } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?next=/app");
   }
 
   const role =

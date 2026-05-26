@@ -65,6 +65,7 @@ export function AppShell({
                   <Link
                     key={item.label}
                     href={item.href}
+                    prefetch={false}
                     className={[
                       "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
                       active
@@ -90,6 +91,7 @@ export function AppShell({
             </p>
             <Link
               href="/app/planificar"
+              prefetch={false}
               className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#ff7a1a] text-sm font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.24)] transition hover:bg-[#ea6508]"
             >
               Crear clase
@@ -121,7 +123,7 @@ export function AppShell({
                   asChild
                   className="bg-[#ff7a1a] text-white shadow-[0_14px_34px_rgba(255,122,26,0.36)] hover:bg-[#ea6508]"
                 >
-                  <Link href="/app/planificar">
+                  <Link href="/app/planificar" prefetch={false}>
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
                     Crear clase
                   </Link>
@@ -147,6 +149,7 @@ export function AppShell({
                 <Link
                   key={item.label}
                   href={item.href}
+                  prefetch={false}
                   className={[
                     "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
                     active
