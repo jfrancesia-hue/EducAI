@@ -31,8 +31,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname.startsWith("/app") && hasSession && role === "PARENT") {
+    return NextResponse.redirect(new URL("/familia", request.url));
+  }
+
   if (pathname.startsWith("/app") && hasSession && (!role || !WEB_ALLOWED_ROLES.has(role))) {
     return NextResponse.redirect(new URL("/acceso-denegado", request.url));
+  }
+
+  if (pathname === "/login" && hasSession && role === "PARENT") {
+    return NextResponse.redirect(new URL("/familia", request.url));
   }
 
   if (pathname === "/login" && hasSession && role && WEB_ALLOWED_ROLES.has(role)) {
