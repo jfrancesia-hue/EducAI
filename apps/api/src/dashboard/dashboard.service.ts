@@ -71,11 +71,35 @@ export class DashboardService {
       ...(input.schoolId ? { schoolId: input.schoolId } : {}),
     };
 
+    const lessonPlanSummary = await this.readDashboardValue<LessonPlanSummary>(
+      "lessonPlanSummary",
+      { count: 0, recent: [] },
+      async (prisma) => {
+        const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
+        const recent = await prisma.lessonPlan.findMany({
+          where: lessonPlanWhere,
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: {
+            id: true,
+            grade: true,
+            subject: true,
+            topic: true,
+            status: true,
+            durationMinutes: true,
+            generatedByAI: true,
+            createdAt: true,
+          },
+        });
+
+        return { count, recent };
+      },
+    );
+
     const [
       studentCount,
       profileCount,
       diagnosticCompletedCount,
-      lessonPlanSummary,
       curriculumCount,
       recentStudents,
       lessonPlanBySubject,
@@ -95,30 +119,6 @@ export class DashboardService {
             diagnosticCompleted: true,
           },
         }),
-      ),
-      this.readDashboardValue<LessonPlanSummary>(
-        "lessonPlanSummary",
-        { count: 0, recent: [] },
-        async (prisma) => {
-          const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
-          const recent = await prisma.lessonPlan.findMany({
-            where: lessonPlanWhere,
-            orderBy: { createdAt: "desc" },
-            take: 12,
-            select: {
-              id: true,
-              grade: true,
-              subject: true,
-              topic: true,
-              status: true,
-              durationMinutes: true,
-              generatedByAI: true,
-              createdAt: true,
-            },
-          });
-
-          return { count, recent };
-        },
       ),
       this.readDashboardValue("curriculumCount", 0, (prisma) =>
         prisma.curriculum.count({ where: curriculumWhere }),
