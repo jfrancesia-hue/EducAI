@@ -18,6 +18,8 @@ export interface LlmGenerateInput {
   temperature?: number;
   maxTokens?: number;
   responseFormat?: "text" | "json";
+  tools?: LlmToolDefinition[];
+  toolChoice?: string;
 }
 
 export interface LlmCacheUsage {
@@ -33,10 +35,22 @@ export interface LlmGenerateOutput {
   outputTokens?: number;
   cache?: LlmCacheUsage;
   stopReason?: string;
+  toolUse?: LlmToolUse;
 }
 
 export interface LlmClient {
   generate(input: LlmGenerateInput): Promise<LlmGenerateOutput>;
+}
+
+export interface LlmToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
+
+export interface LlmToolUse {
+  name: string;
+  input: unknown;
 }
 
 export class DeterministicLlmClient implements LlmClient {

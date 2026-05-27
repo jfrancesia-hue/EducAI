@@ -157,6 +157,7 @@ export class LessonPlanService {
               })),
               overview: plan.overview,
               printables: plan.printables,
+              guide: plan.guide,
             },
             generatedByAI: true,
           },

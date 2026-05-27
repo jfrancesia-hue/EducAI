@@ -1,5 +1,6 @@
 export * from "./agents/tutor-agent.js";
 export * from "./agents/plan-generator-agent.js";
+export * from "./agents/lesson-guide-schema.js";
 export * from "./agents/curriculum-analyzer-agent.js";
 export * from "./prompts/tutor-system.js";
 export * from "./plans.js";

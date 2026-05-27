@@ -7,6 +7,7 @@ import {
   FileText,
   ListChecks,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
@@ -55,6 +56,57 @@ type LessonSession = {
     medium?: string;
     high?: string;
   };
+};
+
+type EducaiLessonGuide = {
+  vistaDocente?: {
+    titulo?: string;
+    resumen?: string;
+    focoPedagogico?: string;
+    productoEsperado?: string;
+  };
+  saberesClave?: Array<{
+    nombre?: string;
+    explicacionSimple?: string;
+    ejemploDelTema?: string;
+    errorComun?: string;
+  }>;
+  objetivosAprendizaje?: Array<{ objetivo?: string; evidenciaObservable?: string }>;
+  secuencia?: Array<{
+    claseNumero?: number;
+    duracion?: number;
+    momentos?: Array<{
+      nombre?: string;
+      duracion?: number;
+      proposito?: string;
+      consignaDocente?: string;
+      actividadEstudiantes?: string;
+      ejemploConcreto?: string;
+      intervencionDocente?: string;
+      cierreParcial?: string;
+    }>;
+  }>;
+  actividadCentral?: {
+    titulo?: string;
+    consignaListaParaUsar?: string;
+    pasos?: string[];
+    produccionEsperada?: string;
+    variantes?: string[];
+  };
+  materialesEditables?: Array<{ nombre?: string; contenido?: string; comoUsarlo?: string }>;
+  evaluacion?: {
+    criterios?: string[];
+    instrumento?: string;
+    ticketSalida?: string;
+    retroalimentacionSugerida?: string;
+  };
+  diferenciacion?: {
+    apoyoFuerte?: string;
+    grupoBase?: string;
+    extension?: string;
+  };
+  erroresFrecuentes?: Array<{ error?: string; comoDetectarlo?: string; comoIntervenir?: string }>;
+  recursosOpcionales?: string[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -151,7 +203,25 @@ function printableList(plan: LessonPlanDetail) {
   }));
 }
 
+function richGuide(plan: LessonPlanDetail): EducaiLessonGuide | null {
+  if (!isRecord(plan.adaptations) || !isRecord(plan.adaptations.guide)) {
+    return null;
+  }
+
+  return plan.adaptations.guide;
+}
+
+function RichGuideSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+      <h3 className="font-display text-xl font-bold tracking-tight">{title}</h3>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
 function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
+  const guide = richGuide(plan);
   const overview = planOverview(plan);
   const objectives = toTextList(plan.objectives);
   const competences = toTextList(plan.competences);
@@ -159,6 +229,243 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
   const resources = toTextList(plan.resources);
   const assessment = assessmentList(plan);
   const printables = printableList(plan);
+
+  if (guide) {
+    return (
+      <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
+        <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Guia generada</Badge>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
+            {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Anio {plan.grade}</span>
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-5 p-5">
+          <RichGuideSection title="Vista docente">
+            <div className="grid gap-3 text-[15px] leading-7 text-[#33423c]">
+              {guide.vistaDocente?.resumen ? <p>{guide.vistaDocente.resumen}</p> : null}
+              {guide.vistaDocente?.focoPedagogico ? (
+                <p>
+                  <span className="font-semibold">Foco:</span> {guide.vistaDocente.focoPedagogico}
+                </p>
+              ) : null}
+              {guide.vistaDocente?.productoEsperado ? (
+                <p>
+                  <span className="font-semibold">Producto esperado:</span>{" "}
+                  {guide.vistaDocente.productoEsperado}
+                </p>
+              ) : null}
+            </div>
+          </RichGuideSection>
+
+          {guide.saberesClave?.length ? (
+            <RichGuideSection title="Saberes clave">
+              <div className="grid gap-3 md:grid-cols-2">
+                {guide.saberesClave.map((item, index) => (
+                  <div key={`${item.nombre}-${index}`} className="rounded-lg bg-white p-3">
+                    <p className="font-semibold">{item.nombre}</p>
+                    <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                      {item.explicacionSimple}
+                    </p>
+                    {item.ejemploDelTema ? (
+                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                        <span className="font-semibold">Ejemplo:</span> {item.ejemploDelTema}
+                      </p>
+                    ) : null}
+                    {item.errorComun ? (
+                      <p className="mt-2 text-[15px] leading-6 text-[#8d174f]">
+                        <span className="font-semibold">Error comun:</span> {item.errorComun}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </RichGuideSection>
+          ) : null}
+
+          {guide.objetivosAprendizaje?.length ? (
+            <RichGuideSection title="Objetivos y evidencias">
+              <ul className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                {guide.objetivosAprendizaje.map((objective, index) => (
+                  <li
+                    key={`${objective.objetivo}-${index}`}
+                    className="rounded-lg bg-white px-3 py-2"
+                  >
+                    <span className="font-semibold">{objective.objetivo}</span>
+                    {objective.evidenciaObservable
+                      ? ` Evidencia: ${objective.evidenciaObservable}`
+                      : ""}
+                  </li>
+                ))}
+              </ul>
+            </RichGuideSection>
+          ) : null}
+
+          {guide.secuencia?.length ? (
+            <section className="grid gap-3">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-[#087968]" aria-hidden="true" />
+                <h3 className="font-display text-xl font-bold tracking-tight">Secuencia</h3>
+              </div>
+              {guide.secuencia.map((session, index) => (
+                <div
+                  key={session.claseNumero ?? index}
+                  className="rounded-lg border border-[#e3ebe7] p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-bold">Clase {session.claseNumero ?? index + 1}</p>
+                    {session.duracion ? (
+                      <span className="text-sm font-semibold text-[#5b6962]">
+                        {session.duracion} min
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 grid gap-3">
+                    {session.momentos?.map((moment, momentIndex) => (
+                      <div
+                        key={`${moment.nombre}-${momentIndex}`}
+                        className="rounded-lg bg-[#fbfffd] p-3"
+                      >
+                        <p className="font-semibold">
+                          {moment.nombre}
+                          {moment.duracion ? ` - ${moment.duracion} min` : ""}
+                        </p>
+                        <div className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                          {[
+                            ["Proposito", moment.proposito],
+                            ["Consigna docente", moment.consignaDocente],
+                            ["Actividad estudiantes", moment.actividadEstudiantes],
+                            ["Ejemplo concreto", moment.ejemploConcreto],
+                            ["Intervencion docente", moment.intervencionDocente],
+                            ["Cierre parcial", moment.cierreParcial],
+                          ].map(([label, value]) =>
+                            value ? (
+                              <p key={label}>
+                                <span className="font-semibold">{label}:</span> {value}
+                              </p>
+                            ) : null,
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </section>
+          ) : null}
+
+          {guide.actividadCentral ? (
+            <RichGuideSection title="Actividad central">
+              <div className="grid gap-3 text-[15px] leading-6 text-[#33423c]">
+                <p className="font-semibold">{guide.actividadCentral.titulo}</p>
+                <p>{guide.actividadCentral.consignaListaParaUsar}</p>
+                {guide.actividadCentral.pasos?.length ? (
+                  <ol className="grid list-decimal gap-1 pl-5">
+                    {guide.actividadCentral.pasos.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                ) : null}
+                {guide.actividadCentral.produccionEsperada ? (
+                  <p>
+                    <span className="font-semibold">Produccion esperada:</span>{" "}
+                    {guide.actividadCentral.produccionEsperada}
+                  </p>
+                ) : null}
+              </div>
+            </RichGuideSection>
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {guide.evaluacion ? (
+              <RichGuideSection title="Evaluacion">
+                <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  {guide.evaluacion.criterios?.map((criterion) => (
+                    <p key={criterion}>{criterion}</p>
+                  ))}
+                  {guide.evaluacion.instrumento ? (
+                    <p>
+                      <span className="font-semibold">Instrumento:</span>{" "}
+                      {guide.evaluacion.instrumento}
+                    </p>
+                  ) : null}
+                  {guide.evaluacion.ticketSalida ? (
+                    <p>
+                      <span className="font-semibold">Ticket:</span> {guide.evaluacion.ticketSalida}
+                    </p>
+                  ) : null}
+                </div>
+              </RichGuideSection>
+            ) : null}
+
+            {guide.diferenciacion ? (
+              <RichGuideSection title="Diferenciacion">
+                <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  {[
+                    ["Apoyo fuerte", guide.diferenciacion.apoyoFuerte],
+                    ["Grupo base", guide.diferenciacion.grupoBase],
+                    ["Extension", guide.diferenciacion.extension],
+                  ].map(([label, value]) =>
+                    value ? (
+                      <p key={label}>
+                        <span className="font-semibold">{label}:</span> {value}
+                      </p>
+                    ) : null,
+                  )}
+                </div>
+              </RichGuideSection>
+            ) : null}
+          </div>
+
+          {guide.materialesEditables?.length ? (
+            <RichGuideSection title="Materiales editables">
+              <div className="grid gap-3">
+                {guide.materialesEditables.map((material, index) => (
+                  <div key={`${material.nombre}-${index}`} className="rounded-lg bg-white p-3">
+                    <p className="font-semibold">{material.nombre}</p>
+                    <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
+                      {material.contenido}
+                    </p>
+                    {material.comoUsarlo ? (
+                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                        <span className="font-semibold">Como usarlo:</span> {material.comoUsarlo}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </RichGuideSection>
+          ) : null}
+
+          {guide.erroresFrecuentes?.length ? (
+            <RichGuideSection title="Errores frecuentes">
+              <div className="grid gap-3">
+                {guide.erroresFrecuentes.map((error, index) => (
+                  <div
+                    key={`${error.error}-${index}`}
+                    className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
+                  >
+                    <p className="font-semibold text-[#8d174f]">{error.error}</p>
+                    <p className="mt-2">
+                      <span className="font-semibold">Como detectarlo:</span> {error.comoDetectarlo}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Como intervenir:</span> {error.comoIntervenir}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </RichGuideSection>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
@@ -358,7 +665,18 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             </div>
           ) : null}
 
-          <LessonPlanForm accessToken={accessToken} />
+          {createdPlan ? (
+            <div>
+              <a
+                href="/app/planificar"
+                className="inline-flex rounded-lg bg-[#075f53] px-4 py-3 text-sm font-bold text-white shadow-whisper transition hover:bg-[#087968]"
+              >
+                Nueva planificacion
+              </a>
+            </div>
+          ) : (
+            <LessonPlanForm accessToken={accessToken} />
+          )}
         </section>
 
         <aside className="grid content-start gap-5">

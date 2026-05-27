@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type {
-  PromptCachingBetaMessage,
   PromptCachingBetaMessageParam,
   PromptCachingBetaTextBlockParam,
+  PromptCachingBetaTool,
 } from "@anthropic-ai/sdk/resources/beta/prompt-caching/messages";
 import type {
   LlmCachedTextBlock,
@@ -59,16 +59,28 @@ export class AnthropicLlmClient implements LlmClient {
     const systemBlocks = this.buildSystemBlocks(input.system);
     const messages = this.toAnthropicMessages(input);
 
-    const response: PromptCachingBetaMessage =
-      await this.anthropic.beta.promptCaching.messages.create({
-        model: input.model || this.defaultModel,
-        max_tokens: input.maxTokens ?? this.defaultMaxTokens,
-        system: systemBlocks,
-        messages,
-      });
+    const request: Parameters<Anthropic["beta"]["promptCaching"]["messages"]["create"]>[0] = {
+      model: input.model || this.defaultModel,
+      max_tokens: input.maxTokens ?? this.defaultMaxTokens,
+      stream: false,
+      system: systemBlocks,
+      messages,
+      tools: input.tools?.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema as PromptCachingBetaTool["input_schema"],
+      })),
+      tool_choice: input.toolChoice ? { type: "tool", name: input.toolChoice } : undefined,
+    };
+
+    const response = await this.anthropic.beta.promptCaching.messages.create(request);
+    if (!("content" in response)) {
+      throw new Error("Anthropic streaming responses are not supported by AnthropicLlmClient");
+    }
 
     const textBlock = response.content.find((block) => block.type === "text");
     const content = textBlock && textBlock.type === "text" ? textBlock.text : "";
+    const toolBlock = response.content.find((block) => block.type === "tool_use");
 
     return {
       content,
@@ -81,6 +93,10 @@ export class AnthropicLlmClient implements LlmClient {
         cacheReadInputTokens: response.usage.cache_read_input_tokens ?? 0,
       },
       stopReason: response.stop_reason ?? undefined,
+      toolUse:
+        toolBlock && toolBlock.type === "tool_use"
+          ? { name: toolBlock.name, input: toolBlock.input }
+          : undefined,
     };
   }
 
