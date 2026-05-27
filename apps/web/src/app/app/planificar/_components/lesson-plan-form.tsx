@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CalendarDays, Sparkles } from "lucide-react";
+import { CalendarDays, FileText, Loader2, Sparkles } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
 
@@ -130,18 +130,51 @@ const lessonIntentOptions: Array<{ value: LessonIntent; label: string }> = [
   { value: "proyecto", label: "Proyecto" },
 ];
 
-function SubmitButton() {
+function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   const { pending } = useFormStatus();
+  const busy = pending || isSubmitting;
 
   return (
     <Button
       type="submit"
-      disabled={pending}
+      disabled={busy}
       className="min-h-12 bg-[#ff7a1a] px-6 font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.32)] hover:bg-[#ea6508] disabled:cursor-wait disabled:bg-[#c85f16] disabled:opacity-85"
     >
-      <Sparkles className="h-5 w-5" aria-hidden="true" />
-      {pending ? "Generando clase..." : "Crear clase"}
+      {busy ? (
+        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+      ) : (
+        <Sparkles className="h-5 w-5" aria-hidden="true" />
+      )}
+      {busy ? "Generando clase..." : "Crear clase"}
     </Button>
+  );
+}
+
+function GeneratingOverlay() {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#f8fbf7]/95 px-4 backdrop-blur-sm">
+      <section
+        role="status"
+        aria-live="polite"
+        className="w-full max-w-lg rounded-lg border border-[#18b6a4]/30 bg-white p-6 text-center shadow-float"
+      >
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-[#075f53] text-white">
+          <FileText className="h-7 w-7" aria-hidden="true" />
+        </span>
+        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Generando tu guia</h2>
+        <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
+          Estamos armando la secuencia, actividades, recursos y evaluacion. Esto puede tardar unos
+          minutos.
+        </p>
+        <div className="mx-auto mt-6 h-2 w-full max-w-sm overflow-hidden rounded-full bg-[#e3ebe7]">
+          <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-[#ff7a1a]" />
+        </div>
+        <div className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-[#075f53]">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          No cierres esta pantalla
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -150,6 +183,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
   const [lessonIntent, setLessonIntent] = useState<LessonIntent>("introducir");
   const [grade, setGrade] = useState(levelLabels.secundaria.defaultGrade);
   const [duration, setDuration] = useState(levelLabels.secundaria.durationDefault);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const labels = levelLabels[educationLevel];
   const isUniversity = educationLevel === "universitario";
   const subjectListId = useMemo(() => `subjects-${educationLevel}`, [educationLevel]);
@@ -162,340 +196,350 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
   }
 
   return (
-    <form
-      action="/app/planificar/generar"
-      method="post"
-      className="rounded-lg border border-[#18b6a4]/25 bg-white shadow-whisper"
-    >
-      <input type="hidden" name="educationLevel" value={educationLevel} />
-      <input type="hidden" name="lessonIntent" value={lessonIntent} />
-      {accessToken ? <input type="hidden" name="accessToken" value={accessToken} /> : null}
+    <>
+      {isSubmitting ? <GeneratingOverlay /> : null}
+      <form
+        action="/app/planificar/generar"
+        method="post"
+        onSubmit={() => setIsSubmitting(true)}
+        aria-busy={isSubmitting}
+        className="rounded-lg border border-[#18b6a4]/25 bg-white shadow-whisper"
+      >
+        <input type="hidden" name="educationLevel" value={educationLevel} />
+        <input type="hidden" name="lessonIntent" value={lessonIntent} />
+        {accessToken ? <input type="hidden" name="accessToken" value={accessToken} /> : null}
 
-      <div className="border-b border-[#e3ebe7] p-5">
-        <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificacion</Badge>
-        <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-          Datos minimos de la clase
-        </h2>
-        <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-          Completa lo esencial. El formulario se adapta al nivel educativo y deja el contexto fino
-          como opcional.
-        </p>
-      </div>
-
-      <div className="grid gap-5 p-5">
-        <fieldset className="grid gap-2">
-          <legend className="text-sm font-semibold text-[#33423c]">Nivel educativo</legend>
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {(Object.keys(levelLabels) as EducationLevel[]).map((level) => {
-              const option = levelLabels[level];
-              const selected = educationLevel === level;
-              return (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => changeLevel(level)}
-                  aria-pressed={selected}
-                  className={`min-h-[84px] rounded-lg border px-4 py-3 text-left transition ${
-                    selected
-                      ? "border-[#18b6a4] bg-[#e7fbf7] text-[#075c50] shadow-[0_10px_24px_rgba(24,182,164,0.16)]"
-                      : "border-[#d5e1dc] bg-white text-[#33423c] hover:border-[#18b6a4]/70"
-                  }`}
-                >
-                  <span className="block font-bold">{option.title}</span>
-                  <span className="mt-1 block text-[13px] font-medium leading-5">
-                    {option.description}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <div className="grid gap-4 md:grid-cols-[0.45fr_1fr]">
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-[#33423c]">{labels.year}</span>
-            <input
-              name="grade"
-              type="number"
-              min={labels.gradeMin}
-              max={labels.gradeMax}
-              value={grade}
-              onChange={(event) => setGrade(Number(event.target.value))}
-              required
-              className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-            />
-          </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-[#33423c]">{labels.subject}</span>
-            <input
-              name="subject"
-              defaultValue="Matematica"
-              list={subjectListId}
-              required
-              className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-            />
-            <datalist id={subjectListId}>
-              {labels.subjects.map((subject) => (
-                <option key={subject} value={subject} />
-              ))}
-            </datalist>
-          </label>
+        <div className="border-b border-[#e3ebe7] p-5">
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificacion</Badge>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
+            Datos minimos de la clase
+          </h2>
+          <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
+            Completa lo esencial. El formulario se adapta al nivel educativo y deja el contexto fino
+            como opcional.
+          </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {isUniversity ? (
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-[#33423c]">Carrera</span>
-              <input
-                name="careerName"
-                placeholder="Ej: Ingenieria en sistemas, Abogacia, Medicina..."
-                required
-                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-              />
-            </label>
-          ) : (
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-[#33423c]">
-                {labels.levelContext.label}
-              </span>
-              <input
-                name="levelContext"
-                placeholder={labels.levelContext.placeholder}
-                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-              />
-            </label>
-          )}
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-[#33423c]">Tema</span>
-            <input
-              name="topic"
-              defaultValue="Proporcionalidad directa"
-              placeholder={labels.topicPlaceholder}
-              required
-              className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-            />
-          </label>
-        </div>
-
-        <fieldset className="grid gap-2">
-          <legend className="text-sm font-semibold text-[#33423c]">Intencion de la clase</legend>
-          <div className="flex flex-wrap gap-2">
-            {lessonIntentOptions.map((option) => {
-              const selected = lessonIntent === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setLessonIntent(option.value)}
-                  aria-pressed={selected}
-                  className={`h-10 rounded-lg border px-3 text-sm font-bold transition ${
-                    selected
-                      ? "border-[#18b6a4] bg-[#18b6a4] text-white"
-                      : "border-[#d5e1dc] bg-white text-[#33423c] hover:border-[#18b6a4]/70"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-[#33423c]">Objetivo de aprendizaje</span>
-          <textarea
-            name="learningGoal"
-            rows={3}
-            placeholder={labels.goalPlaceholder}
-            className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-          />
-        </label>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="grid gap-2">
-            <span className="text-sm font-semibold text-[#33423c]">Cantidad de clases</span>
-            <input
-              name="sessionCount"
-              type="number"
-              min="1"
-              max="10"
-              defaultValue="1"
-              required
-              className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-            />
-          </label>
-          <div className="grid gap-2">
-            <label className="text-sm font-semibold text-[#33423c]" htmlFor="totalDurationMinutes">
-              Duracion total en minutos
-            </label>
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-              <input
-                id="totalDurationMinutes"
-                name="totalDurationMinutes"
-                type="number"
-                min="10"
-                max="600"
-                value={duration}
-                onChange={(event) => setDuration(Number(event.target.value))}
-                required
-                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-              />
-              <div className="flex gap-2">
-                {labels.durationPresets.map((minutes) => (
+        <fieldset disabled={isSubmitting} className="grid gap-5 p-5 disabled:opacity-70">
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-semibold text-[#33423c]">Nivel educativo</legend>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {(Object.keys(levelLabels) as EducationLevel[]).map((level) => {
+                const option = levelLabels[level];
+                const selected = educationLevel === level;
+                return (
                   <button
-                    key={minutes}
+                    key={level}
                     type="button"
-                    onClick={() => setDuration(minutes)}
-                    className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 text-sm font-bold text-[#33423c] hover:border-[#18b6a4]"
+                    onClick={() => changeLevel(level)}
+                    aria-pressed={selected}
+                    className={`min-h-[84px] rounded-lg border px-4 py-3 text-left transition ${
+                      selected
+                        ? "border-[#18b6a4] bg-[#e7fbf7] text-[#075c50] shadow-[0_10px_24px_rgba(24,182,164,0.16)]"
+                        : "border-[#d5e1dc] bg-white text-[#33423c] hover:border-[#18b6a4]/70"
+                    }`}
                   >
-                    {minutes}
+                    <span className="block font-bold">{option.title}</span>
+                    <span className="mt-1 block text-[13px] font-medium leading-5">
+                      {option.description}
+                    </span>
                   </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div className="grid gap-4 md:grid-cols-[0.45fr_1fr]">
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-[#33423c]">{labels.year}</span>
+              <input
+                name="grade"
+                type="number"
+                min={labels.gradeMin}
+                max={labels.gradeMax}
+                value={grade}
+                onChange={(event) => setGrade(Number(event.target.value))}
+                required
+                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-[#33423c]">{labels.subject}</span>
+              <input
+                name="subject"
+                defaultValue="Matematica"
+                list={subjectListId}
+                required
+                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+              />
+              <datalist id={subjectListId}>
+                {labels.subjects.map((subject) => (
+                  <option key={subject} value={subject} />
                 ))}
+              </datalist>
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {isUniversity ? (
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#33423c]">Carrera</span>
+                <input
+                  name="careerName"
+                  placeholder="Ej: Ingenieria en sistemas, Abogacia, Medicina..."
+                  required
+                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                />
+              </label>
+            ) : (
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-[#33423c]">
+                  {labels.levelContext.label}
+                </span>
+                <input
+                  name="levelContext"
+                  placeholder={labels.levelContext.placeholder}
+                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                />
+              </label>
+            )}
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-[#33423c]">Tema</span>
+              <input
+                name="topic"
+                defaultValue="Proporcionalidad directa"
+                placeholder={labels.topicPlaceholder}
+                required
+                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+              />
+            </label>
+          </div>
+
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-semibold text-[#33423c]">Intencion de la clase</legend>
+            <div className="flex flex-wrap gap-2">
+              {lessonIntentOptions.map((option) => {
+                const selected = lessonIntent === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setLessonIntent(option.value)}
+                    aria-pressed={selected}
+                    className={`h-10 rounded-lg border px-3 text-sm font-bold transition ${
+                      selected
+                        ? "border-[#18b6a4] bg-[#18b6a4] text-white"
+                        : "border-[#d5e1dc] bg-white text-[#33423c] hover:border-[#18b6a4]/70"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <label className="grid gap-2">
+            <span className="text-sm font-semibold text-[#33423c]">Objetivo de aprendizaje</span>
+            <textarea
+              name="learningGoal"
+              rows={3}
+              placeholder={labels.goalPlaceholder}
+              className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+            />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-[#33423c]">Cantidad de clases</span>
+              <input
+                name="sessionCount"
+                type="number"
+                min="1"
+                max="10"
+                defaultValue="1"
+                required
+                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+              />
+            </label>
+            <div className="grid gap-2">
+              <label
+                className="text-sm font-semibold text-[#33423c]"
+                htmlFor="totalDurationMinutes"
+              >
+                Duracion total en minutos
+              </label>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <input
+                  id="totalDurationMinutes"
+                  name="totalDurationMinutes"
+                  type="number"
+                  min="10"
+                  max="600"
+                  value={duration}
+                  onChange={(event) => setDuration(Number(event.target.value))}
+                  required
+                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                />
+                <div className="flex gap-2">
+                  {labels.durationPresets.map((minutes) => (
+                    <button
+                      key={minutes}
+                      type="button"
+                      onClick={() => setDuration(minutes)}
+                      className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 text-sm font-bold text-[#33423c] hover:border-[#18b6a4]"
+                    >
+                      {minutes}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <details className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd]">
-          <summary className="cursor-pointer px-4 py-3 font-semibold text-[#11231f]">
-            Contexto opcional para mejorar la precision
-          </summary>
-          <div className="grid gap-4 border-t border-[#e3ebe7] p-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">
-                  Curso, division o comision
-                </span>
-                <input
-                  name="courseLabel"
-                  placeholder="Ej: 7A, 2do B, comision noche..."
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-              {isUniversity ? (
+          <details className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd]">
+            <summary className="cursor-pointer px-4 py-3 font-semibold text-[#11231f]">
+              Contexto opcional para mejorar la precision
+            </summary>
+            <div className="grid gap-4 border-t border-[#e3ebe7] p-4">
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2">
                   <span className="text-sm font-semibold text-[#33423c]">
-                    {labels.levelContext.label}
+                    Curso, division o comision
                   </span>
                   <input
-                    name="levelContext"
-                    placeholder={labels.levelContext.placeholder}
+                    name="courseLabel"
+                    placeholder="Ej: 7A, 2do B, comision noche..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
-              ) : (
+                {isUniversity ? (
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-[#33423c]">
+                      {labels.levelContext.label}
+                    </span>
+                    <input
+                      name="levelContext"
+                      placeholder={labels.levelContext.placeholder}
+                      className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                    />
+                  </label>
+                ) : (
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                    <input
+                      name="institutionName"
+                      placeholder="Nombre de escuela, instituto o universidad..."
+                      className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {isUniversity ? (
+                  <label className="grid gap-2">
+                    <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                    <input
+                      name="institutionName"
+                      placeholder="Nombre de universidad o facultad..."
+                      className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                    />
+                  </label>
+                ) : null}
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-[#33423c]">
+                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                    Fecha tentativa
+                  </span>
                   <input
-                    name="institutionName"
-                    placeholder="Nombre de escuela, instituto o universidad..."
+                    name="plannedDate"
+                    type="date"
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
-              )}
-            </div>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {isUniversity ? (
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                  <span className="text-sm font-semibold text-[#33423c]">Contexto del grupo</span>
+                  <textarea
+                    name="groupProfile"
+                    rows={3}
+                    placeholder="Ej: grupo heterogeneo, consignas breves, ritmo medio."
+                    className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Saberes previos</span>
+                  <textarea
+                    name="priorKnowledge"
+                    rows={3}
+                    placeholder="Ej: ya trabajaron fracciones equivalentes y tablas simples."
+                    className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Recursos disponibles</span>
                   <input
-                    name="institutionName"
-                    placeholder="Nombre de universidad o facultad..."
+                    name="availableResources"
+                    placeholder="Pizarron, fotocopias, proyector..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
-              ) : null}
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Que queres evaluar</span>
+                  <input
+                    name="assessmentFocus"
+                    placeholder="Procedimiento, argumentacion, trabajo grupal..."
+                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">Marco curricular</span>
+                  <input
+                    name="curriculumContext"
+                    placeholder="NAP, diseno provincial, programa de catedra..."
+                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-[#33423c]">
+                    Apoyos o adaptaciones
+                  </span>
+                  <input
+                    name="inclusionNeeds"
+                    placeholder="Apoyo visual, consignas cortas, extension..."
+                    className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+                  />
+                </label>
+              </div>
+
               <label className="grid gap-2">
-                <span className="flex items-center gap-2 text-sm font-semibold text-[#33423c]">
-                  <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                  Fecha tentativa
-                </span>
+                <span className="text-sm font-semibold text-[#33423c]">Formato de salida</span>
                 <input
-                  name="plannedDate"
-                  type="date"
+                  name="outputFormat"
+                  placeholder="Secuencia editable, guia para imprimir, rubrica breve..."
                   className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                 />
               </label>
             </div>
+          </details>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Contexto del grupo</span>
-                <textarea
-                  name="groupProfile"
-                  rows={3}
-                  placeholder="Ej: grupo heterogeneo, consignas breves, ritmo medio."
-                  className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Saberes previos</span>
-                <textarea
-                  name="priorKnowledge"
-                  rows={3}
-                  placeholder="Ej: ya trabajaron fracciones equivalentes y tablas simples."
-                  className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Recursos disponibles</span>
-                <input
-                  name="availableResources"
-                  placeholder="Pizarron, fotocopias, proyector..."
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Que queres evaluar</span>
-                <input
-                  name="assessmentFocus"
-                  placeholder="Procedimiento, argumentacion, trabajo grupal..."
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Marco curricular</span>
-                <input
-                  name="curriculumContext"
-                  placeholder="NAP, diseno provincial, programa de catedra..."
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-[#33423c]">Apoyos o adaptaciones</span>
-                <input
-                  name="inclusionNeeds"
-                  placeholder="Apoyo visual, consignas cortas, extension..."
-                  className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-                />
-              </label>
-            </div>
-
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-[#33423c]">Formato de salida</span>
-              <input
-                name="outputFormat"
-                placeholder="Secuencia editable, guia para imprimir, rubrica breve..."
-                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
-              />
-            </label>
+          <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[15px] font-medium leading-6 text-[#4f5f58]">
+              La clase queda disponible en tu espacio docente al terminar la generacion.
+            </p>
+            <SubmitButton isSubmitting={isSubmitting} />
           </div>
-        </details>
-
-        <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[15px] font-medium leading-6 text-[#4f5f58]">
-            La clase queda disponible en tu espacio docente al terminar la generacion.
-          </p>
-          <SubmitButton />
-        </div>
-      </div>
-    </form>
+        </fieldset>
+      </form>
+    </>
   );
 }
