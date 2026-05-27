@@ -125,6 +125,10 @@ export async function POST(request: NextRequest) {
         return withStableAuthCookies(redirectTo(request, { error: "teacher_profile" }));
       }
 
+      if (code === "LESSON_PLAN_QUOTA_EXCEEDED") {
+        return withStableAuthCookies(redirectTo(request, { error: "quota" }));
+      }
+
       return withStableAuthCookies(redirectTo(request, { error: "api" }));
     }
 

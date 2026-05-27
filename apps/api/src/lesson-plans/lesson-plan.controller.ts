@@ -24,6 +24,7 @@ export class LessonPlanController {
       ...body,
       tenantId: requireUserClaim(user, "tenantId"),
       teacherId: await this.lessonPlans.resolveTeacherIdForPlanning(user),
+      plan: user.plan,
     });
   }
 

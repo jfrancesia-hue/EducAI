@@ -8,6 +8,7 @@ export interface AuthenticatedUser {
   familyId?: string;
   schoolId?: string;
   teacherId?: string;
+  plan?: string;
 }
 
 export interface AuthenticatedRequest {

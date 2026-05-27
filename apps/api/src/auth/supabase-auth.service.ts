@@ -87,6 +87,7 @@ export class SupabaseAuthService {
       familyId: this.extractString(appMetadata, userMetadata, "familyId", "family_id"),
       schoolId: this.extractString(appMetadata, userMetadata, "schoolId", "school_id"),
       teacherId: this.extractString(appMetadata, userMetadata, "teacherId", "teacher_id"),
+      plan: this.extractString(appMetadata, userMetadata, "plan", "planCode", "plan_code"),
     };
   }
 
@@ -121,6 +122,7 @@ export class SupabaseAuthService {
       familyId: this.extractString(appMetadata, userMetadata, "familyId", "family_id"),
       schoolId: this.extractString(appMetadata, userMetadata, "schoolId", "school_id"),
       teacherId: this.extractString(appMetadata, userMetadata, "teacherId", "teacher_id"),
+      plan: this.extractString(appMetadata, userMetadata, "plan", "planCode", "plan_code"),
     };
   }
 

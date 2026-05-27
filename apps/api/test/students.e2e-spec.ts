@@ -43,6 +43,7 @@ const prismaMock = {
     findUnique: vi.fn(),
   },
   lessonPlan: {
+    count: vi.fn().mockResolvedValue(0),
     create: vi.fn(),
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -101,6 +102,7 @@ const authFixtures: Record<string, AuthenticatedUser> = {
     role: "SCHOOL_ADMIN",
     tenantId: "tnt_school_1",
     schoolId: "sch_1",
+    plan: "docente-pro",
   },
   "token:school-missing-school": {
     id: "usr_school_missing",
@@ -114,6 +116,7 @@ const authFixtures: Record<string, AuthenticatedUser> = {
     role: "SCHOOL_ADMIN",
     tenantId: "tnt_school_1",
     schoolId: "sch_intruder",
+    plan: "docente-pro",
   },
   "token:teacher-1": {
     id: "usr_teacher_1",
@@ -121,6 +124,23 @@ const authFixtures: Record<string, AuthenticatedUser> = {
     role: "TEACHER",
     tenantId: "tnt_school_1",
     teacherId: "tea_1",
+    plan: "free",
+  },
+  "token:teacher-pro": {
+    id: "usr_teacher_pro",
+    email: "docente-pro@educai.local",
+    role: "TEACHER",
+    tenantId: "tnt_school_1",
+    teacherId: "tea_pro",
+    plan: "docente-pro",
+  },
+  "token:teacher-free-exhausted": {
+    id: "usr_teacher_free_exhausted",
+    email: "docente-free-exhausted@educai.local",
+    role: "TEACHER",
+    tenantId: "tnt_school_1",
+    teacherId: "tea_free_exhausted",
+    plan: "free",
   },
   "token:teacher-missing-teacher": {
     id: "usr_teacher_missing",
@@ -134,6 +154,7 @@ const authFixtures: Record<string, AuthenticatedUser> = {
     role: "TEACHER",
     tenantId: "tnt_school_1",
     teacherId: "tea_intruder",
+    plan: "free",
   },
 };
 
@@ -471,6 +492,7 @@ describe("Students API (e2e)", () => {
   });
 
   it("POST /lesson-plans/generate crea plan con contexto docente por claims", async () => {
+    prismaMock.lessonPlan.count.mockResolvedValueOnce(0);
     prismaMock.lessonPlan.create.mockResolvedValueOnce({
       id: "plan_1",
       tenantId: "tnt_school_1",
@@ -501,7 +523,56 @@ describe("Students API (e2e)", () => {
     expect(response.body.data.id).toBe("plan_1");
   });
 
+  it("POST /lesson-plans/generate bloquea Free al agotar sus 2 planificaciones", async () => {
+    prismaMock.lessonPlan.count.mockResolvedValueOnce(2);
+    prismaMock.lessonPlan.create.mockClear();
+
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("Authorization", "Bearer token:teacher-free-exhausted")
+      .send({
+        educationLevel: "secundaria",
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("LESSON_PLAN_QUOTA_EXCEEDED");
+    expect(response.body.plan).toBe("free");
+    expect(response.body.limit).toBe(2);
+    expect(response.body.used).toBe(2);
+    expect(prismaMock.lessonPlan.create).not.toHaveBeenCalled();
+  });
+
+  it("POST /lesson-plans/generate permite plan pago por debajo del limite mensual", async () => {
+    prismaMock.lessonPlan.count.mockResolvedValueOnce(12);
+    prismaMock.lessonPlan.create.mockResolvedValueOnce({
+      id: "plan_pro_1",
+      tenantId: "tnt_school_1",
+      teacherId: "tea_pro",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("Authorization", "Bearer token:teacher-pro")
+      .send({
+        educationLevel: "secundaria",
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.id).toBe("plan_pro_1");
+  });
+
   it("POST /lesson-plans/generate permite al admin escolar crear plan con perfil docente asociado", async () => {
+    prismaMock.lessonPlan.count.mockResolvedValueOnce(0);
     prismaMock.teacher.findFirst.mockResolvedValueOnce({
       id: "tea_school_admin_1",
       tenantId: "tnt_school_1",

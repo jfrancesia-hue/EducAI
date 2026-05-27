@@ -29,6 +29,8 @@ const errorMessages: Record<string, string> = {
   invalid: "Revisa nivel, anio, materia, tema, cantidad de clases y duracion.",
   teacher_profile:
     "Esta cuenta escolar todavia no tiene un perfil docente asociado para guardar clases.",
+  quota:
+    "Alcanzaste el limite de planificaciones de tu plan. Actualiza tu plan para seguir generando clases.",
   api: "No pudimos generar la clase. Reintenta en unos minutos.",
   network: "La conexion fallo. Reintenta en unos minutos.",
 };

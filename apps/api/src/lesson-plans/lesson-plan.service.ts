@@ -4,7 +4,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
-import { AnthropicLlmClient, PlanGeneratorAgent } from "@educai/ai";
+import {
+  AnthropicLlmClient,
+  EDUCAI_LIMITS,
+  PlanGeneratorAgent,
+  normalizeEducAIPlan,
+} from "@educai/ai";
 import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -81,6 +86,7 @@ export class LessonPlanService {
   async generate(input: {
     tenantId: string;
     teacherId: string;
+    plan?: string;
     educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
     grade: number;
     subject: string;
@@ -102,6 +108,12 @@ export class LessonPlanService {
     inclusionNeeds?: string;
     outputFormat?: string;
   }) {
+    await this.assertCanGenerateLessonPlan({
+      tenantId: input.tenantId,
+      teacherId: input.teacherId,
+      plan: input.plan,
+    });
+
     const plan = await this.generator.generate(input);
     let created: { id: string };
     try {
@@ -157,6 +169,92 @@ export class LessonPlanService {
     }
 
     return { data: { id: created.id, plan } };
+  }
+
+  private async assertCanGenerateLessonPlan(input: {
+    tenantId: string;
+    teacherId: string;
+    plan?: string;
+  }): Promise<void> {
+    const quota = this.resolveLessonPlanQuota(input.plan);
+    if (!quota) {
+      return;
+    }
+
+    const used = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
+      return tx.lessonPlan.count({
+        where: {
+          tenantId: input.tenantId,
+          teacherId: input.teacherId,
+          deletedAt: null,
+          ...(quota.periodStart ? { createdAt: { gte: quota.periodStart } } : {}),
+        },
+      });
+    });
+
+    if (used >= quota.limit) {
+      throw new ForbiddenException({
+        code: "LESSON_PLAN_QUOTA_EXCEEDED",
+        message:
+          quota.period === "lifetime"
+            ? `Alcanzaste el limite Free de ${quota.limit} planificaciones.`
+            : `Alcanzaste el limite mensual de ${quota.limit} planificaciones para tu plan.`,
+        plan: quota.plan,
+        limit: quota.limit,
+        used,
+        period: quota.period,
+      });
+    }
+  }
+
+  private resolveLessonPlanQuota(plan: string | undefined): {
+    plan: string;
+    limit: number;
+    period: "lifetime" | "monthly";
+    periodStart?: Date;
+  } | null {
+    const normalizedPlan = normalizeEducAIPlan(plan);
+    const limits = EDUCAI_LIMITS[normalizedPlan];
+
+    if ("planificaciones" in limits) {
+      const lessonPlanLimit = limits.planificaciones;
+      if ("total_vida" in lessonPlanLimit) {
+        return {
+          plan: normalizedPlan,
+          limit: lessonPlanLimit.total_vida,
+          period: "lifetime",
+        };
+      }
+
+      if (lessonPlanLimit.mensual === null) {
+        return null;
+      }
+
+      return {
+        plan: normalizedPlan,
+        limit: lessonPlanLimit.mensual,
+        period: "monthly",
+        periodStart: this.currentMonthStart(),
+      };
+    }
+
+    if ("planificaciones_por_docente_activo" in limits) {
+      return {
+        plan: normalizedPlan,
+        limit: limits.planificaciones_por_docente_activo.mensual,
+        period: "monthly",
+        periodStart: this.currentMonthStart(),
+      };
+    }
+
+    return null;
+  }
+
+  private currentMonthStart(): Date {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   }
 
   private async enableRlsBypass(tx: PrismaTx): Promise<void> {
