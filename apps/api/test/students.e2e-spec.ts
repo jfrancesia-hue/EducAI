@@ -48,6 +48,9 @@ const prismaMock = {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
   },
+  usageCreditLedger: {
+    aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
+  },
   contactLead: {
     create: vi.fn(),
   },
@@ -493,6 +496,7 @@ describe("Students API (e2e)", () => {
 
   it("POST /lesson-plans/generate crea plan con contexto docente por claims", async () => {
     prismaMock.lessonPlan.count.mockResolvedValueOnce(0);
+    prismaMock.usageCreditLedger.aggregate.mockResolvedValueOnce({ _sum: { amount: 0 } });
     prismaMock.lessonPlan.create.mockResolvedValueOnce({
       id: "plan_1",
       tenantId: "tnt_school_1",
@@ -525,6 +529,7 @@ describe("Students API (e2e)", () => {
 
   it("POST /lesson-plans/generate bloquea Free al agotar sus 2 planificaciones", async () => {
     prismaMock.lessonPlan.count.mockResolvedValueOnce(2);
+    prismaMock.usageCreditLedger.aggregate.mockResolvedValueOnce({ _sum: { amount: 0 } });
     prismaMock.lessonPlan.create.mockClear();
 
     const response = await request(app.getHttpServer())
@@ -542,13 +547,41 @@ describe("Students API (e2e)", () => {
     expect(response.status).toBe(403);
     expect(response.body.code).toBe("LESSON_PLAN_QUOTA_EXCEEDED");
     expect(response.body.plan).toBe("free");
+    expect(response.body.baseLimit).toBe(2);
+    expect(response.body.extraCredits).toBe(0);
     expect(response.body.limit).toBe(2);
     expect(response.body.used).toBe(2);
     expect(prismaMock.lessonPlan.create).not.toHaveBeenCalled();
   });
 
+  it("POST /lesson-plans/generate permite Free agotado si tiene creditos extra", async () => {
+    prismaMock.lessonPlan.count.mockResolvedValueOnce(2);
+    prismaMock.usageCreditLedger.aggregate.mockResolvedValueOnce({ _sum: { amount: 3 } });
+    prismaMock.lessonPlan.create.mockResolvedValueOnce({
+      id: "plan_free_extra_1",
+      tenantId: "tnt_school_1",
+      teacherId: "tea_free_exhausted",
+    });
+
+    const response = await request(app.getHttpServer())
+      .post("/lesson-plans/generate")
+      .set("Authorization", "Bearer token:teacher-free-exhausted")
+      .send({
+        educationLevel: "secundaria",
+        grade: 7,
+        subject: "matematica",
+        topic: "proporcionalidad",
+        sessionCount: 2,
+        totalDurationMinutes: 80,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.id).toBe("plan_free_extra_1");
+  });
+
   it("POST /lesson-plans/generate permite plan pago por debajo del limite mensual", async () => {
     prismaMock.lessonPlan.count.mockResolvedValueOnce(12);
+    prismaMock.usageCreditLedger.aggregate.mockResolvedValueOnce({ _sum: { amount: 0 } });
     prismaMock.lessonPlan.create.mockResolvedValueOnce({
       id: "plan_pro_1",
       tenantId: "tnt_school_1",
@@ -573,6 +606,7 @@ describe("Students API (e2e)", () => {
 
   it("POST /lesson-plans/generate permite al admin escolar crear plan con perfil docente asociado", async () => {
     prismaMock.lessonPlan.count.mockResolvedValueOnce(0);
+    prismaMock.usageCreditLedger.aggregate.mockResolvedValueOnce({ _sum: { amount: 0 } });
     prismaMock.teacher.findFirst.mockResolvedValueOnce({
       id: "tea_school_admin_1",
       tenantId: "tnt_school_1",

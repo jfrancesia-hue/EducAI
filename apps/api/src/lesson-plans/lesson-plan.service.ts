@@ -181,20 +181,42 @@ export class LessonPlanService {
       return;
     }
 
-    const used = await this.prisma.$transaction(async (tx) => {
+    const usage = await this.prisma.$transaction(async (tx) => {
       await this.enableRlsBypass(tx);
 
-      return tx.lessonPlan.count({
-        where: {
-          tenantId: input.tenantId,
-          teacherId: input.teacherId,
-          deletedAt: null,
-          ...(quota.periodStart ? { createdAt: { gte: quota.periodStart } } : {}),
-        },
-      });
+      const [used, credits] = await Promise.all([
+        tx.lessonPlan.count({
+          where: {
+            tenantId: input.tenantId,
+            teacherId: input.teacherId,
+            deletedAt: null,
+            ...(quota.periodStart ? { createdAt: { gte: quota.periodStart } } : {}),
+          },
+        }),
+        tx.usageCreditLedger.aggregate({
+          _sum: { amount: true },
+          where: {
+            tenantId: input.tenantId,
+            product: "EDUCAI",
+            unit: "lesson_plan",
+            OR: [{ teacherId: input.teacherId }, { teacherId: null }],
+            AND: [
+              {
+                OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+              },
+            ],
+          },
+        }),
+      ]);
+
+      return {
+        used,
+        extraCredits: Math.max(0, credits._sum.amount ?? 0),
+      };
     });
 
-    if (used >= quota.limit) {
+    const effectiveLimit = quota.limit + usage.extraCredits;
+    if (usage.used >= effectiveLimit) {
       throw new ForbiddenException({
         code: "LESSON_PLAN_QUOTA_EXCEEDED",
         message:
@@ -202,8 +224,10 @@ export class LessonPlanService {
             ? `Alcanzaste el limite Free de ${quota.limit} planificaciones.`
             : `Alcanzaste el limite mensual de ${quota.limit} planificaciones para tu plan.`,
         plan: quota.plan,
-        limit: quota.limit,
-        used,
+        baseLimit: quota.limit,
+        extraCredits: usage.extraCredits,
+        limit: effectiveLimit,
+        used: usage.used,
         period: quota.period,
       });
     }

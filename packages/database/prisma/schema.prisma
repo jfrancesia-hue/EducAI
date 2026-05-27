@@ -17,6 +17,7 @@ model Tenant {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
+  creditLedger UsageCreditLedger[]
   family    Family?
   roles     Role[]
   school    School?
@@ -172,6 +173,7 @@ model Teacher {
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   deletedAt   DateTime?
+  creditLedger UsageCreditLedger[]
   classrooms  Classroom[]
   lessonPlans LessonPlan[]
   school      School              @relation(fields: [schoolId], references: [id])
@@ -622,6 +624,29 @@ model BillingEvent {
   @@index([receivedAt])
   @@index([subscriptionId])
   @@index([tenantId])
+}
+
+model UsageCreditLedger {
+  id          String        @id @default(cuid())
+  tenantId    String
+  teacherId   String?
+  product     EducaiProduct
+  unit        String
+  amount      Int
+  source      String
+  reason      String?
+  referenceId String?
+  metadata    Json?
+  expiresAt   DateTime?
+  createdAt   DateTime      @default(now())
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teacher     Teacher?      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, product, unit])
+  @@index([teacherId])
+  @@index([referenceId])
+  @@index([expiresAt])
+  @@index([createdAt])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
