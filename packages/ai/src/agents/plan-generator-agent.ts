@@ -78,19 +78,28 @@ export class PlanGeneratorAgent {
 
   private async tryGenerateWithLlm(input: PlanGeneratorInput) {
     try {
+      const systemPrompt = [
+        "Sos EducAI, un agente pedagogico para docentes argentinos.",
+        "Tu trabajo no es dar ideas generales: tenes que producir una planificacion de aula lista para revisar, editar y usar.",
+        "La clase debe quedar especifica para el nivel, anio, materia, tema, intencion didactica, duracion y contexto recibidos.",
+        "Si el tema es disciplinar, explicitalo en consignas, ejemplos, errores frecuentes, evaluacion y cierre. No escribas frases comodin.",
+        "Cada fase debe tener acciones concretas del docente y de los estudiantes, con consignas textuales que puedan leerse en clase.",
+        "Respeta la duracion total: la suma de sesiones debe aproximarse al total y la suma de fases debe coincidir con cada sesion.",
+        "Usa solo recursos plausibles. Si el docente informo recursos disponibles, priorizalos.",
+        "Inclui diferenciacion real por nivel de acompanamiento, no etiquetas vacias.",
+        "La evaluacion debe mirar evidencias observables del tema trabajado.",
+        "Devolve solo JSON valido, sin markdown, sin comentarios y sin texto alrededor.",
+      ].join(" ");
+
       return await this.llm.generate({
         model: getEducAIModelForPlan("pro"),
         responseFormat: "json",
-        maxTokens: 2200,
+        maxTokens: 5200,
+        system: [{ type: "text", text: systemPrompt, cacheable: true }],
         messages: [
           {
-            role: "system",
-            content:
-              "Sos un asistente pedagogico para docentes argentinos. Genera planificaciones realistas, concretas y editables. Adapta vocabulario, complejidad, evaluacion y autonomia al nivel educativo indicado: primaria, secundaria, terciario o universitario. Ajusta la clase a la intencion didactica si viene informada: introducir, practicar, profundizar, integrar, evaluar, repasar o proyecto. Si hay fecha tentativa, usala solo para contextualizar tiempos, efemerides o calendario escolar cuando aporte. Si hay carrera, orientacion, eje, trayecto, plan de estudios, curso, comision o institucion, usalos para dar precision sin inventar datos. Usa el contexto del grupo, objetivo, saberes previos, recursos disponibles, criterios de evaluacion y necesidades de inclusion si vienen en el input. No prometas actividades imposibles con recursos no disponibles. Si falta contexto, hace supuestos conservadores y dejalos claros en overview. Devolve solo JSON valido que respete este shape: overview string, objectives string[], competences string[], sessions con number, duration, phases, resources, differentiation low/medium/high, assessment rubric/instruments y printables name/prompt.",
-          },
-          {
             role: "user",
-            content: JSON.stringify(input),
+            content: this.buildUserPrompt(input),
           },
         ],
       });
@@ -101,16 +110,117 @@ export class PlanGeneratorAgent {
 
   private tryParseLlmPlan(content: string): LessonPlanOutput | null {
     try {
-      return lessonPlanSchema.parse(JSON.parse(content));
+      return lessonPlanSchema.parse(JSON.parse(this.extractJson(content)));
     } catch {
       return null;
     }
   }
 
+  private extractJson(content: string): string {
+    const trimmed = content.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      return trimmed;
+    }
+
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenced?.[1]) {
+      return fenced[1].trim();
+    }
+
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return trimmed.slice(start, end + 1);
+    }
+
+    return trimmed;
+  }
+
+  private buildUserPrompt(input: PlanGeneratorInput): string {
+    return [
+      "Genera una planificacion docente completa con este input:",
+      JSON.stringify(input, null, 2),
+      "",
+      "Shape obligatorio:",
+      JSON.stringify(
+        {
+          overview:
+            "Resumen concreto con supuestos pedagogicos, enfoque de la clase y producto esperado.",
+          objectives: ["2 a 4 objetivos observables, especificos del tema."],
+          competences: ["3 a 6 competencias o capacidades trabajadas."],
+          sessions: [
+            {
+              number: 1,
+              duration: input.sessionCount
+                ? Math.round(input.totalDurationMinutes / input.sessionCount)
+                : input.totalDurationMinutes,
+              phases: [
+                {
+                  name: "Apertura",
+                  duration: 10,
+                  activities: [
+                    "Consigna textual y accion docente concreta vinculada al tema.",
+                    "Respuesta, produccion o intercambio esperado de estudiantes.",
+                  ],
+                },
+              ],
+              resources: ["Recursos concretos para esta sesion."],
+              differentiation: {
+                low: "Apoyo para estudiantes que necesitan guia fuerte.",
+                medium: "Trabajo esperado para el grupo base.",
+                high: "Extension desafiante para quienes avanzan rapido.",
+              },
+            },
+          ],
+          assessment: {
+            rubric: [
+              "Criterio observable + evidencia + nivel esperado. No uses criterios genericos.",
+            ],
+            instruments: ["Instrumentos concretos: ticket de salida, lista de cotejo, rubrica."],
+          },
+          printables: [
+            {
+              name: "Nombre del material listo para imprimir",
+              prompt:
+                "Contenido exacto o instruccion precisa para armar el material, con consignas y ejemplos.",
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      "",
+      "Reglas de calidad:",
+      "- No uses 'pregunta disparadora' sin escribir la pregunta exacta.",
+      "- No uses 'resolver un desafio' sin describir el desafio exacto.",
+      "- No uses 'registrar una idea clave' sin indicar que idea o formato de ticket.",
+      "- Para cada fase incluye al menos 2 actividades concretas.",
+      "- En evaluacion, cada criterio debe nombrar el contenido del tema.",
+    ].join("\n");
+  }
+
   private buildFallbackPlan(input: PlanGeneratorInput): LessonPlanOutput {
+    const sessionDuration = Math.max(
+      10,
+      Math.round(input.totalDurationMinutes / input.sessionCount),
+    );
+    const openingDuration = Math.max(5, Math.round(sessionDuration * 0.2));
+    const closingDuration = Math.max(5, Math.round(sessionDuration * 0.2));
+    const developmentDuration = Math.max(10, sessionDuration - openingDuration - closingDuration);
+    const resources = input.availableResources
+      ? input.availableResources
+          .split(",")
+          .map((resource) => resource.trim())
+          .filter(Boolean)
+      : ["Pizarron", "Cuaderno o carpeta", "Tarjetas o consignas impresas"];
+    const goal =
+      input.learningGoal ||
+      `Que los estudiantes puedan explicar ${input.topic} y aplicarlo en una situacion de ${input.subject}.`;
+    const assessmentFocus = input.assessmentFocus || `comprension y aplicacion de ${input.topic}`;
+
     return lessonPlanSchema.parse({
       overview: [
-        `Secuencia de ${input.educationLevel} sobre ${input.topic} para ${input.subject}.`,
+        `Secuencia de ${input.educationLevel} sobre ${input.topic} para ${input.subject}, pensada como borrador editable cuando la IA principal no esta disponible.`,
         input.courseLabel ? `Curso: ${input.courseLabel}.` : null,
         input.lessonIntent ? `Intencion: ${input.lessonIntent}.` : null,
         input.levelContext ? `Contexto del nivel: ${input.levelContext}.` : null,
@@ -122,52 +232,62 @@ export class PlanGeneratorAgent {
       ]
         .filter(Boolean)
         .join(" "),
-      objectives: [
-        input.learningGoal || `Comprender y aplicar ${input.topic} en situaciones cercanas.`,
-      ],
-      competences: ["comprension", "aplicacion", "comunicacion"],
+      objectives: [goal, `Usar vocabulario propio de ${input.subject} para justificar decisiones.`],
+      competences: ["comprension conceptual", "aplicacion", "argumentacion", "comunicacion"],
       sessions: Array.from({ length: input.sessionCount }, (_, index) => ({
         number: index + 1,
-        duration: Math.round(input.totalDurationMinutes / input.sessionCount),
+        duration: sessionDuration,
         phases: [
           {
             name: "Apertura",
-            duration: 10,
-            activities: ["Recuperar saberes previos con una pregunta disparadora."],
+            duration: openingDuration,
+            activities: [
+              `Escribi en el pizarron: "Que sabemos de ${input.topic} y donde aparece en ${input.subject}?". Pedi dos ejemplos y anotalos sin corregir todavia.`,
+              `Presenta el objetivo de la clase: ${goal}`,
+            ],
           },
           {
             name: "Desarrollo",
-            duration: 40,
-            activities: ["Resolver un desafio en grupos y comparar estrategias."],
+            duration: developmentDuration,
+            activities: [
+              `Modela un ejemplo breve de ${input.topic} mostrando el procedimiento y nombrando cada decision.`,
+              `Entrega una consigna graduada: primero un caso guiado, luego un caso similar y finalmente una situacion nueva vinculada a ${input.subject}.`,
+              "Hace una puesta en comun comparando dos estrategias correctas y un error frecuente.",
+            ],
           },
           {
             name: "Cierre",
-            duration: 10,
-            activities: ["Registrar una idea clave y una duda para la proxima clase."],
+            duration: closingDuration,
+            activities: [
+              `Ticket de salida: "Explica en 3 pasos como trabajaste ${input.topic} y marca una decision que todavia te cuesta justificar".`,
+              `Recoge dos respuestas para decidir si la proxima clase conviene practicar, profundizar o revisar ${input.topic}.`,
+            ],
           },
         ],
-        resources: input.availableResources
-          ? input.availableResources
-              .split(",")
-              .map((resource) => resource.trim())
-              .filter(Boolean)
-          : ["Pizarron", "Tarjetas imprimibles", "Cuaderno"],
+        resources,
         differentiation: {
           low:
             input.inclusionNeeds ||
-            "Usar material concreto, consignas paso a paso y chequeos breves de comprension.",
-          medium: "Resolver problemas con una variable nueva y explicar el procedimiento.",
-          high: "Crear un problema propio, justificarlo y proponer una variante.",
+            `Dar una plantilla de pasos para trabajar ${input.topic}, ejemplo resuelto visible y chequeos breves.`,
+          medium: `Resolver una situacion nueva sobre ${input.topic} y explicar el procedimiento usado.`,
+          high: `Crear una variante del problema sobre ${input.topic}, resolverla y justificar por que funciona.`,
         },
       })),
       assessment: {
-        rubric: input.assessmentFocus
-          ? [input.assessmentFocus, "Explica el procedimiento", "Aplica en contexto"]
-          : ["Identifica el concepto", "Explica el procedimiento", "Aplica en contexto"],
-        instruments: ["Lista de cotejo", "Produccion grupal"],
+        rubric: [
+          `Reconoce los elementos centrales de ${input.topic}.`,
+          `Explica el procedimiento usado para trabajar ${input.topic}.`,
+          `Aplica ${input.topic} en una situacion contextualizada.`,
+          `Comunica dudas o decisiones usando vocabulario de ${input.subject}.`,
+          `Foco docente: ${assessmentFocus}.`,
+        ],
+        instruments: ["Ticket de salida", "Lista de cotejo", "Produccion individual o grupal"],
       },
       printables: [
-        { name: "Guia de practica", prompt: `Ejercicios graduados sobre ${input.topic}` },
+        {
+          name: `Guia de practica sobre ${input.topic}`,
+          prompt: `Armar 3 consignas graduadas sobre ${input.topic}: una guiada, una de practica autonoma y una de transferencia a ${input.subject}. Incluir espacio para justificar el procedimiento.`,
+        },
       ],
     });
   }

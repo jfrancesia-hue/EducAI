@@ -155,6 +155,8 @@ export class LessonPlanService {
                 session: session.number,
                 differentiation: session.differentiation,
               })),
+              overview: plan.overview,
+              printables: plan.printables,
             },
             generatedByAI: true,
           },

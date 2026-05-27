@@ -50,6 +50,11 @@ type LessonSession = {
     activities?: string[];
   }>;
   resources?: string[];
+  differentiation?: {
+    low?: string;
+    medium?: string;
+    high?: string;
+  };
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -97,6 +102,22 @@ function toSessions(value: unknown): LessonSession[] {
         }))
       : [],
     resources: toTextList(session.resources),
+    differentiation: isRecord(session.differentiation)
+      ? {
+          low:
+            typeof session.differentiation.low === "string"
+              ? session.differentiation.low
+              : undefined,
+          medium:
+            typeof session.differentiation.medium === "string"
+              ? session.differentiation.medium
+              : undefined,
+          high:
+            typeof session.differentiation.high === "string"
+              ? session.differentiation.high
+              : undefined,
+        }
+      : undefined,
   }));
 }
 
@@ -111,11 +132,33 @@ function assessmentList(plan: LessonPlanDetail) {
   ];
 }
 
+function planOverview(plan: LessonPlanDetail) {
+  if (!isRecord(plan.adaptations)) {
+    return null;
+  }
+
+  return typeof plan.adaptations.overview === "string" ? plan.adaptations.overview : null;
+}
+
+function printableList(plan: LessonPlanDetail) {
+  if (!isRecord(plan.adaptations) || !Array.isArray(plan.adaptations.printables)) {
+    return [];
+  }
+
+  return plan.adaptations.printables.filter(isRecord).map((printable) => ({
+    name: typeof printable.name === "string" ? printable.name : "Material imprimible",
+    prompt: typeof printable.prompt === "string" ? printable.prompt : "",
+  }));
+}
+
 function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
+  const overview = planOverview(plan);
   const objectives = toTextList(plan.objectives);
+  const competences = toTextList(plan.competences);
   const sessions = toSessions(plan.activities);
   const resources = toTextList(plan.resources);
   const assessment = assessmentList(plan);
+  const printables = printableList(plan);
 
   return (
     <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
@@ -132,6 +175,12 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
       </div>
 
       <div className="grid gap-5 p-5">
+        {overview ? (
+          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+            <p className="text-[15px] font-medium leading-7 text-[#33423c]">{overview}</p>
+          </section>
+        ) : null}
+
         {objectives.length ? (
           <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
             <div className="flex items-center gap-2">
@@ -145,6 +194,22 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                 </li>
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {competences.length ? (
+          <section className="rounded-lg border border-[#e3ebe7] bg-white p-4">
+            <h3 className="font-display text-xl font-bold tracking-tight">Capacidades</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {competences.map((competence) => (
+                <span
+                  key={competence}
+                  className="rounded-lg bg-[#eef5f3] px-3 py-2 text-sm font-bold text-[#33423c]"
+                >
+                  {competence}
+                </span>
+              ))}
+            </div>
           </section>
         ) : null}
 
@@ -182,6 +247,22 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                     </div>
                   ))}
                 </div>
+                {session.differentiation ? (
+                  <div className="mt-3 grid gap-2 rounded-lg border border-[#d5e1dc] bg-white p-3">
+                    <p className="font-semibold">Ajustes y desafios</p>
+                    {[
+                      ["Apoyo fuerte", session.differentiation.low],
+                      ["Grupo base", session.differentiation.medium],
+                      ["Extension", session.differentiation.high],
+                    ].map(([label, value]) =>
+                      value ? (
+                        <p key={label} className="text-[15px] leading-6 text-[#33423c]">
+                          <span className="font-semibold">{label}:</span> {value}
+                        </p>
+                      ) : null,
+                    )}
+                  </div>
+                ) : null}
               </div>
             ))}
           </section>
@@ -210,6 +291,22 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
             </section>
           ) : null}
         </div>
+
+        {printables.length ? (
+          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+            <h3 className="font-display text-xl font-bold tracking-tight">Materiales editables</h3>
+            <div className="mt-3 grid gap-3">
+              {printables.map((printable) => (
+                <div key={printable.name} className="rounded-lg bg-white p-3">
+                  <p className="font-semibold">{printable.name}</p>
+                  {printable.prompt ? (
+                    <p className="mt-1 text-[15px] leading-6 text-[#33423c]">{printable.prompt}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </article>
   );
