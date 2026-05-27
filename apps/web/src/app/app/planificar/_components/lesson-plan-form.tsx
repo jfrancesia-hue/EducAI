@@ -201,7 +201,9 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
       <form
         action="/app/planificar/generar"
         method="post"
-        onSubmit={() => setIsSubmitting(true)}
+        onSubmit={() => {
+          window.setTimeout(() => setIsSubmitting(true), 0);
+        }}
         aria-busy={isSubmitting}
         className="rounded-lg border border-[#18b6a4]/25 bg-white shadow-whisper"
       >
