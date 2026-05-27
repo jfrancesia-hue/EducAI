@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   AlertCircle,
   BookOpenCheck,
@@ -292,10 +291,9 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             <div className="mt-5 grid gap-3">
               {dashboard?.recentLessonPlans.length ? (
                 dashboard.recentLessonPlans.slice(0, 5).map((plan) => (
-                  <Link
+                  <a
                     key={plan.id}
                     href={`/app/planificar?created=${encodeURIComponent(plan.id)}`}
-                    prefetch={false}
                     className="block rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/70 hover:bg-[#f3fffc]"
                   >
                     <p className="font-semibold">
@@ -308,7 +306,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                       </span>
                       <Badge className="w-fit bg-[#eef5f3] text-[#33423c]">{plan.status}</Badge>
                     </div>
-                  </Link>
+                  </a>
                 ))
               ) : (
                 <p className="text-[15px] leading-6 text-[#4f5f58]">
