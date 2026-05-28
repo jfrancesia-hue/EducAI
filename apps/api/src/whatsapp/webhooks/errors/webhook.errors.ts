@@ -68,3 +68,22 @@ export class RateLimitExceededError extends ForbiddenException {
     });
   }
 }
+
+export class ParentalConsentMissingError extends ForbiddenException {
+  readonly studentId: string;
+  readonly reason: "no_consent_record" | "consent_revoked" | "consent_incomplete";
+
+  constructor(
+    studentId: string,
+    reason: "no_consent_record" | "consent_revoked" | "consent_incomplete",
+  ) {
+    super({
+      code: "PARENTAL_CONSENT_MISSING",
+      message: `El estudiante ${studentId} no tiene consentimiento parental activo (${reason})`,
+      studentId,
+      reason,
+    });
+    this.studentId = studentId;
+    this.reason = reason;
+  }
+}

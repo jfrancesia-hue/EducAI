@@ -21,6 +21,7 @@ import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
 import { InboundIdempotencyService } from "../webhooks/inbound-idempotency.service.js";
+import { ParentalConsentMissingError } from "../webhooks/errors/webhook.errors.js";
 
 export interface InboundMessage {
   messageSid: string;
@@ -32,7 +33,14 @@ export interface InboundMessage {
 }
 
 export interface OrchestratorOutcome {
-  status: "answered" | "rate_limited" | "not_enrolled" | "error" | "diagnostic" | "duplicate";
+  status:
+    | "answered"
+    | "rate_limited"
+    | "not_enrolled"
+    | "error"
+    | "diagnostic"
+    | "duplicate"
+    | "parental_consent_missing";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
@@ -110,20 +118,27 @@ export class TutorOrchestratorService {
     try {
       outcome = await this.handle(message);
     } catch (error) {
-      this.log.error(
-        {
-          err: error instanceof Error ? error.message : String(error),
-          messageSid: message.messageSid,
-        },
-        "orchestrator.error",
-      );
+      if (error instanceof ParentalConsentMissingError) {
+        const reply =
+          "Para responderte necesitamos que un adulto responsable de la familia confirme el consentimiento de uso. Pedile a tu mamá, papá o tutor que entre a apoyoai.com.ar/familia y complete el permiso. Cuando esté listo seguimos.";
+        await this.safeSendFallback(message.fromWhatsappPhone, reply);
+        outcome = { status: "parental_consent_missing", reply };
+      } else {
+        this.log.error(
+          {
+            err: error instanceof Error ? error.message : String(error),
+            messageSid: message.messageSid,
+          },
+          "orchestrator.error",
+        );
 
-      await this.safeSendFallback(
-        message.fromWhatsappPhone,
-        "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
-      );
+        await this.safeSendFallback(
+          message.fromWhatsappPhone,
+          "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
+        );
 
-      outcome = { status: "error" };
+        outcome = { status: "error" };
+      }
     }
 
     await this.idempotency.markCompleted(message.messageSid, outcome.status);

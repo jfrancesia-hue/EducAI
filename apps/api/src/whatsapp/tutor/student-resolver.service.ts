@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
 import {
+  ParentalConsentMissingError,
   StudentNotEnrolledError,
   StudentSelectionRequiredError,
 } from "../webhooks/errors/webhook.errors.js";
@@ -68,13 +69,17 @@ export class StudentResolverService {
 
     if (activeContacts.length === 1) {
       const contact = activeContacts[0]!;
-      return this.fromProfile(contact.studentProfile, phone, contact.role);
+      const resolved = this.fromProfile(contact.studentProfile, phone, contact.role);
+      await this.assertActiveParentalConsent(resolved.studentId, resolved.tenantId);
+      return resolved;
     }
 
     if (activeContacts.length > 1) {
       const selected = this.selectByStudentName(activeContacts, body);
       if (selected) {
-        return this.fromProfile(selected.studentProfile, phone, selected.role);
+        const resolved = this.fromProfile(selected.studentProfile, phone, selected.role);
+        await this.assertActiveParentalConsent(resolved.studentId, resolved.tenantId);
+        return resolved;
       }
 
       const names = activeContacts.map((contact) => contact.studentProfile.student.firstName);
@@ -98,7 +103,9 @@ export class StudentResolverService {
       throw new StudentNotEnrolledError(phone);
     }
 
-    return this.fromProfile(profile, phone, "STUDENT");
+    const resolved = this.fromProfile(profile, phone, "STUDENT");
+    await this.assertActiveParentalConsent(resolved.studentId, resolved.tenantId);
+    return resolved;
   }
 
   async resolveByStudentForFamily(input: {
@@ -130,7 +137,49 @@ export class StudentResolverService {
       throw new StudentNotEnrolledError(input.studentId);
     }
 
-    return this.fromProfile(profile, profile.whatsappPhone ?? "", "STUDENT");
+    const resolved = this.fromProfile(profile, profile.whatsappPhone ?? "", "STUDENT");
+    await this.assertActiveParentalConsent(resolved.studentId, resolved.tenantId);
+    return resolved;
+  }
+
+  /**
+   * Verifica que exista un ParentalConsent activo para el estudiante:
+   * no revocado y con los 3 flags requeridos en true (términos, privacidad
+   * y procesamiento por IA). Sin esto no podemos responder a un menor
+   * por las leyes de protección de menores (Ley 26.061 AR, LGPD BR, COPPA).
+   *
+   * Fail-closed: si no hay registro O fue revocado O algún flag está en
+   * false, lanzamos ParentalConsentMissingError y el orquestador devuelve
+   * un mensaje pidiendo que un adulto active la familia.
+   */
+  async assertActiveParentalConsent(studentId: string, tenantId: string): Promise<void> {
+    if (process.env.APOYOAI_PARENTAL_CONSENT_ENFORCEMENT === "off") {
+      // Escape hatch para tests internos y entornos de desarrollo. No se
+      // debería usar en producción; el secrets matrix la marca como ausente.
+      return;
+    }
+
+    const consent = await this.prisma.parentalConsent.findFirst({
+      where: {
+        studentId,
+        tenantId,
+        revokedAt: null,
+      },
+      orderBy: { signedAt: "desc" },
+      select: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        aiProcessingAccepted: true,
+      },
+    });
+
+    if (!consent) {
+      throw new ParentalConsentMissingError(studentId, "no_consent_record");
+    }
+
+    if (!consent.termsAccepted || !consent.privacyAccepted || !consent.aiProcessingAccepted) {
+      throw new ParentalConsentMissingError(studentId, "consent_incomplete");
+    }
   }
 
   private fromProfile(

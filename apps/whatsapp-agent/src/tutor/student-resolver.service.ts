@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service.js";
-import { StudentNotEnrolledError } from "../webhooks/errors/webhook.errors.js";
+import {
+  ParentalConsentMissingError,
+  StudentNotEnrolledError,
+} from "../webhooks/errors/webhook.errors.js";
 
 export interface ResolvedStudent {
   studentId: string;
@@ -57,6 +60,8 @@ export class StudentResolverService {
       throw new StudentNotEnrolledError(phone);
     }
 
+    await this.assertActiveParentalConsent(profile.student.id, profile.tenantId);
+
     return {
       studentId: profile.student.id,
       studentName: profile.student.firstName,
@@ -75,6 +80,40 @@ export class StudentResolverService {
         currentPeriodEnd: family.subscription.currentPeriodEnd,
       },
     };
+  }
+
+  /**
+   * Verifica que exista un ParentalConsent activo para el estudiante:
+   * no revocado y con los 3 flags requeridos en true (términos, privacidad
+   * y procesamiento por IA). Sin esto no podemos responder a un menor
+   * por las leyes de protección de menores (Ley 26.061 AR, LGPD BR, COPPA).
+   */
+  async assertActiveParentalConsent(studentId: string, tenantId: string): Promise<void> {
+    if (process.env.APOYOAI_PARENTAL_CONSENT_ENFORCEMENT === "off") {
+      return;
+    }
+
+    const consent = await this.prisma.parentalConsent.findFirst({
+      where: {
+        studentId,
+        tenantId,
+        revokedAt: null,
+      },
+      orderBy: { signedAt: "desc" },
+      select: {
+        termsAccepted: true,
+        privacyAccepted: true,
+        aiProcessingAccepted: true,
+      },
+    });
+
+    if (!consent) {
+      throw new ParentalConsentMissingError(studentId, "no_consent_record");
+    }
+
+    if (!consent.termsAccepted || !consent.privacyAccepted || !consent.aiProcessingAccepted) {
+      throw new ParentalConsentMissingError(studentId, "consent_incomplete");
+    }
   }
 
   normalize(rawPhone: string): string {

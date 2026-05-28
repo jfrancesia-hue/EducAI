@@ -23,6 +23,7 @@ import { StudentResolverService, type ResolvedStudent } from "./student-resolver
 import { TwilioSenderService } from "./twilio-sender.service.js";
 import { InboundIdempotencyService } from "../webhooks/inbound-idempotency.service.js";
 import {
+  ParentalConsentMissingError,
   RateLimitExceededError,
   StudentNotEnrolledError,
   StudentSelectionRequiredError,
@@ -47,7 +48,8 @@ export interface OrchestratorOutcome {
     | "subscription_inactive"
     | "error"
     | "diagnostic"
-    | "duplicate";
+    | "duplicate"
+    | "parental_consent_missing";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
@@ -689,6 +691,13 @@ export class TutorOrchestratorService {
         "Llegaste al límite de mensajes de tu plan por hoy. Mañana se renueva automáticamente; si necesitás más uso, conviene subir de plan.";
       await this.safeSendFallback(message.fromWhatsappPhone, reply);
       return { status: "rate_limited", reply };
+    }
+
+    if (error instanceof ParentalConsentMissingError) {
+      const reply =
+        "Para responderte necesitamos que un adulto responsable de la familia confirme el consentimiento de uso. Pedile a tu mamá, papá o tutor que entre a apoyoai.com.ar/familia y complete el permiso. Cuando esté listo seguimos.";
+      await this.safeSendFallback(message.fromWhatsappPhone, reply);
+      return { status: "parental_consent_missing", reply };
     }
 
     return null;
