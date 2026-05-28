@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { createBrowserClient } from "@supabase/ssr";
 import { CalendarDays, CheckCircle2, Circle, FileText, Loader2, Sparkles } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
@@ -129,6 +130,114 @@ const lessonIntentOptions: Array<{ value: LessonIntent; label: string }> = [
   { value: "repasar", label: "Repasar" },
   { value: "proyecto", label: "Proyecto" },
 ];
+
+type GenerateApiError = {
+  code?: string;
+};
+
+function readFormString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function readFormInteger(formData: FormData, key: string) {
+  const value = Number.parseInt(readFormString(formData, key), 10);
+  return Number.isFinite(value) ? value : Number.NaN;
+}
+
+function optionalFormString(formData: FormData, key: string) {
+  return readFormString(formData, key) || undefined;
+}
+
+function buildGeneratePayload(formData: FormData) {
+  const educationLevel = readFormString(formData, "educationLevel");
+
+  return {
+    educationLevel,
+    grade: readFormInteger(formData, "grade"),
+    subject: readFormString(formData, "subject"),
+    courseLabel: optionalFormString(formData, "courseLabel"),
+    institutionName: optionalFormString(formData, "institutionName"),
+    lessonIntent: optionalFormString(formData, "lessonIntent"),
+    levelContext: optionalFormString(formData, "levelContext"),
+    plannedDate: optionalFormString(formData, "plannedDate"),
+    careerName:
+      educationLevel === "universitario" ? optionalFormString(formData, "careerName") : undefined,
+    topic: readFormString(formData, "topic"),
+    sessionCount: readFormInteger(formData, "sessionCount"),
+    totalDurationMinutes: readFormInteger(formData, "totalDurationMinutes"),
+    learningGoal: optionalFormString(formData, "learningGoal"),
+    groupProfile: optionalFormString(formData, "groupProfile"),
+    priorKnowledge: optionalFormString(formData, "priorKnowledge"),
+    curriculumContext: optionalFormString(formData, "curriculumContext"),
+    availableResources: optionalFormString(formData, "availableResources"),
+    assessmentFocus: optionalFormString(formData, "assessmentFocus"),
+    inclusionNeeds: optionalFormString(formData, "inclusionNeeds"),
+    outputFormat: optionalFormString(formData, "outputFormat"),
+  };
+}
+
+function redirectToPlanning(params: Record<string, string>) {
+  const url = new URL("/app/planificar", window.location.origin);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  window.location.assign(url.toString());
+}
+
+function mapApiErrorToQuery(code: string | undefined) {
+  if (code === "TEACHER_PROFILE_MISSING") return "teacher_profile";
+  if (code === "LESSON_PLAN_QUOTA_EXCEEDED") return "quota";
+  if (code === "LESSON_PLAN_AI_UNAVAILABLE") return "ai_unavailable";
+  return "api";
+}
+
+async function readGenerateApiError(response: Response): Promise<GenerateApiError> {
+  try {
+    const body = (await response.json()) as GenerateApiError;
+    return body;
+  } catch {
+    return {};
+  }
+}
+
+async function submitGenerateDirectly(form: HTMLFormElement) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!apiUrl || !supabaseUrl || !supabaseAnonKey) {
+    form.submit();
+    return;
+  }
+
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    redirectToPlanning({ error: "auth" });
+    return;
+  }
+
+  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildGeneratePayload(new FormData(form))),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const apiError = await readGenerateApiError(response);
+    redirectToPlanning({ error: mapApiErrorToQuery(apiError.code) });
+    return;
+  }
+
+  const body = (await response.json()) as { data?: { id?: string } };
+  redirectToPlanning({ created: body.data?.id ?? "ok" });
+}
 
 function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   const { pending } = useFormStatus();
@@ -285,8 +394,12 @@ export function LessonPlanForm() {
       <form
         action="/app/planificar/generar"
         method="post"
-        onSubmit={() => {
-          window.setTimeout(() => setIsSubmitting(true), 0);
+        onSubmit={(event) => {
+          event.preventDefault();
+          setIsSubmitting(true);
+          submitGenerateDirectly(event.currentTarget).catch(() => {
+            redirectToPlanning({ error: "network" });
+          });
         }}
         aria-busy={isSubmitting}
         className="rounded-lg border border-[#18b6a4]/25 bg-white shadow-whisper"
