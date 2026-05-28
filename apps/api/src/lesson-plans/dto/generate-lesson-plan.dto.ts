@@ -119,4 +119,14 @@ export class GenerateLessonPlanDto {
   @IsOptional()
   @IsString()
   outputFormat?: string;
+
+  @ApiProperty({
+    example: "clx5y...id",
+    required: false,
+    description:
+      "Id de un curso del docente (Classroom). Si viene, el service hidrata contexto del curso en el input del LLM cuando los campos correspondientes del form vienen vacíos.",
+  })
+  @IsOptional()
+  @IsString()
+  courseId?: string;
 }

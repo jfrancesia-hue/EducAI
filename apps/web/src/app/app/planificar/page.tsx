@@ -21,6 +21,7 @@ import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { LessonPlanOpenRetry } from "./_components/lesson-plan-open-retry";
 import { fetchPlanningDashboard } from "../../../lib/api/institutional-dashboard";
 import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
+import { fetchTeacherCourses } from "../../../lib/api/teacher-courses";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 type PlanningModulePageProps = {
@@ -28,6 +29,7 @@ type PlanningModulePageProps = {
     created?: string;
     error?: string;
     feedback?: string;
+    courseId?: string;
   };
 };
 
@@ -971,12 +973,14 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
   const { accessToken, user } = await getEducaiAppAuth();
 
   const createdId = searchParams?.created;
-  const [dashboard, createdPlan] = accessToken
+  const initialCourseId = searchParams?.courseId;
+  const [dashboard, createdPlan, teacherCourses] = accessToken
     ? await Promise.all([
         fetchPlanningDashboard(accessToken),
         createdId ? fetchLessonPlan(accessToken, createdId) : Promise.resolve(null),
+        fetchTeacherCourses(accessToken),
       ])
-    : [null, null];
+    : [null, null, []];
   const error = searchParams?.error;
   const feedback = searchParams?.feedback;
   const userPlan = metadataValue(user?.app_metadata, "plan") || "free";
@@ -1109,7 +1113,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
               </a>
             </div>
           ) : (
-            <LessonPlanForm />
+            <LessonPlanForm courses={teacherCourses} initialCourseId={initialCourseId} />
           )}
         </section>
 

@@ -15,6 +15,7 @@ import {
 import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TeacherCourseService } from "../teacher-courses/teacher-course.service.js";
 import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 
 type PrismaTx = Prisma.TransactionClient;
@@ -46,6 +47,7 @@ type GenerateInput = {
   assessmentFocus?: string;
   inclusionNeeds?: string;
   outputFormat?: string;
+  courseId?: string;
 };
 
 @Injectable()
@@ -54,7 +56,10 @@ export class LessonPlanService {
   private readonly generator: PlanGeneratorAgent;
   private readonly aiProviderConfigured: boolean;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly teacherCourses: TeacherCourseService,
+  ) {
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim();
     this.aiProviderConfigured = Boolean(anthropicApiKey);
     this.generator = anthropicApiKey
@@ -134,14 +139,59 @@ export class LessonPlanService {
       plan: input.plan,
     });
 
-    const created = await this.createPending(input);
+    const enrichedInput = await this.enrichWithCourseContext(input);
+
+    const created = await this.createPending(enrichedInput);
 
     // La generación corre en background: el cliente recibe `{id, status: "pending"}`
     // de inmediato y polea `GET /lesson-plans/:id` hasta que el status sea "ready" o
     // "failed". `runGeneration` captura todos los errores y nunca propaga.
-    void this.runGeneration(created.id, input);
+    void this.runGeneration(created.id, enrichedInput);
 
     return { data: { id: created.id, status: "pending" as const } };
+  }
+
+  /**
+   * Si el docente eligió un curso (`courseId`), cargamos su contexto y mergeamos
+   * con el input del form. El input del form siempre gana: solo completamos los
+   * campos que vinieron vacíos. Esto motiva al docente a cargar sus cursos sin
+   * pisarle lo que escriba manualmente.
+   */
+  private async enrichWithCourseContext(input: GenerateInput): Promise<GenerateInput> {
+    if (!input.courseId) {
+      return input;
+    }
+
+    const course = await this.teacherCourses.getContextForLlm(input.courseId, {
+      tenantId: input.tenantId,
+      teacherId: input.teacherId,
+    });
+
+    if (!course) {
+      // Curso inválido o de otro docente: lo ignoramos en silencio para no
+      // bloquear la generación. El frontend ya valida ownership con `GET /teacher-courses`.
+      this.logger.warn({
+        event: "lesson_plan_course_context_missing",
+        courseId: input.courseId,
+        teacherId: input.teacherId,
+      });
+      return { ...input, courseId: undefined };
+    }
+
+    const studentCountHint =
+      typeof course.studentCount === "number" ? `${course.studentCount} estudiantes` : undefined;
+    const shiftHint = course.shift ? `turno ${course.shift}` : undefined;
+    const groupProfileFromCourse = [course.name, studentCountHint, shiftHint]
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      ...input,
+      courseLabel: input.courseLabel ?? course.name,
+      // Si el form no trajo materia (no debería pasar, es required), tomamos la del curso.
+      subject: input.subject || course.subject,
+      groupProfile: input.groupProfile ?? (groupProfileFromCourse || undefined),
+    };
   }
 
   private buildPlanningContext(input: GenerateInput): Record<string, string | undefined> {

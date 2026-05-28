@@ -4,8 +4,21 @@ import { useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBrowserClient } from "@supabase/ssr";
 import { CalendarDays, CheckCircle2, Circle, FileText, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 import { Badge, Button } from "@educai/ui";
+
+import type { TeacherCourseSummary } from "../../../../lib/api/teacher-courses";
+
+type TeacherCourseOption = Pick<
+  TeacherCourseSummary,
+  "id" | "name" | "grade" | "subject" | "shift" | "studentCount"
+>;
+
+type LessonPlanFormProps = {
+  courses?: TeacherCourseOption[];
+  initialCourseId?: string;
+};
 
 type EducationLevel = "primaria" | "secundaria" | "terciario" | "universitario";
 type LessonIntent =
@@ -174,6 +187,7 @@ function buildGeneratePayload(formData: FormData) {
     assessmentFocus: optionalFormString(formData, "assessmentFocus"),
     inclusionNeeds: optionalFormString(formData, "inclusionNeeds"),
     outputFormat: optionalFormString(formData, "outputFormat"),
+    courseId: optionalFormString(formData, "courseId"),
   };
 }
 
@@ -588,11 +602,31 @@ function GeneratingOverlay() {
   );
 }
 
-export function LessonPlanForm() {
-  const [educationLevel, setEducationLevel] = useState<EducationLevel>("secundaria");
+export function LessonPlanForm({ courses = [], initialCourseId }: LessonPlanFormProps = {}) {
+  const initialCourse = useMemo(
+    () => (initialCourseId ? courses.find((course) => course.id === initialCourseId) : undefined),
+    [courses, initialCourseId],
+  );
+
+  const inferredLevel: EducationLevel = useMemo(() => {
+    if (!initialCourse) return "secundaria";
+    if (initialCourse.grade >= 1 && initialCourse.grade <= 7) {
+      // Heurística simple: primaria y secundaria comparten 1-7. Dejamos secundaria
+      // como default razonable cuando hay duda; el docente lo ajusta en un click.
+      return "secundaria";
+    }
+    return "secundaria";
+  }, [initialCourse]);
+
+  const [educationLevel, setEducationLevel] = useState<EducationLevel>(inferredLevel);
   const [lessonIntent, setLessonIntent] = useState<LessonIntent>("introducir");
-  const [grade, setGrade] = useState(levelLabels.secundaria.defaultGrade);
-  const [duration, setDuration] = useState(levelLabels.secundaria.durationDefault);
+  const [grade, setGrade] = useState(
+    initialCourse?.grade ?? levelLabels[inferredLevel].defaultGrade,
+  );
+  const [duration, setDuration] = useState(levelLabels[inferredLevel].durationDefault);
+  const [selectedCourseId, setSelectedCourseId] = useState(initialCourseId ?? "");
+  const [subjectValue, setSubjectValue] = useState(initialCourse?.subject ?? "Matemática");
+  const [courseLabelValue, setCourseLabelValue] = useState(initialCourse?.name ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const labels = levelLabels[educationLevel];
   const isUniversity = educationLevel === "universitario";
@@ -603,6 +637,18 @@ export function LessonPlanForm() {
     setEducationLevel(nextLevel);
     setGrade(nextLabels.defaultGrade);
     setDuration(nextLabels.durationDefault);
+  }
+
+  function handleCourseChange(nextId: string) {
+    setSelectedCourseId(nextId);
+    if (!nextId) {
+      return;
+    }
+    const course = courses.find((candidate) => candidate.id === nextId);
+    if (!course) return;
+    setGrade(course.grade);
+    setSubjectValue(course.subject);
+    setCourseLabelValue(course.name);
   }
 
   return (
@@ -640,6 +686,7 @@ export function LessonPlanForm() {
       >
         <input type="hidden" name="educationLevel" value={educationLevel} />
         <input type="hidden" name="lessonIntent" value={lessonIntent} />
+        <input type="hidden" name="courseId" value={selectedCourseId} />
 
         <div className="border-b border-[#e3ebe7] p-5">
           <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificación</Badge>
@@ -653,6 +700,35 @@ export function LessonPlanForm() {
         </div>
 
         <fieldset disabled={isSubmitting} className="grid gap-5 p-5 disabled:opacity-70">
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-semibold text-[#33423c]">Curso (opcional)</legend>
+            {courses.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-[#18b6a4]/40 bg-[#fbfffd] px-4 py-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
+                Todavía no cargaste cursos.{" "}
+                <Link
+                  href="/app/estudiantes/nuevo"
+                  prefetch={false}
+                  className="font-bold text-[#075c50] underline-offset-4 hover:underline"
+                >
+                  Cargar mi primer curso
+                </Link>{" "}
+                hace que las guías futuras se generen con tu contexto real.
+              </div>
+            ) : (
+              <select
+                value={selectedCourseId}
+                onChange={(event) => handleCourseChange(event.target.value)}
+                className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
+              >
+                <option value="">Sin curso específico</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.name} · {course.subject} · {course.grade}° año
+                  </option>
+                ))}
+              </select>
+            )}
+          </fieldset>
           <fieldset className="grid gap-2">
             <legend className="text-sm font-semibold text-[#33423c]">Nivel educativo</legend>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -699,7 +775,8 @@ export function LessonPlanForm() {
               <span className="text-sm font-semibold text-[#33423c]">{labels.subject}</span>
               <input
                 name="subject"
-                defaultValue="Matemática"
+                value={subjectValue}
+                onChange={(event) => setSubjectValue(event.target.value)}
                 list={subjectListId}
                 required
                 className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
@@ -841,6 +918,8 @@ export function LessonPlanForm() {
                   </span>
                   <input
                     name="courseLabel"
+                    value={courseLabelValue}
+                    onChange={(event) => setCourseLabelValue(event.target.value)}
                     placeholder="Ej: 7A, 2do B, comisión noche..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />

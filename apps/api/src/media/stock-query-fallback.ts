@@ -45,7 +45,6 @@ export function queryFallback(query: string): string {
   const words = query
     .toLowerCase()
     .normalize("NFD")
-    // eslint-disable-next-line no-misleading-character-class
     .replace(/[̀-ͯ]/g, "")
     .split(/\s+/)
     .filter((word) => word.length > 2 && !STOPWORDS.has(word));

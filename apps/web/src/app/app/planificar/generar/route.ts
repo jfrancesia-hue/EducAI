@@ -203,6 +203,7 @@ export async function POST(request: NextRequest) {
     assessmentFocus: readString(formData, "assessmentFocus") || undefined,
     inclusionNeeds: readString(formData, "inclusionNeeds") || undefined,
     outputFormat: readString(formData, "outputFormat") || undefined,
+    courseId: readString(formData, "courseId") || undefined,
   };
   const gradeRange = GRADE_RANGES[payload.educationLevel];
 

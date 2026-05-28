@@ -15,6 +15,7 @@ import { PrismaModule } from "./prisma/prisma.module.js";
 import { TenantContextInterceptor } from "./prisma/tenant-context.interceptor.js";
 import { PublicIntakeModule } from "./public-intake/public-intake.module.js";
 import { StudentModule } from "./students/student.module.js";
+import { TeacherCourseModule } from "./teacher-courses/teacher-course.module.js";
 import { WhatsappModule } from "./whatsapp/whatsapp.module.js";
 
 @Module({
@@ -32,6 +33,7 @@ import { WhatsappModule } from "./whatsapp/whatsapp.module.js";
     ParentReportModule,
     PaymentsModule,
     PublicIntakeModule,
+    TeacherCourseModule,
     WhatsappModule,
   ],
   controllers: [HealthController],
