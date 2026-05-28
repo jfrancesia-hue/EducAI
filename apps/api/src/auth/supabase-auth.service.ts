@@ -36,6 +36,14 @@ export class SupabaseAuthService {
   private client?: SupabaseClient;
 
   async authenticate(accessToken: string): Promise<AuthenticatedUser> {
+    const parsed = this.parseJwt(accessToken);
+    if (parsed?.header.alg === "ES256") {
+      const jwtUser = await this.authenticateSignedJwt(accessToken);
+      if (jwtUser) {
+        return jwtUser;
+      }
+    }
+
     const client = this.getClient();
     const { data, error } = await client.auth.getUser(accessToken);
 
@@ -43,9 +51,11 @@ export class SupabaseAuthService {
       return this.mapUser(data.user);
     }
 
-    const jwtUser = await this.authenticateSignedJwt(accessToken);
-    if (jwtUser) {
-      return jwtUser;
+    if (parsed?.header.alg !== "ES256") {
+      const jwtUser = await this.authenticateSignedJwt(accessToken);
+      if (jwtUser) {
+        return jwtUser;
+      }
     }
 
     throw new UnauthorizedException("Token de acceso invalido o expirado");
