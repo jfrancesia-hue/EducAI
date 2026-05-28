@@ -220,9 +220,8 @@ function LessonPlanQuotaNotice({ quota }: { quota: LessonPlanQuota }) {
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
         <div>
           <p className="font-semibold">
-            Te {quota.remaining === 1 ? "queda" : "quedan"} {quota.remaining} planificación
-            {quota.remaining === 1 ? "" : "es"} disponible
-            {quota.remaining === 1 ? "" : "s"}.
+            Te {quota.remaining === 1 ? "queda" : "quedan"} {quota.remaining}{" "}
+            {quota.remaining === 1 ? "planificación disponible" : "planificaciones disponibles"}.
           </p>
           <p className="mt-1 text-sm leading-6">
             Usaste {quota.used} de {quota.effectiveLimit} {period}.{extraText}
