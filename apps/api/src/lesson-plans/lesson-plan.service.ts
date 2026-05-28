@@ -341,8 +341,27 @@ export class LessonPlanService {
         where: {
           id,
           tenantId: access.tenantId,
+          deletedAt: null,
           ...(access.teacherId ? { teacherId: access.teacherId } : {}),
           ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
+        },
+        select: {
+          id: true,
+          grade: true,
+          subject: true,
+          topic: true,
+          status: true,
+          durationMinutes: true,
+          competences: true,
+          objectives: true,
+          activities: true,
+          resources: true,
+          assessment: true,
+          adaptations: true,
+          generatedByAI: true,
+          rating: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
     });
