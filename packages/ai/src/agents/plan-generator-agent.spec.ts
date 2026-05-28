@@ -213,4 +213,23 @@ describe("PlanGeneratorAgent", () => {
     );
     expect(plan.guide.erroresFrecuentes).toHaveLength(2);
   });
+
+  it("reintenta una vez si la primera llamada IA falla", async () => {
+    const generate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("provider unavailable"))
+      .mockResolvedValueOnce({
+        content: "",
+        toolUse: { name: "guardar_clase_docente", input: richGuide },
+        tokensUsed: 100,
+        modelUsed: "test-model",
+      });
+    const agent = new PlanGeneratorAgent({ generate });
+
+    const result = await agent.generateWithMetadata(baseInput);
+
+    expect(result.source).toBe("llm");
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(generate.mock.calls[1]?.[0].messages[0]?.content).toContain("REINTENTO");
+  });
 });

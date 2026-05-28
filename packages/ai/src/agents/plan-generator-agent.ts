@@ -50,6 +50,7 @@ const PLAN_GENERATION_TIMEOUT_MS = readPositiveIntegerEnv(
   360_000,
 );
 const PLAN_GENERATION_MAX_TOKENS = 12_000;
+const PLAN_GENERATION_ATTEMPTS = 2;
 
 export interface PlanGeneratorInput {
   educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
@@ -82,35 +83,38 @@ export class PlanGeneratorAgent {
   }
 
   async generateWithMetadata(input: PlanGeneratorInput): Promise<LessonPlanGenerationResult> {
-    const result = await this.tryGenerateWithLlm(input);
+    let fallbackReason = "llm_unavailable";
 
-    if (!result.output) {
-      return {
-        plan: this.buildFallbackPlan(input),
-        source: "fallback",
-        fallbackReason: result.reason,
-      };
-    }
+    for (let attempt = 1; attempt <= PLAN_GENERATION_ATTEMPTS; attempt += 1) {
+      const result = await this.tryGenerateWithLlm(input, attempt);
 
-    const parsed = this.tryParseLlmPlan(result.output.content, input);
-    if (parsed) {
-      return { plan: parsed, source: "llm" };
-    }
+      if (!result.output) {
+        fallbackReason = result.reason;
+        continue;
+      }
 
-    const toolPlan = this.tryParseGuide(result.output.toolUse?.input, input);
-    if (toolPlan) {
-      return { plan: toolPlan, source: "llm" };
+      const parsed = this.tryParseLlmPlan(result.output.content, input);
+      if (parsed) {
+        return { plan: parsed, source: "llm" };
+      }
+
+      const toolPlan = this.tryParseGuide(result.output.toolUse?.input, input);
+      if (toolPlan) {
+        return { plan: toolPlan, source: "llm" };
+      }
+
+      fallbackReason =
+        result.output.stopReason === "max_tokens" ? "max_tokens" : "invalid_llm_response";
     }
 
     return {
       plan: this.buildFallbackPlan(input),
       source: "fallback",
-      fallbackReason:
-        result.output.stopReason === "max_tokens" ? "max_tokens" : "invalid_llm_response",
+      fallbackReason,
     };
   }
 
-  private async tryGenerateWithLlm(input: PlanGeneratorInput) {
+  private async tryGenerateWithLlm(input: PlanGeneratorInput, attempt = 1) {
     try {
       const systemPrompt = [
         "Sos EducAI, un agente pedagogico para docentes argentinos.",
@@ -144,7 +148,7 @@ export class PlanGeneratorAgent {
           messages: [
             {
               role: "user",
-              content: this.buildUserPrompt(input),
+              content: this.buildUserPrompt(input, attempt),
             },
           ],
         }),
@@ -386,7 +390,17 @@ export class PlanGeneratorAgent {
     return trimmed;
   }
 
-  private buildUserPrompt(input: PlanGeneratorInput): string {
+  private buildUserPrompt(input: PlanGeneratorInput, attempt = 1): string {
+    const retryInstruction =
+      attempt > 1
+        ? [
+            "",
+            "REINTENTO: la respuesta anterior no pudo guardarse.",
+            "Usa la herramienta guardar_clase_docente con JSON valido y completo.",
+            "No agregues texto libre fuera de la herramienta.",
+          ].join("\n")
+        : "";
+
     return [
       "Genera una planificacion docente completa con este input:",
       JSON.stringify(input, null, 2),
@@ -406,6 +420,7 @@ export class PlanGeneratorAgent {
       "- Inclui recomendaciones de clase, imagenes sugeridas y videos de YouTube como busquedas/criterios, no como URLs inventadas.",
       "- Mantene la guia completa pero acotada: maximo 3 saberes clave, 2 objetivos, 1 actividad central, 1 material editable, 4 criterios de evaluacion y 3 errores frecuentes.",
       "- En cada campo textual escribi contenido concreto de aula, pero no parrafos largos. Prioriza consignas listas para usar, ejemplos y evidencia.",
+      retryInstruction,
     ].join("\n");
   }
 
