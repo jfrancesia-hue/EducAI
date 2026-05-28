@@ -37,6 +37,20 @@ export const lessonPlanSchema = z.object({
 
 export type LessonPlanOutput = z.infer<typeof lessonPlanSchema>;
 
+export type LessonPlanGenerationSource = "llm" | "fallback";
+
+export interface LessonPlanGenerationResult {
+  plan: LessonPlanOutput;
+  source: LessonPlanGenerationSource;
+  fallbackReason?: string;
+}
+
+const PLAN_GENERATION_TIMEOUT_MS = readPositiveIntegerEnv(
+  "LESSON_PLAN_GENERATION_TIMEOUT_MS",
+  130_000,
+);
+const PLAN_GENERATION_MAX_TOKENS = 9_000;
+
 export interface PlanGeneratorInput {
   educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
   grade: number;
@@ -64,23 +78,36 @@ export class PlanGeneratorAgent {
   constructor(private readonly llm: LlmClient = new DeterministicLlmClient()) {}
 
   async generate(input: PlanGeneratorInput): Promise<LessonPlanOutput> {
+    return (await this.generateWithMetadata(input)).plan;
+  }
+
+  async generateWithMetadata(input: PlanGeneratorInput): Promise<LessonPlanGenerationResult> {
     const result = await this.tryGenerateWithLlm(input);
 
-    if (!result) {
-      return this.buildFallbackPlan(input);
+    if (!result.output) {
+      return {
+        plan: this.buildFallbackPlan(input),
+        source: "fallback",
+        fallbackReason: result.reason,
+      };
     }
 
-    const parsed = this.tryParseLlmPlan(result.content);
+    const parsed = this.tryParseLlmPlan(result.output.content, input);
     if (parsed) {
-      return parsed;
+      return { plan: parsed, source: "llm" };
     }
 
-    const toolPlan = this.tryParseGuide(result.toolUse?.input);
+    const toolPlan = this.tryParseGuide(result.output.toolUse?.input, input);
     if (toolPlan) {
-      return toolPlan;
+      return { plan: toolPlan, source: "llm" };
     }
 
-    return this.buildFallbackPlan(input);
+    return {
+      plan: this.buildFallbackPlan(input),
+      source: "fallback",
+      fallbackReason:
+        result.output.stopReason === "max_tokens" ? "max_tokens" : "invalid_llm_response",
+    };
   }
 
   private async tryGenerateWithLlm(input: PlanGeneratorInput) {
@@ -99,11 +126,11 @@ export class PlanGeneratorAgent {
         "Usa obligatoriamente la herramienta guardar_clase_docente. No respondas con texto libre.",
       ].join(" ");
 
-      return await this.withTimeout(
+      const output = await this.withTimeout(
         this.llm.generate({
           model: getEducAIModelForPlan("pro"),
           responseFormat: "json",
-          maxTokens: 5200,
+          maxTokens: PLAN_GENERATION_MAX_TOKENS,
           system: [{ type: "text", text: systemPrompt, cacheable: true }],
           tools: [
             {
@@ -121,10 +148,15 @@ export class PlanGeneratorAgent {
             },
           ],
         }),
-        35_000,
+        PLAN_GENERATION_TIMEOUT_MS,
       );
-    } catch {
-      return null;
+      return { output };
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.message === "Plan generation timed out"
+          ? "timeout"
+          : "llm_unavailable";
+      return { output: null, reason };
     }
   }
 
@@ -144,22 +176,133 @@ export class PlanGeneratorAgent {
     });
   }
 
-  private tryParseLlmPlan(content: string): LessonPlanOutput | null {
+  private tryParseLlmPlan(content: string, input: PlanGeneratorInput): LessonPlanOutput | null {
     try {
       return this.toLegacyPlan(
-        educaiLessonGuideSchema.parse(JSON.parse(this.extractJson(content))),
+        educaiLessonGuideSchema.parse(
+          this.normalizeGuideCandidate(JSON.parse(this.extractJson(content)), input),
+        ),
       );
     } catch {
       return null;
     }
   }
 
-  private tryParseGuide(input: unknown): LessonPlanOutput | null {
+  private tryParseGuide(candidate: unknown, input: PlanGeneratorInput): LessonPlanOutput | null {
     try {
-      return this.toLegacyPlan(educaiLessonGuideSchema.parse(input));
+      return this.toLegacyPlan(
+        educaiLessonGuideSchema.parse(this.normalizeGuideCandidate(candidate, input)),
+      );
     } catch {
       return null;
     }
+  }
+
+  private normalizeGuideCandidate(candidate: unknown, input: PlanGeneratorInput): unknown {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return candidate;
+    }
+
+    const guide = { ...(candidate as Record<string, unknown>) };
+
+    if (typeof guide.evaluacion === "string") {
+      guide.evaluacion = {
+        criterios: [guide.evaluacion],
+        instrumento: "Lista de cotejo breve sobre la produccion de clase.",
+        ticketSalida: `Escribi una decision clave sobre ${input.topic} y justificá cómo la aplicaste.`,
+        retroalimentacionSugerida:
+          "Devolver una fortaleza, una correccion puntual y un proximo paso para mejorar.",
+      };
+    }
+
+    if (typeof guide.diferenciacion === "string") {
+      guide.diferenciacion = {
+        apoyoFuerte: guide.diferenciacion,
+        grupoBase: `Resolver la actividad central sobre ${input.topic} con la consigna base.`,
+        extension: `Agregar una variante o mejora justificada sobre ${input.topic}.`,
+      };
+    }
+
+    if (typeof guide.materialesEditables === "string") {
+      guide.materialesEditables = [
+        {
+          nombre: `Material editable sobre ${input.topic}`,
+          contenido: guide.materialesEditables,
+          comoUsarlo: "Entregar durante el desarrollo y revisar una respuesta en comun.",
+        },
+      ];
+    }
+
+    if (typeof guide.secuencia === "string") {
+      const sessionDuration = Math.max(
+        10,
+        Math.round(input.totalDurationMinutes / input.sessionCount),
+      );
+      const openingDuration = Math.max(5, Math.round(sessionDuration * 0.2));
+      const closingDuration = Math.max(5, Math.round(sessionDuration * 0.2));
+      const developmentDuration = Math.max(10, sessionDuration - openingDuration - closingDuration);
+
+      guide.secuencia = [
+        {
+          claseNumero: 1,
+          duracion: sessionDuration,
+          momentos: [
+            {
+              nombre: "Apertura",
+              duracion: openingDuration,
+              proposito: `Ubicar el sentido de ${input.topic} en ${input.subject}.`,
+              consignaDocente: `Presenta el proposito de la clase y pedi un ejemplo inicial sobre ${input.topic}.`,
+              actividadEstudiantes:
+                "Comparten ideas previas y registran una duda concreta para revisar durante la clase.",
+              ejemploConcreto: `Ejemplo inicial de ${input.topic} conectado con el contexto del curso.`,
+              intervencionDocente:
+                "Ordenar respuestas, recuperar vocabulario preciso y dejar visible el criterio de trabajo.",
+              cierreParcial: "Nombrar que se va a producir y como se evaluara.",
+            },
+            {
+              nombre: "Desarrollo",
+              duracion: developmentDuration,
+              proposito: `Trabajar ${input.topic} con una consigna concreta y evidencia observable.`,
+              consignaDocente: guide.secuencia,
+              actividadEstudiantes:
+                "Resuelven la consigna, justifican decisiones y revisan una produccion con criterios comunes.",
+              ejemploConcreto: `Produccion o resolucion modelada sobre ${input.topic}.`,
+              intervencionDocente:
+                "Circular, pedir evidencia de cada decision y comparar una respuesta lograda con un error frecuente.",
+              cierreParcial: "Seleccionar una produccion para revisar criterios antes del cierre.",
+            },
+            {
+              nombre: "Cierre",
+              duracion: closingDuration,
+              proposito: "Recoger evidencia breve y definir proximo paso.",
+              consignaDocente: `Ticket de salida: escribi que aprendiste sobre ${input.topic}, aplica una regla o criterio y marca una duda.`,
+              actividadEstudiantes:
+                "Completan el ticket de salida individual y entregan la produccion de la clase.",
+              ejemploConcreto: `Respuesta esperada que aplica ${input.topic} y justifica una decision.`,
+              intervencionDocente:
+                "Agrupar dudas recurrentes para decidir si conviene practicar, revisar o profundizar.",
+              cierreParcial: "Guardar evidencias y registrar ajustes para la proxima clase.",
+            },
+          ],
+        },
+      ];
+    }
+
+    if (typeof guide.erroresFrecuentes === "string") {
+      guide.erroresFrecuentes = [
+        {
+          error: guide.erroresFrecuentes,
+          comoDetectarlo: "La produccion muestra el problema de forma observable.",
+          comoIntervenir: "Pedir una revision puntual usando el ejemplo trabajado en clase.",
+        },
+      ];
+    }
+
+    if (typeof guide.recursosOpcionales === "string") {
+      guide.recursosOpcionales = [guide.recursosOpcionales];
+    }
+
+    return guide;
   }
 
   private extractJson(content: string): string {
@@ -287,6 +430,8 @@ export class PlanGeneratorAgent {
       "- Cada momento debe incluir consigna docente, actividad estudiante, ejemplo concreto e intervencion docente.",
       "- En evaluacion, cada criterio debe nombrar el contenido del tema.",
       "- Si el tema es Normas APA, inclui citas, referencias, errores tipicos, mini textos para corregir y ticket de salida.",
+      "- Mantene la guia completa pero acotada: maximo 3 saberes clave, 2 objetivos, 1 actividad central, 1 material editable, 4 criterios de evaluacion y 3 errores frecuentes.",
+      "- En cada campo textual escribi contenido concreto de aula, pero no parrafos largos. Prioriza consignas listas para usar, ejemplos y evidencia.",
     ].join("\n");
   }
 
@@ -544,6 +689,141 @@ export class PlanGeneratorAgent {
       input.learningGoal ||
       `Que los estudiantes puedan explicar ${input.topic} y aplicarlo en una situacion de ${input.subject}.`;
     const assessmentFocus = input.assessmentFocus || `comprension y aplicacion de ${input.topic}`;
+    const isApaTopic = /\bapa\b|normas apa|cita bibliografica|referencia bibliografica/i.test(
+      input.topic,
+    );
+    const keyKnowledge = isApaTopic
+      ? [
+          {
+            nombre: "Cita parentetica y cita narrativa",
+            explicacionSimple:
+              "La cita parentetica coloca autor y anio entre parentesis; la narrativa integra el autor en la frase y deja el anio entre parentesis.",
+            ejemploDelTema:
+              'Parentetica: "La lectura mejora cuando hay proposito" (Gomez, 2022). Narrativa: Gomez (2022) sostiene que la lectura mejora cuando hay proposito.',
+            errorComun:
+              "Poner solo el enlace, olvidar el anio o repetir una cita textual sin comillas.",
+          },
+          {
+            nombre: "Referencia bibliografica",
+            explicacionSimple:
+              "La referencia permite ubicar la fuente completa al final del trabajo: autor, fecha, titulo y datos de publicacion o URL.",
+            ejemploDelTema:
+              "Gomez, L. (2022). Lectura academica en la escuela secundaria. Revista Aula, 18(2), 25-34.",
+            errorComun:
+              "Confundir cita dentro del texto con referencia final o dejar referencias que no fueron citadas.",
+          },
+          {
+            nombre: "Parafrasis academica",
+            explicacionSimple:
+              "Parafrasear no es cambiar dos palabras: es explicar la idea con palabras propias y citar la fuente.",
+            ejemploDelTema:
+              "Si un texto dice que las TIC amplian el acceso a materiales, el estudiante escribe la idea con sus palabras y agrega (Perez, 2021).",
+            errorComun: "Copiar una oracion completa sin comillas ni pagina.",
+          },
+        ]
+      : [
+          {
+            nombre: input.topic,
+            explicacionSimple: `${input.topic} es el contenido central de la clase y se trabaja con explicacion, ejemplo y practica.`,
+            ejemploDelTema: `Ejemplo modelado por el docente sobre ${input.topic} aplicado a ${input.subject}.`,
+            errorComun: `Confundir pasos, condiciones o vocabulario propio de ${input.topic}.`,
+          },
+          {
+            nombre: `Vocabulario de ${input.subject}`,
+            explicacionSimple: `Nombrar correctamente las decisiones ayuda a justificar el procedimiento.`,
+            ejemploDelTema: `El estudiante explica que hizo, por que lo hizo y como verifica el resultado.`,
+            errorComun: "Resolver sin poder explicar el criterio usado.",
+          },
+        ];
+    const centralActivity = isApaTopic
+      ? {
+          titulo: "Correccion de citas y referencias APA en un informe tecnico",
+          consignaListaParaUsar:
+            "Lean el fragmento de informe sobre seguridad informatica. Marquen donde falta citar, reescriban dos oraciones con cita parentetica o narrativa y armen la referencia final de la fuente indicada.",
+          pasos: [
+            "Identificar ideas que vienen de una fuente y no de una opinion propia.",
+            "Elegir si conviene cita narrativa o parentetica.",
+            "Reescribir el fragmento con autor y anio visibles.",
+            "Armar la referencia final y comprobar que coincida con la cita usada.",
+          ],
+          produccionEsperada:
+            "Fragmento corregido con dos citas APA y una referencia final completa.",
+          variantes: [
+            "Con apoyo: entregar plantilla Autor (anio), idea / idea (Autor, anio).",
+            "Extension: agregar una segunda fuente y ordenar las referencias alfabeticamente.",
+          ],
+        }
+      : {
+          titulo: `Practica guiada sobre ${input.topic}`,
+          consignaListaParaUsar: `Resolver una situacion de ${input.topic}, explicar el procedimiento usado y marcar una duda o decision dificil.`,
+          pasos: [
+            "Leer la consigna y subrayar los datos o ideas clave.",
+            "Resolver el caso guiado con apoyo del docente.",
+            "Resolver un caso similar en pareja o individual.",
+            "Justificar una decision con vocabulario de la materia.",
+          ],
+          produccionEsperada: `Resolucion o explicacion breve sobre ${input.topic} con evidencia de procedimiento.`,
+          variantes: [
+            `Con apoyo: plantilla de pasos y ejemplo resuelto de ${input.topic}.`,
+            `Extension: crear una variante del caso y justificarla.`,
+          ],
+        };
+    const editableMaterials = isApaTopic
+      ? [
+          {
+            nombre: "Ficha editable de practica APA",
+            contenido:
+              "Fuente A: Perez, M. (2021). Ciudadania digital en escuelas tecnicas. Revista Educacion y Tecnologia, 9(1), 12-20.\nFragmento a corregir: Las escuelas tecnicas necesitan ensenar ciudadania digital porque los estudiantes usan informacion de internet todo el tiempo. Esto ayuda a prevenir el plagio y mejora la escritura de informes.\nTareas: 1) Agrega una cita narrativa. 2) Agrega una cita parentetica. 3) Escribe la referencia final. 4) Explica que diferencia hay entre cita y referencia.",
+            comoUsarlo:
+              "Entregar durante el desarrollo, resolver el primer item en comun y usar los otros como evidencia individual.",
+          },
+        ]
+      : [
+          {
+            nombre: `Guia de practica sobre ${input.topic}`,
+            contenido: `Tres consignas graduadas sobre ${input.topic}: una guiada, una de practica autonoma y una de transferencia a ${input.subject}. Incluir espacio para justificar el procedimiento.`,
+            comoUsarlo:
+              "Entregar durante el desarrollo, revisar una respuesta en comun y usar el cierre como evidencia.",
+          },
+        ];
+    const frequentErrors = isApaTopic
+      ? [
+          {
+            error: "Usar una URL como si fuera una referencia APA completa.",
+            comoDetectarlo:
+              "La produccion solo pega un enlace y no incluye autor, fecha, titulo o fuente.",
+            comoIntervenir:
+              "Pedir que separen los datos de la fuente en cuatro columnas: autor, fecha, titulo y ubicacion.",
+          },
+          {
+            error: "Copiar una frase textual sin comillas ni pagina.",
+            comoDetectarlo:
+              "La oracion mantiene la redaccion de la fuente pero aparece como si fuera propia.",
+            comoIntervenir:
+              "Pedir que elijan entre cita textual breve con comillas o parafrasis con palabras propias.",
+          },
+          {
+            error: "Citar en el texto una fuente que no aparece en referencias.",
+            comoDetectarlo:
+              "La cita tiene autor y anio, pero no hay entrada final correspondiente.",
+            comoIntervenir:
+              "Hacer una verificacion cruzada: cada cita del texto debe tener una referencia final.",
+          },
+        ]
+      : [
+          {
+            error: `Responder sobre ${input.topic} con una frase general sin ejemplo.`,
+            comoDetectarlo: "La respuesta no nombra datos, pasos ni evidencia del contenido.",
+            comoIntervenir:
+              "Pedir que agregue un ejemplo concreto y senale en que parte de la consigna aparece.",
+          },
+          {
+            error: `Aplicar un procedimiento de ${input.topic} sin justificarlo.`,
+            comoDetectarlo: "El resultado aparece sin explicacion o con vocabulario impreciso.",
+            comoIntervenir:
+              "Pedir que reconstruya el procedimiento en dos pasos y nombre la decision clave.",
+          },
+        ];
 
     const guide = educaiLessonGuideSchema.parse({
       version: "educai.lesson-guide.v1",
@@ -551,7 +831,7 @@ export class PlanGeneratorAgent {
       vistaDocente: {
         titulo: `${input.subject} - ${input.topic}`,
         resumen: [
-          `Secuencia de ${input.educationLevel} sobre ${input.topic} para ${input.subject}, pensada como borrador editable cuando la IA principal no esta disponible.`,
+          `Secuencia de ${input.educationLevel} sobre ${input.topic} para ${input.subject}, pensada como borrador inicial editable para revisar antes de usar en clase.`,
           input.courseLabel ? `Curso: ${input.courseLabel}.` : null,
           input.lessonIntent ? `Intencion: ${input.lessonIntent}.` : null,
           input.levelContext ? `Contexto del nivel: ${input.levelContext}.` : null,
@@ -579,20 +859,7 @@ export class PlanGeneratorAgent {
             `El grupo tiene saberes iniciales heterogeneos sobre ${input.topic}.`,
         ],
       },
-      saberesClave: [
-        {
-          nombre: input.topic,
-          explicacionSimple: `${input.topic} es el contenido central de la clase y se trabaja con explicacion, ejemplo y practica.`,
-          ejemploDelTema: `Ejemplo modelado por el docente sobre ${input.topic} aplicado a ${input.subject}.`,
-          errorComun: `Confundir pasos, condiciones o vocabulario propio de ${input.topic}.`,
-        },
-        {
-          nombre: `Vocabulario de ${input.subject}`,
-          explicacionSimple: `Nombrar correctamente las decisiones ayuda a justificar el procedimiento.`,
-          ejemploDelTema: `El estudiante explica que hizo, por que lo hizo y como verifica el resultado.`,
-          errorComun: "Resolver sin poder explicar el criterio usado.",
-        },
-      ],
+      saberesClave: keyKnowledge,
       objetivosAprendizaje: [
         {
           objetivo: goal,
@@ -610,63 +877,68 @@ export class PlanGeneratorAgent {
           {
             nombre: "Apertura",
             duracion: openingDuration,
-            proposito: `Activar ideas previas y ubicar el foco de ${input.topic}.`,
-            consignaDocente: `Escribi en el pizarron: "Que sabemos de ${input.topic} y donde aparece en ${input.subject}?". Pedi dos ejemplos y anotalos sin corregir todavia.`,
-            actividadEstudiantes:
-              "Responden con ejemplos breves y escuchan diferencias entre respuestas.",
-            ejemploConcreto: `Usa un caso simple de ${input.topic} para mostrar que se espera observar en la clase.`,
-            intervencionDocente:
-              "Si aparecen respuestas vagas, pedir que agreguen un ejemplo o expliquen de donde sale.",
+            proposito: isApaTopic
+              ? "Distinguir cita, referencia y opinion propia en un texto escolar."
+              : `Activar ideas previas y ubicar el foco de ${input.topic}.`,
+            consignaDocente: isApaTopic
+              ? 'Mostra dos frases: "Segun Gomez (2022), la lectura mejora con un proposito" y "La lectura mejora con un proposito (Gomez, 2022)". Pregunta: cual nombra al autor dentro de la frase y cual lo deja entre parentesis?'
+              : `Escribi en el pizarron: "Que sabemos de ${input.topic} y donde aparece en ${input.subject}?". Pedi dos ejemplos y anotalos sin corregir todavia.`,
+            actividadEstudiantes: isApaTopic
+              ? "Comparan las dos citas, nombran diferencias y anticipan para que sirve cada formato."
+              : "Responden con ejemplos breves y escuchan diferencias entre respuestas.",
+            ejemploConcreto: isApaTopic
+              ? "Cita narrativa: Gomez (2022) afirma... Cita parentetica: ... (Gomez, 2022)."
+              : `Usa un caso simple de ${input.topic} para mostrar que se espera observar en la clase.`,
+            intervencionDocente: isApaTopic
+              ? "Si confunden cita y referencia, escribir una cita breve en el texto y debajo la referencia completa para compararlas."
+              : "Si aparecen respuestas vagas, pedir que agreguen un ejemplo o expliquen de donde sale.",
             cierreParcial: `Presenta el objetivo de la clase: ${goal}`,
           },
           {
             nombre: "Desarrollo",
             duracion: developmentDuration,
-            proposito: `Practicar ${input.topic} con andamiaje y produccion observable.`,
-            consignaDocente: `Ahora resolvemos un caso de ${input.topic}. Primero observen mi ejemplo, despues prueban uno similar y finalmente justifican una decision por escrito.`,
-            actividadEstudiantes: `Resuelven una consigna graduada sobre ${input.topic} y justifican el procedimiento.`,
-            ejemploConcreto: `Caso guiado de ${input.topic} con pasos visibles y vocabulario de ${input.subject}.`,
-            intervencionDocente:
-              "Circular, pedir evidencia de cada paso y comparar una estrategia correcta con un error frecuente.",
-            cierreParcial:
-              "Seleccionar dos producciones para revisar criterios de calidad antes del cierre.",
+            proposito: isApaTopic
+              ? "Aplicar normas APA en un fragmento de informe con fuente identificada."
+              : `Practicar ${input.topic} con andamiaje y produccion observable.`,
+            consignaDocente: isApaTopic
+              ? "Corrijan el fragmento: agreguen una cita narrativa, una cita parentetica y la referencia final. Despues expliquen por que no alcanza con pegar la URL."
+              : `Ahora resolvemos un caso de ${input.topic}. Primero observen mi ejemplo, despues prueban uno similar y finalmente justifican una decision por escrito.`,
+            actividadEstudiantes: isApaTopic
+              ? "Reescriben oraciones, completan la referencia y hacen control cruzado entre cita y bibliografia."
+              : `Resuelven una consigna graduada sobre ${input.topic} y justifican el procedimiento.`,
+            ejemploConcreto: isApaTopic
+              ? "Perez (2021) senala que la ciudadania digital debe ensenarse en escuelas tecnicas. / La ciudadania digital debe ensenarse en escuelas tecnicas (Perez, 2021)."
+              : `Caso guiado de ${input.topic} con pasos visibles y vocabulario de ${input.subject}.`,
+            intervencionDocente: isApaTopic
+              ? "Circular con tres preguntas: quien es el autor, de que anio es la fuente, aparece tambien en referencias?"
+              : "Circular, pedir evidencia de cada paso y comparar una estrategia correcta con un error frecuente.",
+            cierreParcial: isApaTopic
+              ? "Revisar una produccion y marcar con color autor, anio, titulo y ubicacion de la fuente."
+              : "Seleccionar dos producciones para revisar criterios de calidad antes del cierre.",
           },
           {
             nombre: "Cierre",
             duracion: closingDuration,
             proposito: "Recolectar evidencia breve para decidir el siguiente paso didactico.",
-            consignaDocente: `Ticket de salida: "Explica en 3 pasos como trabajaste ${input.topic} y marca una decision que todavia te cuesta justificar".`,
+            consignaDocente: isApaTopic
+              ? 'Ticket de salida: "Escribi una cita parentetica para una fuente de Perez de 2021 y anota que dato faltaria para armar la referencia completa".'
+              : `Ticket de salida: "Explica en 3 pasos como trabajaste ${input.topic} y marca una decision que todavia te cuesta justificar".`,
             actividadEstudiantes:
               "Completan el ticket de salida individual y entregan su produccion.",
-            ejemploConcreto: `Una respuesta esperada nombra ${input.topic}, muestra un paso y justifica una decision.`,
-            intervencionDocente: `Recoger dos respuestas para decidir si la proxima clase conviene practicar, profundizar o revisar ${input.topic}.`,
+            ejemploConcreto: isApaTopic
+              ? "Respuesta esperada: (Perez, 2021). Para la referencia falta titulo, fuente y URL o datos de publicacion."
+              : `Una respuesta esperada nombra ${input.topic}, muestra un paso y justifica una decision.`,
+            intervencionDocente: isApaTopic
+              ? "Separar tickets con problemas de cita y tickets con problemas de referencia para planificar la proxima revision."
+              : `Recoger dos respuestas para decidir si la proxima clase conviene practicar, profundizar o revisar ${input.topic}.`,
             cierreParcial: "Guardar evidencias y registrar dudas recurrentes.",
           },
         ],
       })),
       actividadCentral: {
-        titulo: `Practica guiada sobre ${input.topic}`,
-        consignaListaParaUsar: `Resolver una situacion de ${input.topic}, explicar el procedimiento usado y marcar una duda o decision dificil.`,
-        pasos: [
-          "Leer la consigna y subrayar los datos o ideas clave.",
-          "Resolver el caso guiado con apoyo del docente.",
-          "Resolver un caso similar en pareja o individual.",
-          "Justificar una decision con vocabulario de la materia.",
-        ],
-        produccionEsperada: `Resolucion o explicacion breve sobre ${input.topic} con evidencia de procedimiento.`,
-        variantes: [
-          `Con apoyo: plantilla de pasos y ejemplo resuelto de ${input.topic}.`,
-          `Extension: crear una variante del caso y justificarla.`,
-        ],
+        ...centralActivity,
       },
-      materialesEditables: [
-        {
-          nombre: `Guia de practica sobre ${input.topic}`,
-          contenido: `Tres consignas graduadas sobre ${input.topic}: una guiada, una de practica autonoma y una de transferencia a ${input.subject}. Incluir espacio para justificar el procedimiento.`,
-          comoUsarlo:
-            "Entregar durante el desarrollo, revisar una respuesta en comun y usar el cierre como evidencia.",
-        },
-      ],
+      materialesEditables: editableMaterials,
       evaluacion: {
         criterios: [
           `Reconoce los elementos centrales de ${input.topic}.`,
@@ -686,23 +958,15 @@ export class PlanGeneratorAgent {
         grupoBase: `Resolver una situacion nueva sobre ${input.topic} y explicar el procedimiento usado.`,
         extension: `Crear una variante del problema sobre ${input.topic}, resolverla y justificar por que funciona.`,
       },
-      erroresFrecuentes: [
-        {
-          error: `Responder sobre ${input.topic} con una frase general sin ejemplo.`,
-          comoDetectarlo: "La respuesta no nombra datos, pasos ni evidencia del contenido.",
-          comoIntervenir:
-            "Pedir que agregue un ejemplo concreto y senale en que parte de la consigna aparece.",
-        },
-        {
-          error: `Aplicar un procedimiento de ${input.topic} sin justificarlo.`,
-          comoDetectarlo: "El resultado aparece sin explicacion o con vocabulario impreciso.",
-          comoIntervenir:
-            "Pedir que reconstruya el procedimiento en dos pasos y nombre la decision clave.",
-        },
-      ],
+      erroresFrecuentes: frequentErrors,
       recursosOpcionales: resources,
     });
 
     return this.toLegacyPlan(guide);
   }
+}
+
+function readPositiveIntegerEnv(name: string, fallback: number): number {
+  const value = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
 }

@@ -31,6 +31,8 @@ const errorMessages: Record<string, string> = {
     "Esta cuenta escolar todavía no tiene un perfil docente asociado para guardar clases.",
   quota:
     "Alcanzaste el límite de planificaciones de tu plan. Actualizá tu plan para seguir generando clases.",
+  ai_unavailable:
+    "La IA de planificación no respondió. No guardamos una guía automática de baja calidad; reintentá en unos minutos.",
   api: "No pudimos generar la clase. Reintentá en unos minutos.",
   network: "La conexión falló. Reintentá en unos minutos.",
 };

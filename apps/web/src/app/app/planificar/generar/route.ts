@@ -129,6 +129,10 @@ export async function POST(request: NextRequest) {
         return withStableAuthCookies(redirectTo(request, { error: "quota" }));
       }
 
+      if (code === "LESSON_PLAN_AI_UNAVAILABLE") {
+        return withStableAuthCookies(redirectTo(request, { error: "ai_unavailable" }));
+      }
+
       return withStableAuthCookies(redirectTo(request, { error: "api" }));
     }
 

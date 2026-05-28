@@ -2,7 +2,9 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import {
   AnthropicLlmClient,
@@ -15,15 +17,26 @@ import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 
 type PrismaTx = Prisma.TransactionClient;
+const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 150_000;
 
 @Injectable()
 export class LessonPlanService {
+  private readonly logger = new Logger(LessonPlanService.name);
   private readonly generator: PlanGeneratorAgent;
+  private readonly aiProviderConfigured: boolean;
 
   constructor(private readonly prisma: PrismaService) {
-    this.generator = process.env.ANTHROPIC_API_KEY?.trim()
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim();
+    this.aiProviderConfigured = Boolean(anthropicApiKey);
+    this.generator = anthropicApiKey
       ? new PlanGeneratorAgent(
-          new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY, timeoutMs: 55_000 }),
+          new AnthropicLlmClient({
+            apiKey: anthropicApiKey,
+            timeoutMs: this.readPositiveIntegerEnv(
+              "LESSON_PLAN_ANTHROPIC_TIMEOUT_MS",
+              DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS,
+            ),
+          }),
         )
       : new PlanGeneratorAgent();
   }
@@ -116,7 +129,25 @@ export class LessonPlanService {
       plan: input.plan,
     });
 
-    const plan = await this.generator.generate(input);
+    const generation = await this.generator.generateWithMetadata(input);
+    if (generation.source === "fallback") {
+      this.logger.warn({
+        event: "lesson_plan_generation_fallback",
+        reason: generation.fallbackReason,
+        aiProviderConfigured: this.aiProviderConfigured,
+      });
+
+      if (!this.shouldPersistFallbackPlans()) {
+        throw new ServiceUnavailableException({
+          code: "LESSON_PLAN_AI_UNAVAILABLE",
+          message: "No se pudo generar una guia con IA en este momento",
+          reason: generation.fallbackReason,
+          aiProviderConfigured: this.aiProviderConfigured,
+        });
+      }
+    }
+
+    const plan = generation.plan;
     let created: { id: string };
     try {
       created = await this.prisma.$transaction(async (tx) => {
@@ -161,7 +192,7 @@ export class LessonPlanService {
               printables: plan.printables,
               guide: plan.guide,
             },
-            generatedByAI: true,
+            generatedByAI: generation.source === "llm",
           },
         });
       });
@@ -284,6 +315,17 @@ export class LessonPlanService {
   private currentMonthStart(): Date {
     const now = new Date();
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  }
+
+  private shouldPersistFallbackPlans(): boolean {
+    return (
+      process.env.ALLOW_LESSON_PLAN_FALLBACK === "true" || process.env.NODE_ENV !== "production"
+    );
+  }
+
+  private readPositiveIntegerEnv(name: string, fallback: number): number {
+    const value = Number.parseInt(process.env[name] ?? "", 10);
+    return Number.isFinite(value) && value > 0 ? value : fallback;
   }
 
   private async enableRlsBypass(tx: PrismaTx): Promise<void> {
