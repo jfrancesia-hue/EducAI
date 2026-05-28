@@ -135,6 +135,7 @@ export class LessonPlanService {
       this.logger.warn({
         event: "lesson_plan_generation_fallback",
         reason: generation.fallbackReason,
+        attempts: generation.fallbackDetails,
         aiProviderConfigured: this.aiProviderConfigured,
       });
 

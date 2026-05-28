@@ -39,10 +39,25 @@ export type LessonPlanOutput = z.infer<typeof lessonPlanSchema>;
 
 export type LessonPlanGenerationSource = "llm" | "fallback";
 
+export interface LessonPlanGenerationAttemptDetail {
+  attempt: number;
+  reason: string;
+  errorName?: string;
+  errorMessage?: string;
+  status?: number;
+  requestId?: string;
+  stopReason?: string;
+  modelUsed?: string;
+  outputTokens?: number;
+  contentLength?: number;
+  hasToolUse?: boolean;
+}
+
 export interface LessonPlanGenerationResult {
   plan: LessonPlanOutput;
   source: LessonPlanGenerationSource;
   fallbackReason?: string;
+  fallbackDetails?: LessonPlanGenerationAttemptDetail[];
 }
 
 const PLAN_GENERATION_TIMEOUT_MS = readPositiveIntegerEnv(
@@ -84,12 +99,14 @@ export class PlanGeneratorAgent {
 
   async generateWithMetadata(input: PlanGeneratorInput): Promise<LessonPlanGenerationResult> {
     let fallbackReason = "llm_unavailable";
+    const fallbackDetails: LessonPlanGenerationAttemptDetail[] = [];
 
     for (let attempt = 1; attempt <= PLAN_GENERATION_ATTEMPTS; attempt += 1) {
       const result = await this.tryGenerateWithLlm(input, attempt);
 
       if (!result.output) {
         fallbackReason = result.reason;
+        fallbackDetails.push(result.detail);
         continue;
       }
 
@@ -105,12 +122,22 @@ export class PlanGeneratorAgent {
 
       fallbackReason =
         result.output.stopReason === "max_tokens" ? "max_tokens" : "invalid_llm_response";
+      fallbackDetails.push({
+        attempt,
+        reason: fallbackReason,
+        stopReason: result.output.stopReason,
+        modelUsed: result.output.modelUsed,
+        outputTokens: result.output.outputTokens,
+        contentLength: result.output.content.length,
+        hasToolUse: Boolean(result.output.toolUse),
+      });
     }
 
     return {
       plan: this.buildFallbackPlan(input),
       source: "fallback",
       fallbackReason,
+      fallbackDetails,
     };
   }
 
@@ -160,8 +187,48 @@ export class PlanGeneratorAgent {
         error instanceof Error && error.message === "Plan generation timed out"
           ? "timeout"
           : "llm_unavailable";
-      return { output: null, reason };
+      return { output: null, reason, detail: this.describeGenerationError(error, attempt, reason) };
     }
+  }
+
+  private describeGenerationError(
+    error: unknown,
+    attempt: number,
+    reason: string,
+  ): LessonPlanGenerationAttemptDetail {
+    const record = this.asRecord(error);
+    const nestedError = this.asRecord(record.error);
+    const headers = this.asRecord(record.headers);
+    const requestId =
+      this.asString(record.request_id) ||
+      this.asString(record.requestId) ||
+      this.asString(nestedError.request_id) ||
+      this.asString(headers["request-id"]) ||
+      this.asString(headers["x-request-id"]);
+
+    return {
+      attempt,
+      reason,
+      errorName: error instanceof Error ? error.name : this.asString(record.name),
+      errorMessage:
+        error instanceof Error
+          ? error.message
+          : this.asString(record.message) || this.asString(nestedError.message),
+      status: this.asNumber(record.status) || this.asNumber(record.statusCode),
+      requestId,
+    };
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  }
+
+  private asString(value: unknown): string | undefined {
+    return typeof value === "string" && value.trim() ? value.trim() : undefined;
+  }
+
+  private asNumber(value: unknown): number | undefined {
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
   }
 
   private withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

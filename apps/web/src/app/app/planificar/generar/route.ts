@@ -37,12 +37,28 @@ function withAccessTokenCookie<T extends NextResponse>(response: T, accessToken:
   return response;
 }
 
-async function readApiErrorCode(response: Response) {
+type ApiErrorPayload = {
+  code?: string | null;
+  message?: string | null;
+  reason?: string | null;
+  status?: number;
+};
+
+async function readApiError(response: Response): Promise<ApiErrorPayload> {
   try {
-    const body = (await response.json()) as { code?: unknown };
-    return typeof body.code === "string" ? body.code : null;
+    const body = (await response.json()) as {
+      code?: unknown;
+      message?: unknown;
+      reason?: unknown;
+    };
+    return {
+      code: typeof body.code === "string" ? body.code : null,
+      message: typeof body.message === "string" ? body.message : null,
+      reason: typeof body.reason === "string" ? body.reason : null,
+      status: response.status,
+    };
   } catch {
-    return null;
+    return { code: null, status: response.status };
   }
 }
 
@@ -122,7 +138,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const code = await readApiErrorCode(response);
+      const apiError = await readApiError(response);
+      const code = apiError.code;
+      console.error("lesson_plan_generate_api_failed", {
+        status: response.status,
+        code: apiError.code,
+        reason: apiError.reason,
+        message: apiError.message,
+      });
+
       if (code === "TEACHER_PROFILE_MISSING") {
         return withStableAuthCookies(redirectTo(request, { error: "teacher_profile" }));
       }
@@ -140,7 +164,10 @@ export async function POST(request: NextRequest) {
 
     const body = (await response.json()) as { data?: { id?: string } };
     return withStableAuthCookies(redirectTo(request, { created: body.data?.id ?? "ok" }));
-  } catch {
+  } catch (error) {
+    console.error("lesson_plan_generate_network_failed", {
+      error: error instanceof Error ? error.message : "unknown",
+    });
     return withStableAuthCookies(redirectTo(request, { error: "network" }));
   }
 }
