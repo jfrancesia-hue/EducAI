@@ -1,4 +1,9 @@
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { createPublicKey, verify, type JsonWebKey } from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 
@@ -33,6 +38,7 @@ type JwksResponse = {
 
 @Injectable()
 export class SupabaseAuthService {
+  private readonly logger = new Logger(SupabaseAuthService.name);
   private client?: SupabaseClient;
 
   async authenticate(accessToken: string): Promise<AuthenticatedUser> {
@@ -45,7 +51,25 @@ export class SupabaseAuthService {
     }
 
     const client = this.getClient();
-    const { data, error } = await client.auth.getUser(accessToken);
+    let data: { user: User | null };
+    let error: unknown;
+    try {
+      const result = await client.auth.getUser(accessToken);
+      data = result.data;
+      error = result.error;
+    } catch (authError) {
+      this.logger.warn({
+        event: "supabase_auth_get_user_failed",
+        error: authError instanceof Error ? authError.message : "unknown",
+      });
+
+      const jwtUser = await this.authenticateSignedJwt(accessToken);
+      if (jwtUser) {
+        return jwtUser;
+      }
+
+      throw new ServiceUnavailableException("No pudimos validar la sesion en este momento");
+    }
 
     if (!error && data.user) {
       return this.mapUser(data.user);
