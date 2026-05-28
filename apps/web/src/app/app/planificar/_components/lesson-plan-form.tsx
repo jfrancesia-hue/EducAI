@@ -153,11 +153,11 @@ function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
 function GeneratingOverlay() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const steps = [
-    "Leyendo nivel, curso y objetivo",
-    "Armando la secuencia de clase",
-    "Preparando actividad y material editable",
-    "Sumando recursos, imágenes y videos",
-    "Revisando evaluación y cierre",
+    "Leyendo nivel, edad y contexto del curso",
+    "Diseñando la secuencia completa",
+    "Preparando actividades y material editable",
+    "Sumando recomendaciones, imágenes y videos",
+    "Revisando evaluación, cierre y coherencia",
   ];
   const activeStep = Math.min(steps.length - 1, Math.floor(elapsedSeconds / 18));
   const progress = Math.min(94, 8 + elapsedSeconds * 1.1);
@@ -187,11 +187,14 @@ function GeneratingOverlay() {
                 Planificación docente
               </p>
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">
-                Generando tu guía
+                Generando la guía completa
               </h2>
+              <div className="mt-3 inline-flex rounded-lg bg-[#fff8d7] px-3 py-2 text-sm font-bold text-[#725200]">
+                Tiempo estimado: 2 a 6 minutos
+              </div>
               <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
-                Estamos armando una clase lista para revisar, imprimir y adaptar. Puede tardar unos
-                minutos.
+                No estamos generando un borrador rápido: estamos preparando la versión final con
+                secuencia, materiales editables, evaluación, recomendaciones, imágenes y videos.
               </p>
             </div>
           </div>
@@ -200,8 +203,8 @@ function GeneratingOverlay() {
         <div className="grid gap-5 p-6">
           <div>
             <div className="mb-2 flex items-center justify-between text-sm font-bold text-[#33423c]">
-              <span>Progreso estimado</span>
-              <span>{Math.round(progress)}%</span>
+              <span>Preparación estimada</span>
+              <span>{elapsedSeconds < 120 ? "En curso" : "Revisión final"}</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-[#e3ebe7]">
               <div
@@ -244,8 +247,9 @@ function GeneratingOverlay() {
             })}
           </div>
 
-          <div className="rounded-lg bg-[#fff8d7] px-4 py-3 text-sm font-bold text-[#725200]">
-            No cierres esta pantalla. Cuando termine, te llevamos directo a la guía.
+          <div className="rounded-lg bg-[#e7fbf7] px-4 py-3 text-sm font-bold leading-6 text-[#075c50]">
+            Dejá esta pantalla abierta. Cuando termine, te llevamos directo a la guía lista para
+            revisar, ajustar y usar.
           </div>
         </div>
       </section>
