@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 
 import {
   EDUCAI_ACCESS_TOKEN_COOKIE,
@@ -7,7 +9,10 @@ import {
 } from "../../../../lib/supabase/cookies";
 import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
+export const runtime = "nodejs";
 export const maxDuration = 420;
+
+const API_GENERATE_TIMEOUT_MS = 410_000;
 
 const GRADE_RANGES: Record<string, { min: number; max: number }> = {
   primaria: { min: 1, max: 7 },
@@ -44,9 +49,15 @@ type ApiErrorPayload = {
   status?: number;
 };
 
-async function readApiError(response: Response): Promise<ApiErrorPayload> {
+type ApiResponse = {
+  ok: boolean;
+  status: number;
+  bodyText: string;
+};
+
+async function readApiError(response: ApiResponse): Promise<ApiErrorPayload> {
   try {
-    const body = (await response.json()) as {
+    const body = JSON.parse(response.bodyText) as {
       code?: unknown;
       message?: unknown;
       reason?: unknown;
@@ -60,6 +71,90 @@ async function readApiError(response: Response): Promise<ApiErrorPayload> {
   } catch {
     return { code: null, status: response.status };
   }
+}
+
+function postJsonToApi(url: string, accessToken: string, payload: unknown): Promise<ApiResponse> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const body = Buffer.from(JSON.stringify(payload));
+    const transport = target.protocol === "https:" ? httpsRequest : httpRequest;
+
+    if (target.protocol !== "https:" && target.protocol !== "http:") {
+      reject(new Error(`Unsupported API protocol: ${target.protocol}`));
+      return;
+    }
+
+    const req = transport(
+      target,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "Content-Length": String(body.byteLength),
+        },
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+
+        res.on("data", (chunk: Buffer | string) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        });
+
+        res.on("end", () => {
+          const status = res.statusCode ?? 0;
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            bodyText: Buffer.concat(chunks).toString("utf8"),
+          });
+        });
+
+        res.on("error", reject);
+      },
+    );
+
+    req.setTimeout(API_GENERATE_TIMEOUT_MS, () => {
+      req.destroy(new Error(`API request timed out after ${API_GENERATE_TIMEOUT_MS}ms`));
+    });
+    req.on("error", reject);
+    req.end(body);
+  });
+}
+
+function readApiSuccessId(response: ApiResponse) {
+  try {
+    const body = JSON.parse(response.bodyText) as { data?: { id?: unknown } };
+    return typeof body.data?.id === "string" ? body.data.id : "ok";
+  } catch {
+    return "ok";
+  }
+}
+
+function describeNetworkError(error: unknown) {
+  const record = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+  const cause =
+    record.cause && typeof record.cause === "object"
+      ? (record.cause as Record<string, unknown>)
+      : {};
+
+  return {
+    errorName: error instanceof Error ? error.name : readStringFromRecord(record, "name"),
+    errorMessage:
+      error instanceof Error
+        ? error.message
+        : (readStringFromRecord(record, "message") ?? "unknown"),
+    causeName: readStringFromRecord(cause, "name"),
+    causeMessage: readStringFromRecord(cause, "message"),
+    causeCode: readStringFromRecord(cause, "code"),
+    causeErrno: readStringFromRecord(cause, "errno"),
+    causeSyscall: readStringFromRecord(cause, "syscall"),
+  };
+}
+
+function readStringFromRecord(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 export async function POST(request: NextRequest) {
@@ -126,22 +221,20 @@ export async function POST(request: NextRequest) {
     return withStableAuthCookies(redirectTo(request, { error: "invalid" }));
   }
 
-  try {
-    const response = await fetch(`${apiBaseUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+  const startedAt = Date.now();
 
+  try {
+    const response = await postJsonToApi(
+      `${apiBaseUrl.replace(/\/$/u, "")}/lesson-plans/generate`,
+      accessToken,
+      payload,
+    );
     if (!response.ok) {
       const apiError = await readApiError(response);
       const code = apiError.code;
       console.error("lesson_plan_generate_api_failed", {
         status: response.status,
+        elapsedMs: Date.now() - startedAt,
         code: apiError.code,
         reason: apiError.reason,
         message: apiError.message,
@@ -162,11 +255,17 @@ export async function POST(request: NextRequest) {
       return withStableAuthCookies(redirectTo(request, { error: "api" }));
     }
 
-    const body = (await response.json()) as { data?: { id?: string } };
-    return withStableAuthCookies(redirectTo(request, { created: body.data?.id ?? "ok" }));
+    const planId = readApiSuccessId(response);
+    console.log("lesson_plan_generate_api_completed", {
+      status: response.status,
+      elapsedMs: Date.now() - startedAt,
+      planId,
+    });
+    return withStableAuthCookies(redirectTo(request, { created: planId }));
   } catch (error) {
     console.error("lesson_plan_generate_network_failed", {
-      error: error instanceof Error ? error.message : "unknown",
+      elapsedMs: Date.now() - startedAt,
+      ...describeNetworkError(error),
     });
     return withStableAuthCookies(redirectTo(request, { error: "network" }));
   }

@@ -130,12 +130,15 @@ export class LessonPlanService {
       plan: input.plan,
     });
 
+    const generationStartedAt = Date.now();
     const generation = await this.generator.generateWithMetadata(input);
+    const generationElapsedMs = Date.now() - generationStartedAt;
     if (generation.source === "fallback") {
       this.logger.warn({
         event: "lesson_plan_generation_fallback",
         reason: generation.fallbackReason,
         attempts: generation.fallbackDetails,
+        elapsedMs: generationElapsedMs,
         aiProviderConfigured: this.aiProviderConfigured,
       });
 
@@ -205,6 +208,17 @@ export class LessonPlanService {
         detail: error instanceof Error ? error.message : "Error desconocido",
       });
     }
+
+    this.logger.log({
+      event: "lesson_plan_generation_completed",
+      source: generation.source,
+      elapsedMs: generationElapsedMs,
+      generatedByAI: generation.source === "llm",
+      subject: input.subject,
+      topic: input.topic,
+      educationLevel: input.educationLevel,
+      grade: input.grade,
+    });
 
     return { data: { id: created.id, plan } };
   }
