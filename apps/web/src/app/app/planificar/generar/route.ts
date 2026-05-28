@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
   const accessToken =
-    readString(formData, "accessToken") ||
+    session?.access_token ||
     readCookieValue(request.headers.get("cookie"), EDUCAI_ACCESS_TOKEN_COOKIE) ||
-    session?.access_token;
+    readString(formData, "accessToken");
 
   if (!accessToken) {
     return withAuthCookies(redirectTo(request, { error: "auth" }));

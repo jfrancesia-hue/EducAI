@@ -334,43 +334,71 @@ export class LessonPlanService {
   }
 
   async findOne(id: string, access: { tenantId: string; teacherId?: string; schoolId?: string }) {
-    const lessonPlan = await this.prisma.$transaction(async (tx) => {
-      await this.enableRlsBypass(tx);
+    let lastError: unknown;
 
-      return tx.lessonPlan.findFirst({
-        where: {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const lessonPlan = await this.prisma.$transaction(async (tx) => {
+          await this.enableRlsBypass(tx);
+
+          return tx.lessonPlan.findFirst({
+            where: {
+              id,
+              tenantId: access.tenantId,
+              deletedAt: null,
+              ...(access.teacherId ? { teacherId: access.teacherId } : {}),
+              ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
+            },
+            select: {
+              id: true,
+              grade: true,
+              subject: true,
+              topic: true,
+              status: true,
+              durationMinutes: true,
+              competences: true,
+              objectives: true,
+              activities: true,
+              resources: true,
+              assessment: true,
+              adaptations: true,
+              generatedByAI: true,
+              rating: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          });
+        });
+
+        if (!lessonPlan) {
+          throw new NotFoundException("Lesson plan not found");
+        }
+
+        return { data: lessonPlan };
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw error;
+        }
+
+        lastError = error;
+        this.logger.warn({
+          event: "lesson_plan_read_retry",
           id,
-          tenantId: access.tenantId,
-          deletedAt: null,
-          ...(access.teacherId ? { teacherId: access.teacherId } : {}),
-          ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
-        },
-        select: {
-          id: true,
-          grade: true,
-          subject: true,
-          topic: true,
-          status: true,
-          durationMinutes: true,
-          competences: true,
-          objectives: true,
-          activities: true,
-          resources: true,
-          assessment: true,
-          adaptations: true,
-          generatedByAI: true,
-          rating: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-    });
+          attempt,
+          error: error instanceof Error ? error.message : "unknown",
+        });
 
-    if (!lessonPlan) {
-      throw new NotFoundException("Lesson plan not found");
+        if (attempt < 3) {
+          await this.delay(attempt * 500);
+        }
+      }
     }
 
-    return { data: lessonPlan };
+    throw new InternalServerErrorException({
+      code: "LESSON_PLAN_READ_FAILED",
+      message: "No se pudo abrir la planificacion generada",
+      detail: lastError instanceof Error ? lastError.message : "Error desconocido",
+    });
   }
 
   async saveFeedback(
@@ -416,5 +444,9 @@ export class LessonPlanService {
 
   private asJsonObject(value: Prisma.JsonValue | null): Record<string, unknown> {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

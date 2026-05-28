@@ -262,7 +262,7 @@ function GeneratingOverlay() {
   );
 }
 
-export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
+export function LessonPlanForm() {
   const [educationLevel, setEducationLevel] = useState<EducationLevel>("secundaria");
   const [lessonIntent, setLessonIntent] = useState<LessonIntent>("introducir");
   const [grade, setGrade] = useState(levelLabels.secundaria.defaultGrade);
@@ -293,7 +293,6 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
       >
         <input type="hidden" name="educationLevel" value={educationLevel} />
         <input type="hidden" name="lessonIntent" value={lessonIntent} />
-        {accessToken ? <input type="hidden" name="accessToken" value={accessToken} /> : null}
 
         <div className="border-b border-[#e3ebe7] p-5">
           <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificación</Badge>

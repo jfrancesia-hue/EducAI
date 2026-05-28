@@ -18,6 +18,7 @@ import { AppShell } from "../_components/app-shell";
 import { LessonPlanDocumentActions } from "./_components/lesson-plan-document-actions";
 import { LessonPlanFeedback } from "./_components/lesson-plan-feedback";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
+import { LessonPlanOpenRetry } from "./_components/lesson-plan-open-retry";
 import { fetchPlanningDashboard } from "../../../lib/api/institutional-dashboard";
 import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
@@ -1027,6 +1028,23 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
     );
   }
 
+  if (createdId) {
+    return (
+      <AppShell
+        hideNavigation
+        title="Guía generada"
+        eyebrow="Planificación docente"
+        statusNote="La clase ya se guardó. Estamos preparando la vista final."
+      >
+        <div className="grid min-h-[calc(100vh-120px)] place-items-center bg-[#f4f8f6] p-4 sm:p-6">
+          <div className="w-full max-w-2xl">
+            <LessonPlanOpenRetry planId={createdId} />
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell
       title="Crear clase"
@@ -1091,7 +1109,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
               </a>
             </div>
           ) : (
-            <LessonPlanForm accessToken={accessToken} />
+            <LessonPlanForm />
           )}
         </section>
 

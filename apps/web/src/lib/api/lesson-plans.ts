@@ -30,12 +30,29 @@ export async function fetchLessonPlan(
     return null;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/lesson-plans/${id}`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const url = `${apiUrl.replace(/\/$/u, "")}/lesson-plans/${id}`;
+  let response: Response | null = null;
 
-  if (!response.ok) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      response = await fetch(url, {
+        headers: { authorization: `Bearer ${accessToken}` },
+        cache: "no-store",
+      });
+
+      if (response.ok || response.status < 500) {
+        break;
+      }
+    } catch {
+      response = null;
+    }
+
+    if (attempt < 3) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 750));
+    }
+  }
+
+  if (!response?.ok) {
     return null;
   }
 
