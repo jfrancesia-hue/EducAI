@@ -1,7 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, type MockInstance } from "vitest";
 import { WeeklyReportService } from "./parent-report.service.js";
 
-type AnyPrisma = Record<string, unknown>;
+type AnyPrisma = {
+  family: { findFirst: MockInstance };
+  learningSession: { findMany: MockInstance };
+  message: { count: MockInstance };
+  achievement: { findMany: MockInstance };
+  parentReport: { create: MockInstance; update: MockInstance };
+};
 
 function buildFamily(
   overrides: Partial<{
@@ -60,16 +66,16 @@ function buildPrismaMock(
       create: vi.fn().mockResolvedValue({ id: opts.reportId ?? "rep_1" }),
       update: vi.fn().mockResolvedValue({ id: opts.reportId ?? "rep_1" }),
     },
-  } as unknown as AnyPrisma;
+  } satisfies AnyPrisma;
 }
 
 function buildTwilioMock(failures: number = 0) {
   let calls = 0;
   return {
-    send: vi.fn().mockImplementation(async () => {
+    send: vi.fn().mockImplementation(() => {
       calls += 1;
-      if (calls <= failures) throw new Error("twilio fail");
-      return { messageSid: `MS${calls}`, status: "queued" };
+      if (calls <= failures) return Promise.reject(new Error("twilio fail"));
+      return Promise.resolve({ messageSid: `MS${calls}`, status: "queued" });
     }),
   };
 }
