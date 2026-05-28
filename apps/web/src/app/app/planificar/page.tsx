@@ -160,6 +160,79 @@ function canExportPlan(plan: string) {
   return !["", "free"].includes(plan.trim().toLowerCase());
 }
 
+type LessonPlanQuota = NonNullable<
+  NonNullable<Awaited<ReturnType<typeof fetchInstitutionalDashboard>>>["lessonPlanQuota"]
+>;
+
+function quotaPeriodLabel(period: LessonPlanQuota["period"]) {
+  if (period === "monthly") {
+    return "este mes";
+  }
+
+  if (period === "lifetime") {
+    return "en tu cuenta";
+  }
+
+  return "";
+}
+
+function LessonPlanQuotaNotice({ quota }: { quota: LessonPlanQuota }) {
+  if (!quota || quota.period === "unlimited" || quota.remaining === null) {
+    return null;
+  }
+
+  const exhausted = quota.remaining <= 0;
+  const period = quotaPeriodLabel(quota.period);
+  const extraText =
+    quota.extraCredits > 0
+      ? ` Incluye ${quota.extraCredits} crédito${quota.extraCredits === 1 ? "" : "s"} extra.`
+      : "";
+
+  if (exhausted) {
+    return (
+      <div className="rounded-lg border border-[#ef5da8]/35 bg-[#fdeaf4] p-5 text-[#8d174f] shadow-whisper">
+        <div className="flex gap-3">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div className="grid gap-3">
+            <div>
+              <p className="font-bold">Ya usaste todas las planificaciones de tu plan.</p>
+              <p className="mt-1 text-sm leading-6">
+                Usaste {quota.used} de {quota.effectiveLimit} disponibles {period}. Para generar
+                otra guía, actualizá tu plan o agregá créditos.
+                {extraText}
+              </p>
+            </div>
+            <a
+              href="/app/planes"
+              className="w-fit rounded-lg bg-[#075f53] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#087968]"
+            >
+              Ver planes
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-[#18b6a4]/30 bg-[#e7fbf7] p-4 text-[#075c50]">
+      <div className="flex gap-3">
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+        <div>
+          <p className="font-semibold">
+            Te {quota.remaining === 1 ? "queda" : "quedan"} {quota.remaining} planificación
+            {quota.remaining === 1 ? "" : "es"} disponible
+            {quota.remaining === 1 ? "" : "s"}.
+          </p>
+          <p className="mt-1 text-sm leading-6">
+            Usaste {quota.used} de {quota.effectiveLimit} {period}.{extraText}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function youtubeSearchHref(query: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 }
@@ -909,6 +982,11 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
   const userPlan = metadataValue(user?.app_metadata, "plan") || "free";
   const documentTitle = createdPlan ? lessonPlanTitle(createdPlan) : "Guía EducAI";
   const exportEnabled = canExportPlan(userPlan);
+  const lessonPlanQuota = dashboard?.lessonPlanQuota ?? null;
+  const lessonPlanQuotaExhausted =
+    lessonPlanQuota?.remaining !== null &&
+    lessonPlanQuota?.remaining !== undefined &&
+    lessonPlanQuota.remaining <= 0;
 
   if (createdPlan) {
     return (
@@ -972,6 +1050,10 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
 
           {createdPlan ? <GeneratedLessonPlan plan={createdPlan} /> : null}
 
+          {!createdPlan && lessonPlanQuota ? (
+            <LessonPlanQuotaNotice quota={lessonPlanQuota} />
+          ) : null}
+
           {error ? (
             <div className="rounded-lg border border-[#ef5da8]/35 bg-[#fdeaf4] p-4 text-[#8d174f]">
               <div className="flex gap-3">
@@ -991,6 +1073,22 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                 className="inline-flex rounded-lg bg-[#075f53] px-4 py-3 text-sm font-bold text-white shadow-whisper transition hover:bg-[#087968]"
               >
                 Nueva planificación
+              </a>
+            </div>
+          ) : lessonPlanQuotaExhausted ? (
+            <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+              <h2 className="font-display text-2xl font-bold tracking-tight">
+                Actualizá tu plan para seguir
+              </h2>
+              <p className="mt-2 text-[15px] leading-6 text-[#4f5f58]">
+                El formulario vuelve a estar disponible cuando tengas planificaciones o créditos
+                activos.
+              </p>
+              <a
+                href="/app/planes"
+                className="mt-4 inline-flex rounded-lg bg-[#075f53] px-4 py-3 text-sm font-bold text-white shadow-whisper transition hover:bg-[#087968]"
+              >
+                Ver planes
               </a>
             </div>
           ) : (

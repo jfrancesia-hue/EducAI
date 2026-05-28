@@ -29,6 +29,15 @@ export type InstitutionalDashboardResponse = {
       generatedByAI: boolean;
       createdAt: string;
     }>;
+    lessonPlanQuota: {
+      plan: string;
+      period: "lifetime" | "monthly" | "unlimited";
+      used: number;
+      baseLimit: number | null;
+      extraCredits: number;
+      effectiveLimit: number | null;
+      remaining: number | null;
+    } | null;
     subjectMix: Array<{
       subject: string;
       count: number;

@@ -27,6 +27,7 @@ export class DashboardController {
       tenantId: requireUserClaim(user, "tenantId"),
       schoolId: user.schoolId,
       teacherId: user.teacherId,
+      plan: user.plan,
     });
   }
 

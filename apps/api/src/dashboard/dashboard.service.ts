@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { EDUCAI_LIMITS, normalizeEducAIPlan } from "@educai/ai";
 import { Prisma } from "@educai/database";
 
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -18,6 +19,7 @@ type InstitutionalInput = {
   tenantId: string;
   schoolId?: string;
   teacherId?: string;
+  plan?: string;
 };
 
 type PrismaTx = Prisma.TransactionClient;
@@ -35,6 +37,15 @@ type RecentLessonPlanRow = {
 type LessonPlanSummary = {
   count: number;
   recent: RecentLessonPlanRow[];
+};
+type LessonPlanQuota = {
+  plan: string;
+  period: "lifetime" | "monthly" | "unlimited";
+  used: number;
+  baseLimit: number | null;
+  extraCredits: number;
+  effectiveLimit: number | null;
+  remaining: number | null;
 };
 
 @Injectable()
@@ -94,6 +105,11 @@ export class DashboardService {
 
         return { count, recent };
       },
+    );
+    const lessonPlanQuota = await this.readDashboardValue<LessonPlanQuota | null>(
+      "lessonPlanQuota",
+      null,
+      (prisma) => this.getLessonPlanQuota(prisma, input),
     );
 
     const studentCount = await this.readDashboardValue("studentCount", 0, (prisma) =>
@@ -210,6 +226,7 @@ export class DashboardService {
           ...plan,
           createdAt: plan.createdAt.toISOString(),
         })),
+        lessonPlanQuota,
         subjectMix: lessonPlanBySubject.map((item) => ({
           subject: item.subject,
           count: item._count._all,
@@ -238,6 +255,109 @@ export class DashboardService {
       );
       return fallback;
     }
+  }
+
+  private async getLessonPlanQuota(
+    prisma: PrismaTx,
+    input: InstitutionalInput,
+  ): Promise<LessonPlanQuota> {
+    const quota = this.resolveLessonPlanQuota(input.plan);
+    if (!quota) {
+      return {
+        plan: normalizeEducAIPlan(input.plan),
+        period: "unlimited",
+        used: 0,
+        baseLimit: null,
+        extraCredits: 0,
+        effectiveLimit: null,
+        remaining: null,
+      };
+    }
+
+    const [used, credits] = await Promise.all([
+      prisma.lessonPlan.count({
+        where: {
+          tenantId: input.tenantId,
+          deletedAt: null,
+          ...(input.teacherId ? { teacherId: input.teacherId } : {}),
+          ...(quota.periodStart ? { createdAt: { gte: quota.periodStart } } : {}),
+        },
+      }),
+      prisma.usageCreditLedger.aggregate({
+        _sum: { amount: true },
+        where: {
+          tenantId: input.tenantId,
+          product: "EDUCAI",
+          unit: "lesson_plan",
+          OR: [...(input.teacherId ? [{ teacherId: input.teacherId }] : []), { teacherId: null }],
+          AND: [
+            {
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+          ],
+        },
+      }),
+    ]);
+
+    const extraCredits = Math.max(0, credits._sum.amount ?? 0);
+    const effectiveLimit = quota.limit + extraCredits;
+    return {
+      plan: quota.plan,
+      period: quota.period,
+      used,
+      baseLimit: quota.limit,
+      extraCredits,
+      effectiveLimit,
+      remaining: Math.max(0, effectiveLimit - used),
+    };
+  }
+
+  private resolveLessonPlanQuota(plan: string | undefined): {
+    plan: string;
+    limit: number;
+    period: "lifetime" | "monthly";
+    periodStart?: Date;
+  } | null {
+    const normalizedPlan = normalizeEducAIPlan(plan);
+    const limits = EDUCAI_LIMITS[normalizedPlan];
+
+    if ("planificaciones" in limits) {
+      const lessonPlanLimit = limits.planificaciones;
+      if ("total_vida" in lessonPlanLimit) {
+        return {
+          plan: normalizedPlan,
+          limit: lessonPlanLimit.total_vida,
+          period: "lifetime",
+        };
+      }
+
+      if (lessonPlanLimit.mensual === null) {
+        return null;
+      }
+
+      return {
+        plan: normalizedPlan,
+        limit: lessonPlanLimit.mensual,
+        period: "monthly",
+        periodStart: this.currentMonthStart(),
+      };
+    }
+
+    if ("planificaciones_por_docente_activo" in limits) {
+      return {
+        plan: normalizedPlan,
+        limit: limits.planificaciones_por_docente_activo.mensual,
+        period: "monthly",
+        periodStart: this.currentMonthStart(),
+      };
+    }
+
+    return null;
+  }
+
+  private currentMonthStart(): Date {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   }
 
   async getMinistryOverview() {
