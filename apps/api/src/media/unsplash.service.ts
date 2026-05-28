@@ -11,6 +11,7 @@ type UnsplashOrientation = "landscape" | "portrait" | "squarish";
 interface UnsplashPhoto {
   urls: { small: string; regular: string; full: string };
   user: { name: string; links: { html: string } };
+  links: { download_location: string };
   alt_description?: string;
 }
 
@@ -23,6 +24,22 @@ export interface UnsplashResult {
   autor: { name: string; profileUrl?: string };
   attribution: string;
   altRecibido: string;
+  /**
+   * URL del endpoint download_location que Unsplash exige pegar (GET) cada vez
+   * que la foto se usa de verdad en la app (ej. se renderiza en una guía).
+   * Sirve para que el fotógrafo reciba la métrica del uso real.
+   * Sin disparar este hit, Unsplash puede rechazar la solicitud de production.
+   */
+  downloadLocation: string;
+}
+
+const UTM_SOURCE = "EducAI";
+const UTM_MEDIUM = "referral";
+
+function withUtm(rawUrl: string): string {
+  if (!rawUrl) return rawUrl;
+  const separator = rawUrl.includes("?") ? "&" : "?";
+  return `${rawUrl}${separator}utm_source=${UTM_SOURCE}&utm_medium=${UTM_MEDIUM}`;
 }
 
 @Injectable()
@@ -112,10 +129,40 @@ export class UnsplashService {
       },
       autor: {
         name: photo.user.name,
-        profileUrl: photo.user.links.html,
+        // UTM tracking required by Unsplash production guidelines.
+        profileUrl: withUtm(photo.user.links.html),
       },
       attribution: `Foto por ${photo.user.name} en Unsplash`,
       altRecibido: photo.alt_description ?? "",
+      downloadLocation: photo.links.download_location,
     };
+  }
+
+  /**
+   * Pega un GET autenticado al `download_location` recibido en `UnsplashResult`.
+   * Llamarlo cuando la foto se renderiza por primera vez en una guía publicada.
+   * Sin esto, Unsplash puede rechazar la solicitud de producción.
+   */
+  async trackDownload(downloadLocation: string): Promise<boolean> {
+    if (!this.accessKey || !downloadLocation) return false;
+
+    try {
+      const response = await fetch(downloadLocation, {
+        headers: { Authorization: `Client-ID ${this.accessKey}` },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        this.logger.warn({
+          event: "unsplash.track_download_failed",
+          status: response.status,
+        });
+        return false;
+      }
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown";
+      this.logger.warn({ event: "unsplash.track_download_error", message });
+      return false;
+    }
   }
 }

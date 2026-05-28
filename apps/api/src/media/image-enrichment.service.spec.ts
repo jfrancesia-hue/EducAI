@@ -13,9 +13,13 @@ const PEXELS_RESULT = {
 
 const UNSPLASH_RESULT = {
   urls: { thumbnail: "https://unsplash.test/thumb.jpg", medium: "m", large: "l" },
-  autor: { name: "Foto Otra", profileUrl: "https://unsplash.test/u" },
+  autor: {
+    name: "Foto Otra",
+    profileUrl: "https://unsplash.test/u?utm_source=EducAI&utm_medium=referral",
+  },
   attribution: "Foto por Foto Otra en Unsplash",
   altRecibido: "kids learning",
+  downloadLocation: "https://api.unsplash.com/photos/abc123/download?ixid=test",
 };
 
 describe("ImageEnrichmentService", () => {

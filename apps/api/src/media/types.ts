@@ -31,6 +31,13 @@ export interface ImagenEnriquecida extends ImagenRef {
   autor?: ImagenAutor;
   /** Atribución al proveedor según sus términos. */
   attribution?: string;
+  /**
+   * Solo para imágenes provistas por Unsplash. El frontend DEBE pegar
+   * un GET autenticado a esta URL cuando renderiza la imagen por primera vez
+   * (vía `POST /media/track-download`), para reportar el "uso" al fotógrafo
+   * — es un requisito de las API guidelines de producción de Unsplash.
+   */
+  downloadLocation?: string;
 }
 
 /** Referencia abstracta a un video YouTube. */

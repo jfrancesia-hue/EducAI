@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 
+import { AuthModule } from "../auth/auth.module.js";
 import { ImageEnrichmentService } from "./image-enrichment.service.js";
+import { MediaController } from "./media.controller.js";
 import { PexelsService } from "./pexels.service.js";
 import { UnsplashService } from "./unsplash.service.js";
 import { VideoEnrichmentService } from "./video-enrichment.service.js";
@@ -21,6 +23,8 @@ import { VideoEnrichmentService } from "./video-enrichment.service.js";
  * automáticamente al proveedor disponible.
  */
 @Module({
+  imports: [AuthModule],
+  controllers: [MediaController],
   providers: [PexelsService, UnsplashService, ImageEnrichmentService, VideoEnrichmentService],
   exports: [ImageEnrichmentService, VideoEnrichmentService],
 })

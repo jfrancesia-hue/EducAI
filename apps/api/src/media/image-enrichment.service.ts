@@ -50,6 +50,9 @@ export class ImageEnrichmentService {
           urls: result.urls,
           autor: result.autor,
           attribution: result.attribution,
+          // Unsplash production guidelines: el frontend debe disparar el GET
+          // a este endpoint cuando muestre la imagen. Lo expone vía /media/track-download.
+          downloadLocation: result.downloadLocation,
         };
       }
     }
