@@ -392,7 +392,7 @@ function GeneratedLessonPlan({
             <h2 className="mt-3 font-display text-4xl font-bold tracking-tight">
               {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
             </h2>
-            <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+            <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#11231f]">
               <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
               <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
               <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
@@ -401,7 +401,7 @@ function GeneratedLessonPlan({
 
           <div className="mt-8 grid gap-6">
             <RichGuideSection title="Vista docente">
-              <div className="grid gap-3 text-[15px] leading-7 text-[#33423c]">
+              <div className="grid gap-3 text-[15px] leading-7 text-[#11231f]">
                 {guide.vistaDocente?.resumen ? <p>{guide.vistaDocente.resumen}</p> : null}
                 {guide.vistaDocente?.focoPedagogico ? (
                   <p>
@@ -423,11 +423,11 @@ function GeneratedLessonPlan({
                   {guide.saberesClave.map((item, index) => (
                     <div key={`${item.nombre}-${index}`} className="rounded-lg bg-white p-3">
                       <p className="font-semibold">{item.nombre}</p>
-                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                      <p className="mt-2 text-[15px] leading-6 text-[#11231f]">
                         {item.explicacionSimple}
                       </p>
                       {item.ejemploDelTema ? (
-                        <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                        <p className="mt-2 text-[15px] leading-6 text-[#11231f]">
                           <span className="font-semibold">Ejemplo:</span> {item.ejemploDelTema}
                         </p>
                       ) : null}
@@ -444,7 +444,7 @@ function GeneratedLessonPlan({
 
             {guide.objetivosAprendizaje?.length ? (
               <RichGuideSection title="Objetivos y evidencias">
-                <ul className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                <ul className="grid gap-2 text-[15px] leading-6 text-[#11231f]">
                   {guide.objetivosAprendizaje.map((objective, index) => (
                     <li
                       key={`${objective.objetivo}-${index}`}
@@ -477,7 +477,7 @@ function GeneratedLessonPlan({
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-bold">Clase {session.claseNumero ?? index + 1}</p>
                     {session.duracion ? (
-                      <span className="text-sm font-semibold text-[#5b6962]">
+                      <span className="text-sm font-semibold text-[#11231f]">
                         {session.duracion} min
                       </span>
                     ) : null}
@@ -492,7 +492,7 @@ function GeneratedLessonPlan({
                           {moment.nombre}
                           {moment.duracion ? ` - ${moment.duracion} min` : ""}
                         </p>
-                        <div className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                        <div className="mt-2 grid gap-2 text-[15px] leading-6 text-[#11231f]">
                           {[
                             ["Propósito", moment.proposito],
                             ["Consigna docente", moment.consignaDocente],
@@ -521,7 +521,7 @@ function GeneratedLessonPlan({
           <div className="grid gap-6">
             {guide.actividadCentral ? (
               <RichGuideSection title="Actividad central">
-                <div className="grid gap-3 text-[15px] leading-6 text-[#33423c]">
+                <div className="grid gap-3 text-[15px] leading-6 text-[#11231f]">
                   <p className="font-semibold">{guide.actividadCentral.titulo}</p>
                   <p>{guide.actividadCentral.consignaListaParaUsar}</p>
                   {guide.actividadCentral.pasos?.length ? (
@@ -544,7 +544,7 @@ function GeneratedLessonPlan({
             <div className="grid gap-4 md:grid-cols-2">
               {guide.evaluacion ? (
                 <RichGuideSection title="Evaluación">
-                  <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  <div className="grid gap-2 text-[15px] leading-6 text-[#11231f]">
                     {guide.evaluacion.criterios?.map((criterion) => (
                       <p key={criterion}>{criterion}</p>
                     ))}
@@ -566,7 +566,7 @@ function GeneratedLessonPlan({
 
               {guide.diferenciacion ? (
                 <RichGuideSection title="Diferenciación">
-                  <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  <div className="grid gap-2 text-[15px] leading-6 text-[#11231f]">
                     {[
                       ["Apoyo fuerte", guide.diferenciacion.apoyoFuerte],
                       ["Grupo base", guide.diferenciacion.grupoBase],
@@ -591,7 +591,7 @@ function GeneratedLessonPlan({
               <RichGuideSection title="Recursos y recomendaciones">
                 <div className="grid gap-4">
                   {guide.recursosDidacticos.adecuacionNivel ? (
-                    <div className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]">
+                    <div className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#11231f]">
                       <div className="flex items-center gap-2 font-semibold text-[#075f53]">
                         <Lightbulb className="h-4 w-4" aria-hidden="true" />
                         Adecuación al curso
@@ -603,7 +603,7 @@ function GeneratedLessonPlan({
                   {guide.recursosDidacticos.recomendacionesClase?.length ? (
                     <div className="rounded-lg bg-white p-3">
                       <p className="font-semibold">Recomendaciones para la clase</p>
-                      <ul className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                      <ul className="mt-2 grid gap-2 text-[15px] leading-6 text-[#11231f]">
                         {guide.recursosDidacticos.recomendacionesClase.map((recommendation) => (
                           <li key={recommendation}>{recommendation}</li>
                         ))}
@@ -621,12 +621,12 @@ function GeneratedLessonPlan({
                         <div className="mt-3 grid gap-3">
                           {guide.recursosDidacticos.imagenesSugeridas.map((image, index) => (
                             <div key={`${image.titulo}-${index}`} className="text-[15px] leading-6">
-                              <p className="font-semibold text-[#33423c]">{image.titulo}</p>
+                              <p className="font-semibold text-[#11231f]">{image.titulo}</p>
                               {image.descripcion ? (
-                                <p className="mt-1 text-[#33423c]">{image.descripcion}</p>
+                                <p className="mt-1 text-[#11231f]">{image.descripcion}</p>
                               ) : null}
                               {image.usoDidactico ? (
-                                <p className="mt-1 text-[#33423c]">
+                                <p className="mt-1 text-[#11231f]">
                                   <span className="font-semibold">Uso:</span> {image.usoDidactico}
                                 </p>
                               ) : null}
@@ -651,7 +651,7 @@ function GeneratedLessonPlan({
                                 </div>
                               ) : null}
                               {image.busquedaSugerida ? (
-                                <p className="mt-2 text-sm text-[#5b6962]">
+                                <p className="mt-2 text-sm text-[#11231f]">
                                   Búsqueda: {image.busquedaSugerida}. Crédito sugerido: foto de
                                   autor/a en Pexels o Unsplash.
                                 </p>
@@ -671,7 +671,7 @@ function GeneratedLessonPlan({
                         <div className="mt-3 grid gap-3">
                           {guide.recursosDidacticos.videosSugeridos.map((video, index) => (
                             <div key={`${video.titulo}-${index}`} className="text-[15px] leading-6">
-                              <p className="font-semibold text-[#33423c]">{video.titulo}</p>
+                              <p className="font-semibold text-[#11231f]">{video.titulo}</p>
                               {video.busquedaYoutube ? (
                                 <a
                                   href={youtubeSearchHref(video.busquedaYoutube)}
@@ -683,13 +683,13 @@ function GeneratedLessonPlan({
                                 </a>
                               ) : null}
                               {video.criterioSeleccion ? (
-                                <p className="mt-1 text-[#33423c]">
+                                <p className="mt-1 text-[#11231f]">
                                   <span className="font-semibold">Criterio:</span>{" "}
                                   {video.criterioSeleccion}
                                 </p>
                               ) : null}
                               {video.momentoUso ? (
-                                <p className="mt-1 text-[#33423c]">
+                                <p className="mt-1 text-[#11231f]">
                                   <span className="font-semibold">Uso:</span> {video.momentoUso}
                                 </p>
                               ) : null}
@@ -708,11 +708,11 @@ function GeneratedLessonPlan({
                     {guide.materialesEditables.map((material, index) => (
                       <div key={`${material.nombre}-${index}`} className="rounded-lg bg-white p-3">
                         <p className="font-semibold">{material.nombre}</p>
-                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
+                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#11231f]">
                           {material.contenido}
                         </p>
                         {material.comoUsarlo ? (
-                          <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                          <p className="mt-2 text-[15px] leading-6 text-[#11231f]">
                             <span className="font-semibold">Cómo usarlo:</span>{" "}
                             {material.comoUsarlo}
                           </p>
@@ -729,7 +729,7 @@ function GeneratedLessonPlan({
                     {guide.erroresFrecuentes.map((error, index) => (
                       <div
                         key={`${error.error}-${index}`}
-                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
+                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#11231f]"
                       >
                         <p className="font-semibold text-[#8d174f]">{error.error}</p>
                         <p className="mt-2">
@@ -759,11 +759,11 @@ function GeneratedLessonPlan({
                         className="rounded-lg bg-[#fbfffd] p-3"
                       >
                         <p className="font-semibold">{material.nombre}</p>
-                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
+                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#11231f]">
                           {material.contenido}
                         </p>
                         {material.comoUsarlo ? (
-                          <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                          <p className="mt-2 text-[15px] leading-6 text-[#11231f]">
                             <span className="font-semibold">Cómo usarlo:</span>{" "}
                             {material.comoUsarlo}
                           </p>
@@ -780,7 +780,7 @@ function GeneratedLessonPlan({
                     {guide.erroresFrecuentes.map((error, index) => (
                       <div
                         key={`${error.error}-${index}`}
-                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
+                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#11231f]"
                       >
                         <p className="font-semibold text-[#8d174f]">{error.error}</p>
                         <p className="mt-2">
@@ -811,7 +811,7 @@ function GeneratedLessonPlan({
           <h2 className="mt-3 font-display text-4xl font-bold tracking-tight">
             {plan.subject} - {plan.topic}
           </h2>
-          <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+          <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#11231f]">
             <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
             <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
             <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
@@ -821,7 +821,7 @@ function GeneratedLessonPlan({
         <div className="mt-8 grid gap-6">
           {overview ? (
             <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
-              <p className="text-[15px] font-medium leading-7 text-[#33423c]">{overview}</p>
+              <p className="text-[15px] font-medium leading-7 text-[#11231f]">{overview}</p>
             </section>
           ) : null}
 
@@ -831,7 +831,7 @@ function GeneratedLessonPlan({
                 <ListChecks className="h-5 w-5 text-[#087968]" aria-hidden="true" />
                 <h3 className="font-display text-xl font-bold tracking-tight">Objetivos</h3>
               </div>
-              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#11231f]">
                 {objectives.map((objective) => (
                   <li key={objective} className="rounded-lg bg-white px-3 py-2">
                     {objective}
@@ -848,7 +848,7 @@ function GeneratedLessonPlan({
                 {competences.map((competence) => (
                   <span
                     key={competence}
-                    className="rounded-lg bg-[#eef5f3] px-3 py-2 text-sm font-bold text-[#33423c]"
+                    className="rounded-lg bg-[#eef5f3] px-3 py-2 text-sm font-bold text-[#11231f]"
                   >
                     {competence}
                   </span>
@@ -871,7 +871,7 @@ function GeneratedLessonPlan({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-bold">Clase {session.number ?? index + 1}</p>
                   {session.duration ? (
-                    <span className="text-sm font-semibold text-[#5b6962]">
+                    <span className="text-sm font-semibold text-[#11231f]">
                       {session.duration} min
                     </span>
                   ) : null}
@@ -886,7 +886,7 @@ function GeneratedLessonPlan({
                         {phase.name}
                         {phase.duration ? ` - ${phase.duration} min` : ""}
                       </p>
-                      <ul className="mt-2 grid gap-1 text-[15px] leading-6 text-[#33423c]">
+                      <ul className="mt-2 grid gap-1 text-[15px] leading-6 text-[#11231f]">
                         {phase.activities?.map((activity) => (
                           <li key={activity}>{activity}</li>
                         ))}
@@ -903,7 +903,7 @@ function GeneratedLessonPlan({
                       ["Extensión", session.differentiation.high],
                     ].map(([label, value]) =>
                       value ? (
-                        <p key={label} className="text-[15px] leading-6 text-[#33423c]">
+                        <p key={label} className="text-[15px] leading-6 text-[#11231f]">
                           <span className="font-semibold">{label}:</span> {value}
                         </p>
                       ) : null,
@@ -922,7 +922,7 @@ function GeneratedLessonPlan({
             {resources.length ? (
               <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
                 <h3 className="font-display text-xl font-bold tracking-tight">Recursos</h3>
-                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#11231f]">
                   {resources.map((resource) => (
                     <li key={resource}>{resource}</li>
                   ))}
@@ -933,7 +933,7 @@ function GeneratedLessonPlan({
             {assessment.length ? (
               <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
                 <h3 className="font-display text-xl font-bold tracking-tight">Evaluación</h3>
-                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#11231f]">
                   {assessment.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -952,7 +952,7 @@ function GeneratedLessonPlan({
                   <div key={printable.name} className="rounded-lg bg-white p-3">
                     <p className="font-semibold">{printable.name}</p>
                     {printable.prompt ? (
-                      <p className="mt-1 text-[15px] leading-6 text-[#33423c]">
+                      <p className="mt-1 text-[15px] leading-6 text-[#11231f]">
                         {printable.prompt}
                       </p>
                     ) : null}
@@ -1000,12 +1000,12 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
           <div className="educai-no-print mx-auto flex w-full max-w-[980px] flex-wrap items-center justify-between gap-3">
             <a
               href="/app/planificar"
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cbdad4] bg-white px-4 text-sm font-bold text-[#33423c] transition hover:border-[#18b6a4]"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cbdad4] bg-white px-4 text-sm font-bold text-[#11231f] transition hover:border-[#18b6a4]"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Volver
             </a>
-            <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#5b6962] shadow-whisper">
+            <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#11231f] shadow-whisper">
               Plan actual: {userPlan}
             </span>
           </div>
@@ -1097,7 +1097,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
               <h2 className="font-display text-2xl font-bold tracking-tight">
                 Actualizá tu plan para seguir
               </h2>
-              <p className="mt-2 text-[15px] leading-6 text-[#4f5f58]">
+              <p className="mt-2 text-[15px] leading-6 text-[#11231f]">
                 El formulario vuelve a estar disponible cuando tengas planificaciones o créditos
                 activos.
               </p>
@@ -1149,16 +1149,16 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                       {plan.subject} - {plan.topic}
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-2 text-[15px] text-[#5b6962]">
+                      <span className="flex items-center gap-2 text-[15px] text-[#11231f]">
                         <Clock className="h-4 w-4" aria-hidden="true" />
                         Grado {plan.grade} - {plan.durationMinutes} min
                       </span>
-                      <Badge className="w-fit bg-[#eef5f3] text-[#33423c]">{plan.status}</Badge>
+                      <Badge className="w-fit bg-[#eef5f3] text-[#11231f]">{plan.status}</Badge>
                     </div>
                   </a>
                 ))
               ) : (
-                <p className="text-[15px] leading-6 text-[#4f5f58]">
+                <p className="text-[15px] leading-6 text-[#11231f]">
                   Todavía no hay clases generadas en este alcance.
                 </p>
               )}
