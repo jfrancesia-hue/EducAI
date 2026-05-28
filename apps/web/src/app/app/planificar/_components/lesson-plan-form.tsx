@@ -163,36 +163,41 @@ function GeneratingOverlay() {
   const progress = Math.min(94, 8 + elapsedSeconds * 1.1);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const timer = window.setInterval(() => {
       setElapsedSeconds((value) => value + 1);
     }, 1000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      document.body.style.overflow = previousOverflow;
+    };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#eef5f3]/95 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-[#eef5f3]/95 px-4 py-4 backdrop-blur-sm">
       <section
         role="status"
         aria-live="polite"
-        className="w-full max-w-xl overflow-hidden rounded-lg border border-[#18b6a4]/30 bg-white text-left shadow-float"
+        className="max-h-[calc(100vh-32px)] w-full max-w-lg overflow-y-auto rounded-lg border border-[#18b6a4]/30 bg-white text-left shadow-float"
       >
-        <div className="border-b border-[#d5e1dc] bg-[#fbfffd] p-6">
-          <div className="flex items-start gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[#075f53] text-white shadow-[0_14px_30px_rgba(7,95,83,0.22)]">
-              <FileText className="h-7 w-7" aria-hidden="true" />
+        <div className="border-b border-[#d5e1dc] bg-[#fbfffd] p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#075f53] text-white shadow-[0_14px_30px_rgba(7,95,83,0.22)]">
+              <FileText className="h-6 w-6" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#087968]">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087968]">
                 Planificación docente
               </p>
-              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">
+              <h2 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 Generando la guía completa
               </h2>
-              <div className="mt-3 inline-flex rounded-lg bg-[#fff8d7] px-3 py-2 text-sm font-bold text-[#725200]">
+              <div className="mt-2 inline-flex rounded-lg bg-[#fff8d7] px-3 py-1.5 text-sm font-bold text-[#725200]">
                 Tiempo estimado: 2 a 6 minutos
               </div>
-              <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
+              <p className="mt-2 text-sm font-medium leading-6 text-[#4f5f58]">
                 No estamos generando un borrador rápido: estamos preparando la versión final con
                 secuencia, materiales editables, evaluación, recomendaciones, imágenes y videos.
               </p>
@@ -200,7 +205,7 @@ function GeneratingOverlay() {
           </div>
         </div>
 
-        <div className="grid gap-5 p-6">
+        <div className="grid gap-4 p-4 sm:p-5">
           <div>
             <div className="mb-2 flex items-center justify-between text-sm font-bold text-[#33423c]">
               <span>Preparación estimada</span>
@@ -214,14 +219,14 @@ function GeneratingOverlay() {
             </div>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             {steps.map((step, index) => {
               const done = index < activeStep;
               const current = index === activeStep;
               return (
                 <div
                   key={step}
-                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                  className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
                     done || current ? "border-[#bce7df] bg-[#f3fffc]" : "border-[#e3ebe7] bg-white"
                   }`}
                 >
@@ -247,7 +252,7 @@ function GeneratingOverlay() {
             })}
           </div>
 
-          <div className="rounded-lg bg-[#e7fbf7] px-4 py-3 text-sm font-bold leading-6 text-[#075c50]">
+          <div className="rounded-lg bg-[#e7fbf7] px-3 py-2.5 text-sm font-bold leading-6 text-[#075c50]">
             Dejá esta pantalla abierta. Cuando termine, te llevamos directo a la guía lista para
             revisar, ajustar y usar.
           </div>

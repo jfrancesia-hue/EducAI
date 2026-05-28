@@ -18,7 +18,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 
 type PrismaTx = Prisma.TransactionClient;
-const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 190_000;
+const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 390_000;
 
 @Injectable()
 export class LessonPlanService {
@@ -326,7 +326,7 @@ export class LessonPlanService {
 
   private readPositiveIntegerEnv(name: string, fallback: number): number {
     const value = Number.parseInt(process.env[name] ?? "", 10);
-    return Number.isFinite(value) && value > 0 ? value : fallback;
+    return Number.isFinite(value) && value > 0 ? Math.max(value, fallback) : fallback;
   }
 
   private async enableRlsBypass(tx: PrismaTx): Promise<void> {

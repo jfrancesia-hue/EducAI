@@ -2,13 +2,13 @@ import { Activity, CheckCircle2, UsersRound } from "lucide-react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
-import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
+import { fetchStudentsDashboard } from "../../../lib/api/institutional-dashboard";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 export default async function StudentsModulePage() {
   const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
+  const dashboard = accessToken ? await fetchStudentsDashboard(accessToken) : null;
 
   return (
     <AppShell title="Estudiantes" eyebrow="Seguimiento">

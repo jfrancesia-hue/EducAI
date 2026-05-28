@@ -2,13 +2,13 @@ import { BarChart3, Brain, CheckCircle2, TrendingUp } from "lucide-react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
-import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
+import { fetchReportsDashboard } from "../../../lib/api/institutional-dashboard";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 export default async function ReportsModulePage() {
   const { accessToken } = await getEducaiAppAuth();
 
-  const dashboard = accessToken ? await fetchInstitutionalDashboard(accessToken) : null;
+  const dashboard = accessToken ? await fetchReportsDashboard(accessToken) : null;
 
   const cards = [
     {

@@ -7,6 +7,8 @@ import {
 } from "../../../../lib/supabase/cookies";
 import { createSupabaseRouteClient } from "../../../../lib/supabase/route";
 
+export const maxDuration = 420;
+
 const GRADE_RANGES: Record<string, { min: number; max: number }> = {
   primaria: { min: 1, max: 7 },
   secundaria: { min: 1, max: 7 },

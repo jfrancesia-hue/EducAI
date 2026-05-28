@@ -45,6 +45,45 @@ export type InstitutionalDashboardResponse = {
   };
 };
 
+export type PlanningDashboardResponse = {
+  data: {
+    scope: "teacher" | "institution";
+    metrics: {
+      lessonPlanCount: number;
+    };
+    recentLessonPlans: InstitutionalDashboardResponse["data"]["recentLessonPlans"];
+    lessonPlanQuota: InstitutionalDashboardResponse["data"]["lessonPlanQuota"];
+  };
+};
+
+export type StudentsDashboardResponse = {
+  data: {
+    scope: "teacher" | "institution";
+    metrics: Pick<
+      InstitutionalDashboardResponse["data"]["metrics"],
+      "studentCount" | "diagnosticCompletionRate" | "learningMinutesThisWeek"
+    >;
+    recentStudents: InstitutionalDashboardResponse["data"]["recentStudents"];
+  };
+};
+
+export type ReportsDashboardResponse = {
+  data: {
+    scope: "teacher" | "institution";
+    metrics: Pick<
+      InstitutionalDashboardResponse["data"]["metrics"],
+      | "studentCount"
+      | "lessonPlanCount"
+      | "curriculumCount"
+      | "openHandoffCount"
+      | "diagnosticCompletionRate"
+      | "learningMinutesThisWeek"
+    >;
+    recentStudents: InstitutionalDashboardResponse["data"]["recentStudents"];
+    subjectMix: InstitutionalDashboardResponse["data"]["subjectMix"];
+  };
+};
+
 export async function fetchInstitutionalDashboard(
   accessToken: string,
 ): Promise<InstitutionalDashboardResponse["data"] | null> {
@@ -63,5 +102,68 @@ export async function fetchInstitutionalDashboard(
   }
 
   const payload = (await response.json()) as InstitutionalDashboardResponse;
+  return payload.data;
+}
+
+export async function fetchPlanningDashboard(
+  accessToken: string,
+): Promise<PlanningDashboardResponse["data"] | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/planning`, {
+    headers: { authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as PlanningDashboardResponse;
+  return payload.data;
+}
+
+export async function fetchStudentsDashboard(
+  accessToken: string,
+): Promise<StudentsDashboardResponse["data"] | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/students`, {
+    headers: { authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as StudentsDashboardResponse;
+  return payload.data;
+}
+
+export async function fetchReportsDashboard(
+  accessToken: string,
+): Promise<ReportsDashboardResponse["data"] | null> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/reports`, {
+    headers: { authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as ReportsDashboardResponse;
   return payload.data;
 }

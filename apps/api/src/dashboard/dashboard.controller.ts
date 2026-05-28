@@ -31,6 +31,51 @@ export class DashboardController {
     });
   }
 
+  @Get("planning")
+  @Roles("SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER")
+  getPlanning(@CurrentUser() user: AuthenticatedUser) {
+    return this.dashboard.getPlanningOverview({
+      role:
+        user.role === "SUPER_ADMIN" || user.role === "SCHOOL_ADMIN" || user.role === "TEACHER"
+          ? user.role
+          : undefined,
+      tenantId: requireUserClaim(user, "tenantId"),
+      schoolId: user.schoolId,
+      teacherId: user.teacherId,
+      plan: user.plan,
+    });
+  }
+
+  @Get("students")
+  @Roles("SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER")
+  getStudents(@CurrentUser() user: AuthenticatedUser) {
+    return this.dashboard.getStudentsOverview({
+      role:
+        user.role === "SUPER_ADMIN" || user.role === "SCHOOL_ADMIN" || user.role === "TEACHER"
+          ? user.role
+          : undefined,
+      tenantId: requireUserClaim(user, "tenantId"),
+      schoolId: user.schoolId,
+      teacherId: user.teacherId,
+      plan: user.plan,
+    });
+  }
+
+  @Get("reports")
+  @Roles("SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER")
+  getReports(@CurrentUser() user: AuthenticatedUser) {
+    return this.dashboard.getReportsOverview({
+      role:
+        user.role === "SUPER_ADMIN" || user.role === "SCHOOL_ADMIN" || user.role === "TEACHER"
+          ? user.role
+          : undefined,
+      tenantId: requireUserClaim(user, "tenantId"),
+      schoolId: user.schoolId,
+      teacherId: user.teacherId,
+      plan: user.plan,
+    });
+  }
+
   @Get("ministry")
   @Roles("SUPER_ADMIN", "MINISTRY")
   getMinistry() {

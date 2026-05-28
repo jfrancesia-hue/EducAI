@@ -18,7 +18,7 @@ import { AppShell } from "../_components/app-shell";
 import { LessonPlanDocumentActions } from "./_components/lesson-plan-document-actions";
 import { LessonPlanFeedback } from "./_components/lesson-plan-feedback";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
-import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
+import { fetchPlanningDashboard } from "../../../lib/api/institutional-dashboard";
 import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
 import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
@@ -161,7 +161,7 @@ function canExportPlan(plan: string) {
 }
 
 type LessonPlanQuota = NonNullable<
-  NonNullable<Awaited<ReturnType<typeof fetchInstitutionalDashboard>>>["lessonPlanQuota"]
+  NonNullable<Awaited<ReturnType<typeof fetchPlanningDashboard>>>["lessonPlanQuota"]
 >;
 
 function quotaPeriodLabel(period: LessonPlanQuota["period"]) {
@@ -972,7 +972,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
   const createdId = searchParams?.created;
   const [dashboard, createdPlan] = accessToken
     ? await Promise.all([
-        fetchInstitutionalDashboard(accessToken),
+        fetchPlanningDashboard(accessToken),
         createdId ? fetchLessonPlan(accessToken, createdId) : Promise.resolve(null),
       ])
     : [null, null];

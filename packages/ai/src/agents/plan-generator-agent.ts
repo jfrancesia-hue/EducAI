@@ -47,7 +47,7 @@ export interface LessonPlanGenerationResult {
 
 const PLAN_GENERATION_TIMEOUT_MS = readPositiveIntegerEnv(
   "LESSON_PLAN_GENERATION_TIMEOUT_MS",
-  170_000,
+  360_000,
 );
 const PLAN_GENERATION_MAX_TOKENS = 12_000;
 
@@ -986,7 +986,7 @@ export class PlanGeneratorAgent {
 
 function readPositiveIntegerEnv(name: string, fallback: number): number {
   const value = Number.parseInt(process.env[name] ?? "", 10);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+  return Number.isFinite(value) && value > 0 ? Math.max(value, fallback) : fallback;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
