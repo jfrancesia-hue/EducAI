@@ -226,16 +226,14 @@ async function readGenerateApiError(response: Response): Promise<GenerateApiErro
   return {};
 }
 
-async function submitGenerateDirectly(form: HTMLFormElement) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+type GeneratePayload = ReturnType<typeof buildGeneratePayload>;
 
-  if (!apiUrl || !supabaseUrl || !supabaseAnonKey) {
-    form.submit();
-    return;
-  }
-
+async function submitGenerateDirectly(
+  payload: GeneratePayload,
+  apiUrl: string,
+  supabaseUrl: string,
+  supabaseAnonKey: string,
+) {
   const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   // La generación puede tardar ~290s; refrescamos la sesión antes para evitar que el access_token
@@ -265,7 +263,7 @@ async function submitGenerateDirectly(form: HTMLFormElement) {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify(buildGeneratePayload(new FormData(form))),
+      body: JSON.stringify(payload),
       cache: "no-store",
     });
   } catch (error) {
@@ -456,9 +454,25 @@ export function LessonPlanForm() {
         action="/app/planificar/generar"
         method="post"
         onSubmit={(event) => {
+          const form = event.currentTarget;
+          // Capturamos el payload de forma sincrónica antes de setIsSubmitting: si esperamos al
+          // primer `await`, React ya re-renderizó el <fieldset disabled> y los inputs
+          // deshabilitados desaparecen del FormData (los valores llegaban vacíos a la API).
+          const payload = buildGeneratePayload(new FormData(form));
+
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+          if (!apiUrl || !supabaseUrl || !supabaseAnonKey) {
+            // Fallback: dejamos el submit nativo al route Next; la navegación del browser
+            // captura el FormData antes de que el re-render deshabilite el fieldset.
+            return;
+          }
+
           event.preventDefault();
           setIsSubmitting(true);
-          submitGenerateDirectly(event.currentTarget).catch((error) => {
+          submitGenerateDirectly(payload, apiUrl, supabaseUrl, supabaseAnonKey).catch((error) => {
             console.error("lesson_plan_generate_unexpected_failed", describeNetworkError(error));
             redirectToPlanning({ error: "network" });
           });
