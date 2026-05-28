@@ -95,7 +95,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
             <div>
               <h1 className="font-display text-4xl font-bold tracking-tight">Panel familiar</h1>
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
-                Aca ves los hijos vinculados y los telefonos que el tutor reconoce por WhatsApp.
+                Acá ves los hijos vinculados y los teléfonos que el tutor reconoce por WhatsApp.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -136,7 +136,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
                 </div>
               </div>
               <p className="mt-4 text-sm font-medium leading-6 text-[#4f5f58]">
-                Free, Basico y Plus incluyen 1 hijo. Familiar e Intensivo permiten hasta 3 hijos.
+                Free, Básico y Plus incluyen 1 hijo. Familiar e Intensivo permiten hasta 3 hijos.
               </p>
             </article>
 
@@ -147,7 +147,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
                   <h2 className="mt-4 font-display text-2xl font-bold">Agregar hijo</h2>
                   <p className="mt-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
                     {canAddStudent
-                      ? "Carga otro perfil para que ApoyoAI pueda separarlo por grado y telefono."
+                      ? "Cargá otro perfil para que ApoyoAI pueda separarlo por grado y teléfono."
                       : "Para sumar más hijos, cambiá a un plan Familiar o Intensivo."}
                   </p>
                 </div>
@@ -231,7 +231,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
                 {error === "missing_api_url"
                   ? "No pudimos cargar la información familiar en este momento."
-                  : "El servicio no respondio como esperabamos. Reintentá en unos minutos o contacta soporte."}
+                  : "El servicio no respondió como esperábamos. Reintentá en unos minutos o contactá soporte."}
               </p>
             </article>
           ) : students.length ? (
@@ -276,7 +276,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
               <MessageCircle className="h-7 w-7 text-[#ff7a1a]" aria-hidden="true" />
               <h2 className="mt-4 font-display text-2xl font-bold">Todavía no hay hijos</h2>
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
-                Crea el primer perfil desde este panel o desde el registro ApoyoAI.
+                Creá el primer perfil desde este panel o desde el registro ApoyoAI.
               </p>
               <Button asChild className="mt-5 bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
                 <Link href="/precios#apoyoai">Ir a planes ApoyoAI</Link>

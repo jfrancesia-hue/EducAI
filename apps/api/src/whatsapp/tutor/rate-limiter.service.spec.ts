@@ -105,4 +105,41 @@ describe("RateLimiterService", () => {
 
     expect(decision.allowed).toBe(true);
   });
+
+  it("FREE permite consultas web hasta el limite de vida", async () => {
+    const prisma = buildPrisma(9);
+    const service = new RateLimiterService(prisma as never);
+
+    const decision = await service.assertCanUseApp(buildStudent({ plan: "free" }));
+
+    expect(decision.lifetimeLimit).toBe(10);
+    expect(decision.remaining).toBe(1);
+    expect(prisma.message.count).toHaveBeenCalledWith({
+      where: {
+        role: "web_student",
+        conversation: {
+          studentProfileId: "prof_1",
+        },
+      },
+    });
+  });
+
+  it("FREE rechaza consultas web al agotar el limite de vida", async () => {
+    const prisma = buildPrisma(10);
+    const service = new RateLimiterService(prisma as never);
+
+    await expect(service.assertCanUseApp(buildStudent({ plan: "free" }))).rejects.toBeInstanceOf(
+      RateLimitExceededError,
+    );
+  });
+
+  it("plan pago no limita consultas web por app", async () => {
+    const prisma = buildPrisma(1000);
+    const service = new RateLimiterService(prisma as never);
+
+    const decision = await service.assertCanUseApp(buildStudent({ plan: "plus" }));
+
+    expect(decision.remaining).toBeNull();
+    expect(prisma.message.count).not.toHaveBeenCalled();
+  });
 });

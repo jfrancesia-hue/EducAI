@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { getApoyoAIModelForPlan, TutorAgent, type LlmClient } from "@educai/ai";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
 import { HumanHandoffService } from "../agent/human-handoff.service.js";
+import { RateLimitExceededError } from "../webhooks/errors/webhook.errors.js";
 import { ConversationStoreService } from "./conversation-store.service.js";
+import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService } from "./student-resolver.service.js";
 
 const ACCEPTED_STATUSES = new Set(["ACTIVE", "IN_GRACE_PERIOD"]);
@@ -26,6 +28,7 @@ export class WebTutorService {
     private readonly resolver: StudentResolverService,
     private readonly conversation: ConversationStoreService,
     private readonly humanHandoff: HumanHandoffService,
+    private readonly rateLimiter: RateLimiterService,
     @Inject(WHATSAPP_AGENT_LLM) private readonly llm: LlmClient,
   ) {}
 
@@ -46,10 +49,31 @@ export class WebTutorService {
       return {
         data: {
           reply:
-            "La suscripcion familiar todavia no esta activa. Cuando el pago quede confirmado, ApoyoAI va a responder desde este panel.",
+            "La suscripción familiar todavía no está activa. Cuando el pago quede confirmado, ApoyoAI va a responder desde este panel.",
           conversationId: "",
           studentId: student.studentId,
           modelUsed: "subscription-policy",
+          tokensUsed: 0,
+          safetyStatus: "blocked",
+          channel: "web",
+        },
+      };
+    }
+
+    try {
+      await this.rateLimiter.assertCanUseApp(student);
+    } catch (error) {
+      if (!(error instanceof RateLimitExceededError)) {
+        throw error;
+      }
+
+      return {
+        data: {
+          reply:
+            "Llegaste al límite de consultas por app de tu plan. Si necesitás más uso, podés subir de plan.",
+          conversationId: "",
+          studentId: student.studentId,
+          modelUsed: "app-usage-policy",
           tokensUsed: 0,
           safetyStatus: "blocked",
           channel: "web",

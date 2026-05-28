@@ -13,6 +13,7 @@ export interface RateLimitDecision {
   allowed: boolean;
   plan: string;
   dailyLimit: number | null;
+  lifetimeLimit?: number | null;
   used: number;
   remaining: number | null;
 }
@@ -64,6 +65,61 @@ export class RateLimiterService {
       allowed: true,
       plan: student.subscription.plan,
       dailyLimit: limit,
+      used,
+      remaining: limit - used,
+    };
+  }
+
+  async assertCanUseApp(student: ResolvedStudent): Promise<RateLimitDecision> {
+    if (!ACCEPTED_STATUSES.has(student.subscription.status)) {
+      throw new SubscriptionInactiveError(student.familyId, student.subscription.status);
+    }
+
+    const plan = normalizeApoyoAIPlan(student.subscription.plan);
+    const planLimits = APOYOAI_LIMITS[plan];
+    const appLimit = planLimits.app_consultas;
+    const lifetimeLimit = "total_vida" in appLimit ? appLimit.total_vida : null;
+    const dailyLimit = "diario" in appLimit ? appLimit.diario : null;
+
+    if (lifetimeLimit === null && dailyLimit === null) {
+      return {
+        allowed: true,
+        plan: student.subscription.plan,
+        dailyLimit: null,
+        lifetimeLimit: null,
+        used: 0,
+        remaining: null,
+      };
+    }
+
+    const where =
+      lifetimeLimit !== null
+        ? {
+            role: "web_student",
+            conversation: {
+              studentProfileId: student.studentProfileId,
+            },
+          }
+        : {
+            role: "web_student",
+            createdAt: { gte: this.startOfDayArgentina() },
+            conversation: {
+              studentProfileId: student.studentProfileId,
+            },
+          };
+
+    const limit = lifetimeLimit ?? dailyLimit ?? 0;
+    const used = await this.prisma.message.count({ where });
+
+    if (used >= limit) {
+      throw new RateLimitExceededError(student.subscription.plan, limit);
+    }
+
+    return {
+      allowed: true,
+      plan: student.subscription.plan,
+      dailyLimit,
+      lifetimeLimit,
       used,
       remaining: limit - used,
     };

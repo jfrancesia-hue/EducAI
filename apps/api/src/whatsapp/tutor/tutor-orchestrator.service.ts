@@ -627,7 +627,7 @@ export class TutorOrchestratorService {
   ): Promise<OrchestratorOutcome | null> {
     if (error instanceof StudentNotEnrolledError) {
       const reply =
-        "Todavia no encuentro este WhatsApp en ApoyoAI. Para activarlo, el adulto responsable tiene que registrar la familia, cargar el alumno y vincular este numero como telefono del adulto o del hijo.";
+        "Todavía no encuentro este WhatsApp en ApoyoAI. Para activarlo, el adulto responsable tiene que registrar la familia, cargar el alumno y vincular este número como teléfono del adulto o del hijo.";
       await this.safeSendFallback(message.fromWhatsappPhone, reply);
       return { status: "not_enrolled", reply };
     }
@@ -641,14 +641,14 @@ export class TutorOrchestratorService {
 
     if (error instanceof SubscriptionInactiveError) {
       const reply =
-        "La suscripcion de esta familia todavia no esta activa. Cuando el pago quede confirmado, ApoyoAI va a responder por este mismo WhatsApp.";
+        "La suscripción de esta familia todavía no está activa. Cuando el pago quede confirmado, ApoyoAI va a responder por este mismo WhatsApp.";
       await this.safeSendFallback(message.fromWhatsappPhone, reply);
       return { status: "subscription_inactive", reply };
     }
 
     if (error instanceof RateLimitExceededError) {
       const reply =
-        "Llegaste al limite de mensajes de tu plan por hoy. Manana se renueva automaticamente; si necesitás mas uso, conviene subir de plan.";
+        "Llegaste al límite de mensajes de tu plan por hoy. Mañana se renueva automáticamente; si necesitás más uso, conviene subir de plan.";
       await this.safeSendFallback(message.fromWhatsappPhone, reply);
       return { status: "rate_limited", reply };
     }
