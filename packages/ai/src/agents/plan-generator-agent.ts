@@ -47,9 +47,9 @@ export interface LessonPlanGenerationResult {
 
 const PLAN_GENERATION_TIMEOUT_MS = readPositiveIntegerEnv(
   "LESSON_PLAN_GENERATION_TIMEOUT_MS",
-  130_000,
+  170_000,
 );
-const PLAN_GENERATION_MAX_TOKENS = 9_000;
+const PLAN_GENERATION_MAX_TOKENS = 12_000;
 
 export interface PlanGeneratorInput {
   educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
@@ -391,123 +391,9 @@ export class PlanGeneratorAgent {
       "Genera una planificacion docente completa con este input:",
       JSON.stringify(input, null, 2),
       "",
-      "Schema obligatorio de la herramienta guardar_clase_docente:",
-      JSON.stringify(
-        {
-          version: "educai.lesson-guide.v1",
-          generadaEn: "ISO date",
-          vistaDocente: {
-            titulo: "Materia - tema",
-            resumen: "Resumen concreto de la clase.",
-            focoPedagogico: "Decision didactica central.",
-            productoEsperado: "Produccion observable que queda al final.",
-          },
-          contextoClase: {
-            nivel: input.educationLevel,
-            anio: input.grade,
-            materia: input.subject,
-            tema: input.topic,
-            intencion: input.lessonIntent || "introducir/practicar/profundizar/evaluar",
-            duracionTotal: input.totalDurationMinutes,
-            cantidadClases: input.sessionCount,
-            supuestos: ["Supuestos reales sobre grupo, saberes previos y recursos."],
-          },
-          saberesClave: [
-            {
-              nombre: "Concepto clave del tema",
-              explicacionSimple: "Explicacion breve y correcta.",
-              ejemploDelTema: "Ejemplo concreto del contenido.",
-              errorComun: "Error frecuente esperable.",
-            },
-          ],
-          objetivosAprendizaje: [
-            {
-              objetivo: "Objetivo observable y especifico.",
-              evidenciaObservable: "Como se vera que lo logro.",
-            },
-          ],
-          secuencia: [
-            {
-              claseNumero: 1,
-              duracion: input.sessionCount
-                ? Math.round(input.totalDurationMinutes / input.sessionCount)
-                : input.totalDurationMinutes,
-              momentos: [
-                {
-                  nombre: "Apertura",
-                  duracion: 10,
-                  proposito: "Para que sirve este momento.",
-                  consignaDocente: "Texto que el docente puede leer en clase.",
-                  actividadEstudiantes: "Que hacen los estudiantes.",
-                  ejemploConcreto: "Ejemplo del tema trabajado.",
-                  intervencionDocente: "Que hace el docente si aparece una dificultad.",
-                  cierreParcial: "Mini cierre o decision para pasar al siguiente momento.",
-                },
-              ],
-            },
-          ],
-          actividadCentral: {
-            titulo: "Actividad principal",
-            consignaListaParaUsar: "Consigna textual completa.",
-            pasos: ["Paso 1", "Paso 2"],
-            produccionEsperada: "Producto observable.",
-            variantes: ["Apoyo o extension concreta."],
-          },
-          materialesEditables: [
-            {
-              nombre: "Material listo para editar/imprimir",
-              contenido: "Contenido exacto del material.",
-              comoUsarlo: "Indicacion docente para usarlo.",
-            },
-          ],
-          evaluacion: {
-            criterios: ["Criterio observable y especifico del tema."],
-            instrumento: "Lista de cotejo, rubrica breve o guia de observacion.",
-            ticketSalida: "Ticket de salida textual.",
-            retroalimentacionSugerida: "Como devolver feedback.",
-          },
-          diferenciacion: {
-            apoyoFuerte: "Andamiaje concreto.",
-            grupoBase: "Tarea esperada.",
-            extension: "Desafio para profundizar.",
-          },
-          recursosDidacticos: {
-            adecuacionNivel:
-              "Justificacion de por que las consignas, ejemplos y recursos son adecuados para edad, curso, nivel educativo y orientacion.",
-            recomendacionesClase: [
-              "Recomendacion concreta para gestionar la clase segun el curso.",
-              "Recomendacion concreta para adaptar lenguaje, ritmo o ejemplos.",
-            ],
-            imagenesSugeridas: [
-              {
-                titulo: "Imagen sugerida",
-                descripcion: "Que deberia mostrar la imagen y por que ayuda.",
-                usoDidactico: "Momento de la clase y consigna para usarla.",
-                busquedaSugerida: "Busqueda breve para encontrar o crear la imagen.",
-              },
-            ],
-            videosSugeridos: [
-              {
-                titulo: "Video sugerido",
-                busquedaYoutube: "Busqueda exacta recomendada en YouTube, sin inventar URL.",
-                criterioSeleccion:
-                  "Que debe verificar el docente antes de usar el video con este curso.",
-                momentoUso: "Momento de la clase o tarea domiciliaria donde conviene usarlo.",
-              },
-            ],
-          },
-          erroresFrecuentes: [
-            {
-              error: "Error del estudiante.",
-              comoDetectarlo: "Senal observable.",
-              comoIntervenir: "Intervencion docente concreta.",
-            },
-          ],
-          recursosOpcionales: ["Recurso realista"],
-        },
-        null,
-        2,
-      ),
+      "Usa la herramienta guardar_clase_docente y completa todos los campos requeridos del schema.",
+      "Estructura esperada: vistaDocente, contextoClase, saberesClave, objetivosAprendizaje, secuencia, actividadCentral, materialesEditables, evaluacion, diferenciacion, recursosDidacticos, erroresFrecuentes y recursosOpcionales.",
+      "Cada sesion debe tener momentos con nombre, duracion, proposito, consignaDocente, actividadEstudiantes, ejemploConcreto, intervencionDocente y cierreParcial.",
       "",
       "Reglas de calidad:",
       "- No uses 'pregunta disparadora' sin escribir la pregunta exacta.",

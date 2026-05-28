@@ -173,7 +173,7 @@ describe("PlanGeneratorAgent", () => {
     expect(call?.messages).toEqual([
       expect.objectContaining({
         role: "user",
-        content: expect.stringContaining("Schema obligatorio"),
+        content: expect.stringContaining("completa todos los campos requeridos"),
       }),
     ]);
     expect(call?.toolChoice).toBe("guardar_clase_docente");

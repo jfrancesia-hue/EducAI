@@ -18,7 +18,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 
 type PrismaTx = Prisma.TransactionClient;
-const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 150_000;
+const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 190_000;
 
 @Injectable()
 export class LessonPlanService {
