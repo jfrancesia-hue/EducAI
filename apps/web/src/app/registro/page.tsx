@@ -105,8 +105,8 @@ function PlanChooser({
         })}
       </div>
       <p className="text-sm font-semibold leading-6 text-[#075f53]">
-        Free crea la cuenta sin tarjeta. Si elegis un plan pago, guardamos tus datos y despues te
-        llevamos a Mercado Pago para completar la contratacion.
+        Free crea la cuenta sin tarjeta. Si elegís un plan pago, guardamos tus datos y después te
+        llevamos a Mercado Pago para completar la contratación.
       </p>
     </fieldset>
   );
@@ -121,15 +121,15 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const selectedPlan = plans.find((item) => item.id === plan) ?? plans[0];
   const errorMessage =
     params.error === "exists"
-      ? "Ya existe una cuenta con ese email. Inicia sesion o usa otro correo."
+      ? "Ya existe una cuenta con ese email. Iniciá sesión o usá otro correo."
       : params.error === "terms"
-        ? "Para crear la cuenta tenes que aceptar los terminos y la politica de privacidad."
+        ? "Para crear la cuenta tenés que aceptar los términos y la política de privacidad."
         : params.error === "google"
-          ? "No pudimos iniciar el registro con Google. Intenta de nuevo o usa email y contrasena."
+          ? "No pudimos iniciar el registro con Google. Intentá de nuevo o usá email y contraseña."
           : params.error === "payment"
-            ? "No pudimos iniciar el pago. Proba otra vez o escribinos para ayudarte."
+            ? "No pudimos iniciar el pago. Probá otra vez o escribinos para ayudarte."
             : params.error
-              ? "No pudimos completar el registro. Revisa los datos e intenta de nuevo."
+              ? "No pudimos completar el registro. Revisá los datos e intentá de nuevo."
               : null;
 
   return (
@@ -197,14 +197,14 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               </h1>
               <p className="mt-3 max-w-2xl text-[15px] font-medium leading-7 text-slate-600">
                 {isApoyoAi
-                  ? "Carga el adulto responsable y el primer alumno para dejar ApoyoAI listo desde el primer ingreso."
-                  : "Carga tu perfil docente y tu espacio de trabajo para entrar directo a planificar clases con IA."}
+                  ? "Cargá el adulto responsable y el primer estudiante para dejar ApoyoAI listo desde el primer ingreso."
+                  : "Cargá tu perfil docente y tu espacio de trabajo para entrar directo a planificar clases con IA."}
               </p>
             </div>
 
             <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
               <p className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
-                Seleccion actual
+                Selección actual
               </p>
               <p className="mt-3 font-display text-2xl font-bold">
                 {isApoyoAi ? "ApoyoAI" : "EducAI"}
@@ -262,8 +262,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                   />
                 </label>
                 <PasswordField
-                  label="Contrasena"
-                  placeholder="Minimo 8 caracteres"
+                  label="Contraseña"
+                  placeholder="Mínimo 8 caracteres"
                   autoComplete="new-password"
                 />
               </div>
@@ -271,7 +271,9 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
               <div className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4">
                 <div className="grid gap-4 md:grid-cols-[1fr_1fr_150px]">
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-slate-700">Nombre del alumno</span>
+                    <span className="text-sm font-semibold text-slate-700">
+                      Nombre del estudiante
+                    </span>
                     <input
                       name="studentFirstName"
                       required
@@ -289,7 +291,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     />
                   </label>
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-slate-700">Grado o ano</span>
+                    <span className="text-sm font-semibold text-slate-700">Grado o año</span>
                     <select
                       name="studentGrade"
                       required
@@ -309,7 +311,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 </div>
                 <label className="mt-4 grid gap-2">
                   <span className="text-sm font-semibold text-slate-700">
-                    WhatsApp del alumno, si usa uno distinto
+                    WhatsApp del estudiante, si usa uno distinto
                   </span>
                   <input
                     name="studentWhatsappPhone"
@@ -330,11 +332,11 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 <span>
                   Acepto los{" "}
                   <Link href="/terminos" className="font-bold text-[#075f53] underline">
-                    Terminos y condiciones
+                    Términos y condiciones
                   </Link>{" "}
                   y la{" "}
                   <Link href="/privacidad" className="font-bold text-[#075f53] underline">
-                    Politica de privacidad
+                    Política de privacidad
                   </Link>
                   . Declaro que soy adulto responsable y autorizo el uso de los datos cargados para
                   prestar el servicio educativo.
@@ -398,8 +400,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                   />
                 </label>
                 <PasswordField
-                  label="Contrasena"
-                  placeholder="Minimo 8 caracteres"
+                  label="Contraseña"
+                  placeholder="Mínimo 8 caracteres"
                   autoComplete="new-password"
                 />
               </div>
@@ -425,7 +427,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                       <BookOpenCheck className="h-4 w-4 text-[#087968]" aria-hidden="true" />
                       <input
                         name="subjects"
-                        placeholder="Matematica, Ciencias"
+                        placeholder="Matemática, Ciencias"
                         className="h-full w-full bg-transparent font-medium outline-none"
                       />
                     </span>
@@ -463,13 +465,13 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                 <span>
                   Acepto los{" "}
                   <Link href="/terminos" className="font-bold text-[#075f53] underline">
-                    Terminos y condiciones
+                    Términos y condiciones
                   </Link>{" "}
                   y la{" "}
                   <Link href="/privacidad" className="font-bold text-[#075f53] underline">
-                    Politica de privacidad
+                    Política de privacidad
                   </Link>
-                  . Entiendo que EducAI genera borradores pedagogicos que deben ser revisados antes
+                  . Entiendo que EducAI genera borradores pedagógicos que deben ser revisados antes
                   de usarse con estudiantes.
                 </span>
               </label>
@@ -497,7 +499,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           )}
         </section>
         <p className="mt-5 text-center text-sm font-medium text-slate-600">
-          Ya tenes cuenta?{" "}
+          ¿Ya tenés cuenta?{" "}
           <Link href="/login" className="font-bold text-[#075f53] underline">
             Ingresar
           </Link>

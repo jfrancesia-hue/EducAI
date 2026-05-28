@@ -14,7 +14,7 @@ export default async function ColegiosPage() {
       <PageHeader
         eyebrow="RED"
         title="Colegios conectados"
-        subtitle="Inventario real de instituciones con conteo de docentes, alumnos y curriculas."
+        subtitle="Inventario real de instituciones con conteo de docentes, alumnos y currículas."
       />
 
       <section className="grid gap-4">
@@ -36,7 +36,7 @@ export default async function ColegiosPage() {
               <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
                 <span>{school.teacherCount} docentes</span>
                 <span>{school.studentCount} alumnos</span>
-                <span>{school.curriculumCount} curriculas</span>
+                <span>{school.curriculumCount} currículas</span>
               </div>
             </div>
           </article>

@@ -14,7 +14,7 @@ function statusMessage(status?: string) {
     case "sent":
       return {
         tone: "border-[#18b6a4]/35 bg-[#e7fbf7] text-[#075c50]",
-        text: "Te enviamos un enlace para restablecer la contrasena. Revisa tu correo.",
+        text: "Te enviamos un enlace para restablecer la contraseña. Revisá tu correo.",
       };
     case "missing":
       return {
@@ -24,7 +24,7 @@ function statusMessage(status?: string) {
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos enviar el correo. Reintenta en unos minutos.",
+        text: "No pudimos enviar el correo. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -47,10 +47,10 @@ export default async function RecoverPasswordPage({ searchParams }: RecoverPassw
           </Button>
 
           <h1 className="mt-8 font-display text-4xl font-bold tracking-tight">
-            Recuperar contrasena
+            Recuperar contraseña
           </h1>
           <p className="mt-3 text-[15px] font-medium leading-7 text-[#4f5f58]">
-            Ingresa el email de tu cuenta y te enviamos un enlace seguro para crear una contrasena
+            Ingresá el email de tu cuenta y te enviamos un enlace seguro para crear una contraseña
             nueva.
           </p>
 

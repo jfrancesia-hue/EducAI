@@ -10,15 +10,15 @@ const sections = [
   },
   {
     title: "Registro y veracidad de datos",
-    body: "Quien crea una cuenta declara que la informacion cargada es verdadera, que tiene autorizacion para registrar datos de estudiantes o instituciones y que mantendra actualizados los datos relevantes.",
+    body: "Quien crea una cuenta declara que la información cargada es verdadera, que tiene autorización para registrar datos de estudiantes o instituciones y que mantendrá actualizados los datos relevantes.",
   },
   {
     title: "Cuentas de menores",
-    body: "Los estudiantes menores de edad no deben registrarse por cuenta propia. El alta debe realizarla un adulto responsable o una institucion educativa autorizada.",
+    body: "Los estudiantes menores de edad no deben registrarse por cuenta propia. El alta debe realizarla un adulto responsable o una institución educativa autorizada.",
   },
   {
     title: "Contenido permitido",
-    body: "No se debe cargar contenido ilegal, discriminatorio, violento, datos sensibles innecesarios ni informacion de terceros sin autorizacion. Podemos suspender accesos ante usos indebidos.",
+    body: "No se debe cargar contenido ilegal, discriminatorio, violento, datos sensibles innecesarios ni información de terceros sin autorización. Podemos suspender accesos ante usos indebidos.",
   },
   {
     title: "Pagos y planes",

@@ -23,14 +23,14 @@ type TutorApiResponse = {
 
 const SUBJECTS = [
   { value: "", label: "Detectar materia" },
-  { value: "matematica", label: "Matematica" },
+  { value: "matematica", label: "Matemática" },
   { value: "lengua", label: "Lengua" },
   { value: "ciencias naturales", label: "Ciencias" },
-  { value: "ingles", label: "Ingles" },
+  { value: "ingles", label: "Inglés" },
   { value: "historia", label: "Historia" },
 ];
 
-const QUICK_PROMPTS = ["Explicalo mas simple", "Dame un ejemplo", "Tomame una pregunta"];
+const QUICK_PROMPTS = ["Explicalo más simple", "Dame un ejemplo", "Tomame una pregunta"];
 
 function studentFullName(student: FamilyStudent) {
   return `${student.firstName} ${student.lastName}`.trim();
@@ -38,18 +38,18 @@ function studentFullName(student: FamilyStudent) {
 
 function tutorErrorMessage(status: number, code?: string) {
   if (status === 401) {
-    return "La sesion expiro. Inicia sesion de nuevo para seguir.";
+    return "La sesión expiró. Iniciá sesión de nuevo para seguir.";
   }
   if (status === 403) {
     return "Esta cuenta no tiene permiso familiar para usar el tutor.";
   }
   if (status === 429) {
-    return "Hubo muchas consultas juntas. Espera un momento y volve a intentar.";
+    return "Hubo muchas consultas juntas. Esperá un momento y volvé a intentar.";
   }
   if (code === "api_unavailable") {
-    return "El tutor no esta disponible en este momento.";
+    return "El tutor no está disponible en este momento.";
   }
-  return "No pudimos consultar al tutor. Reintenta en unos minutos.";
+  return "No pudimos consultar al tutor. Reintentá en unos minutos.";
 }
 
 export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
@@ -100,7 +100,7 @@ export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
 
       const reply = payload.data?.reply?.trim();
       if (!reply) {
-        setError("El tutor respondio vacio. Reintenta con otra consulta.");
+        setError("El tutor respondió vacío. Reintentá con otra consulta.");
         return;
       }
 
@@ -113,7 +113,7 @@ export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
         },
       ]);
     } catch {
-      setError("No pudimos conectar con el tutor. Revisa la conexion e intenta de nuevo.");
+      setError("No pudimos conectar con el tutor. Revisá la conexión e intentá de nuevo.");
     } finally {
       setIsSending(false);
     }
@@ -136,7 +136,7 @@ export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
             Preguntale a ApoyoAI
           </h2>
           <p className="mt-2 text-[15px] font-medium leading-7 text-[#42534d]">
-            Es el mismo tutor que responde por WhatsApp, pero desde la web queda disponible con mas
+            Es el mismo tutor que responde por WhatsApp, pero desde la web queda disponible con más
             margen de uso porque no consume mensajes externos.
           </p>
 
@@ -221,7 +221,7 @@ export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
               <div className="rounded-lg border border-dashed border-[#bcd8d1] bg-white p-5">
                 <Bot className="h-7 w-7 text-[#18b6a4]" aria-hidden="true" />
                 <p className="mt-3 text-[15px] font-semibold leading-7 text-[#42534d]">
-                  Escribi una duda escolar, pedi una explicacion paso a paso o pedile que practique
+                  Escribí una duda escolar, pedí una explicación paso a paso o pedile que practique
                   con preguntas cortas.
                 </p>
               </div>
@@ -238,7 +238,7 @@ export function FamilyTutorChat({ students }: { students: FamilyStudent[] }) {
               <textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                placeholder="Ej: No entiendo fracciones equivalentes, explicamelo con un ejemplo."
+                placeholder="Ej: No entiendo fracciones equivalentes, explicámelo con un ejemplo."
                 rows={3}
                 className="min-h-24 rounded-lg border border-[#bcd8d1] bg-white px-3 py-3 font-semibold leading-6 text-[#10221e] outline-none placeholder:text-[#6c7a74] focus:border-[#18b6a4] focus:ring-2 focus:ring-[#18b6a4]/20"
               />

@@ -25,20 +25,20 @@ type PlanningModulePageProps = {
 
 const errorMessages: Record<string, string> = {
   config: "No pudimos preparar el generador en este momento.",
-  auth: "Tu sesion expiro. Volve a ingresar.",
-  invalid: "Revisa nivel, anio, materia, tema, cantidad de clases y duracion.",
+  auth: "Tu sesión expiró. Volvé a ingresar.",
+  invalid: "Revisá nivel, año, materia, tema, cantidad de clases y duración.",
   teacher_profile:
-    "Esta cuenta escolar todavia no tiene un perfil docente asociado para guardar clases.",
+    "Esta cuenta escolar todavía no tiene un perfil docente asociado para guardar clases.",
   quota:
-    "Alcanzaste el limite de planificaciones de tu plan. Actualiza tu plan para seguir generando clases.",
-  api: "No pudimos generar la clase. Reintenta en unos minutos.",
-  network: "La conexion fallo. Reintenta en unos minutos.",
+    "Alcanzaste el límite de planificaciones de tu plan. Actualizá tu plan para seguir generando clases.",
+  api: "No pudimos generar la clase. Reintentá en unos minutos.",
+  network: "La conexión falló. Reintentá en unos minutos.",
 };
 
 const outputItems = [
   "Secuencia de clase con tiempos",
   "Actividad principal y consigna",
-  "Criterios de evaluacion",
+  "Criterios de evaluación",
   "Cierre o ticket de salida",
 ];
 
@@ -234,12 +234,12 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
     return (
       <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
         <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
-          <Badge className="bg-[#e7fbf7] text-[#087968]">Guia generada</Badge>
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
             {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
           </h2>
           <div className="mt-3 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
-            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Anio {plan.grade}</span>
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
             <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
             <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
           </div>
@@ -279,7 +279,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                     ) : null}
                     {item.errorComun ? (
                       <p className="mt-2 text-[15px] leading-6 text-[#8d174f]">
-                        <span className="font-semibold">Error comun:</span> {item.errorComun}
+                        <span className="font-semibold">Error común:</span> {item.errorComun}
                       </p>
                     ) : null}
                   </div>
@@ -337,11 +337,11 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                         </p>
                         <div className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
                           {[
-                            ["Proposito", moment.proposito],
+                            ["Propósito", moment.proposito],
                             ["Consigna docente", moment.consignaDocente],
                             ["Actividad estudiantes", moment.actividadEstudiantes],
                             ["Ejemplo concreto", moment.ejemploConcreto],
-                            ["Intervencion docente", moment.intervencionDocente],
+                            ["Intervención docente", moment.intervencionDocente],
                             ["Cierre parcial", moment.cierreParcial],
                           ].map(([label, value]) =>
                             value ? (
@@ -373,7 +373,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                 ) : null}
                 {guide.actividadCentral.produccionEsperada ? (
                   <p>
-                    <span className="font-semibold">Produccion esperada:</span>{" "}
+                    <span className="font-semibold">Producción esperada:</span>{" "}
                     {guide.actividadCentral.produccionEsperada}
                   </p>
                 ) : null}
@@ -383,7 +383,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
 
           <div className="grid gap-4 md:grid-cols-2">
             {guide.evaluacion ? (
-              <RichGuideSection title="Evaluacion">
+              <RichGuideSection title="Evaluación">
                 <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
                   {guide.evaluacion.criterios?.map((criterion) => (
                     <p key={criterion}>{criterion}</p>
@@ -404,12 +404,12 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
             ) : null}
 
             {guide.diferenciacion ? (
-              <RichGuideSection title="Diferenciacion">
+              <RichGuideSection title="Diferenciación">
                 <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
                   {[
                     ["Apoyo fuerte", guide.diferenciacion.apoyoFuerte],
                     ["Grupo base", guide.diferenciacion.grupoBase],
-                    ["Extension", guide.diferenciacion.extension],
+                    ["Extensión", guide.diferenciacion.extension],
                   ].map(([label, value]) =>
                     value ? (
                       <p key={label}>
@@ -433,7 +433,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                     </p>
                     {material.comoUsarlo ? (
                       <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
-                        <span className="font-semibold">Como usarlo:</span> {material.comoUsarlo}
+                        <span className="font-semibold">Cómo usarlo:</span> {material.comoUsarlo}
                       </p>
                     ) : null}
                   </div>
@@ -452,10 +452,10 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                   >
                     <p className="font-semibold text-[#8d174f]">{error.error}</p>
                     <p className="mt-2">
-                      <span className="font-semibold">Como detectarlo:</span> {error.comoDetectarlo}
+                      <span className="font-semibold">Cómo detectarlo:</span> {error.comoDetectarlo}
                     </p>
                     <p>
-                      <span className="font-semibold">Como intervenir:</span> {error.comoIntervenir}
+                      <span className="font-semibold">Cómo intervenir:</span> {error.comoIntervenir}
                     </p>
                   </div>
                 ))}
@@ -470,7 +470,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
   return (
     <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
       <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
-        <Badge className="bg-[#e7fbf7] text-[#087968]">Guia generada</Badge>
+        <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
         <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
           {plan.subject} - {plan.topic}
         </h2>
@@ -556,11 +556,11 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
                 </div>
                 {session.differentiation ? (
                   <div className="mt-3 grid gap-2 rounded-lg border border-[#d5e1dc] bg-white p-3">
-                    <p className="font-semibold">Ajustes y desafios</p>
+                    <p className="font-semibold">Ajustes y desafíos</p>
                     {[
                       ["Apoyo fuerte", session.differentiation.low],
                       ["Grupo base", session.differentiation.medium],
-                      ["Extension", session.differentiation.high],
+                      ["Extensión", session.differentiation.high],
                     ].map(([label, value]) =>
                       value ? (
                         <p key={label} className="text-[15px] leading-6 text-[#33423c]">
@@ -589,7 +589,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
 
           {assessment.length ? (
             <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-              <h3 className="font-display text-xl font-bold tracking-tight">Evaluacion</h3>
+              <h3 className="font-display text-xl font-bold tracking-tight">Evaluación</h3>
               <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
                 {assessment.map((item) => (
                   <li key={item}>{item}</li>
@@ -645,7 +645,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
                 <div>
                   <p className="font-semibold">Clase generada y guardada.</p>
-                  <p className="mt-1 text-sm">ID de planificacion: {createdId}</p>
+                  <p className="mt-1 text-sm">ID de planificación: {createdId}</p>
                 </div>
               </div>
             </div>
@@ -671,7 +671,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                 href="/app/planificar"
                 className="inline-flex rounded-lg bg-[#075f53] px-4 py-3 text-sm font-bold text-white shadow-whisper transition hover:bg-[#087968]"
               >
-                Nueva planificacion
+                Nueva planificación
               </a>
             </div>
           ) : (
@@ -701,7 +701,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <div className="flex items-center gap-3">
               <BookOpenCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
-              <h2 className="font-display text-2xl font-bold tracking-tight">Ultimas clases</h2>
+              <h2 className="font-display text-2xl font-bold tracking-tight">Últimas clases</h2>
             </div>
             <div className="mt-5 grid gap-3">
               {dashboard?.recentLessonPlans.length ? (
@@ -725,7 +725,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                 ))
               ) : (
                 <p className="text-[15px] leading-6 text-[#4f5f58]">
-                  Todavia no hay clases generadas en este alcance.
+                  Todavía no hay clases generadas en este alcance.
                 </p>
               )}
             </div>

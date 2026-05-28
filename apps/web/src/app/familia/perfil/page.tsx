@@ -38,22 +38,22 @@ function passwordMessage(code?: string) {
     case "updated":
       return {
         tone: "border-[#18b6a4]/35 bg-[#e7fbf7] text-[#075c50]",
-        text: "Contrasena actualizada correctamente.",
+        text: "Contraseña actualizada correctamente.",
       };
     case "short":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "La nueva contrasena debe tener al menos 8 caracteres.",
+        text: "La nueva contraseña debe tener al menos 8 caracteres.",
       };
     case "mismatch":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "Las contrasenas no coinciden.",
+        text: "Las contraseñas no coinciden.",
       };
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar la contrasena. Reintenta en unos minutos.",
+        text: "No pudimos actualizar la contraseña. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -75,7 +75,7 @@ function profileMessage(code?: string) {
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar tus datos. Reintenta en unos minutos.",
+        text: "No pudimos actualizar tus datos. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -118,7 +118,7 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
             <div>
               <h1 className="font-display text-4xl font-bold tracking-tight">Mi perfil</h1>
               <p className="mt-2 max-w-2xl text-[15px] font-medium leading-7 text-[#4f5f58]">
-                Datos de acceso, seguridad y configuracion familiar visible.
+                Datos de acceso, seguridad y configuración familiar visible.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -173,7 +173,7 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
               <Badge className="bg-[#d8f7ee] text-[#075c50]">Perfil visible</Badge>
               <h2 className="mt-4 font-display text-2xl font-bold">Editar adulto responsable</h2>
               <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-                Cambia el nombre visible de la cuenta familiar. Plan, pagos, hijos vinculados y
+                Cambiá el nombre visible de la cuenta familiar. Plan, pagos, hijos vinculados y
                 permisos se mantienen protegidos.
               </p>
 
@@ -211,9 +211,9 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Badge className="bg-[#d8f7ee] text-[#075c50]">Seguridad</Badge>
-                  <h2 className="mt-4 font-display text-2xl font-bold">Cambiar contrasena</h2>
+                  <h2 className="mt-4 font-display text-2xl font-bold">Cambiar contraseña</h2>
                   <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-                    Cambia solo la contrasena de acceso familiar. No modifica plan, hijos ni
+                    Cambiá solo la contraseña de acceso familiar. No modifica plan, hijos ni
                     permisos.
                   </p>
                 </div>
@@ -236,18 +236,18 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
                 <input type="hidden" name="next" value="/familia/perfil" />
                 <PasswordField
                   name="password"
-                  label="Nueva contrasena"
-                  placeholder="Minimo 8 caracteres"
+                  label="Nueva contraseña"
+                  placeholder="Mínimo 8 caracteres"
                   autoComplete="new-password"
                 />
                 <PasswordField
                   name="confirmPassword"
-                  label="Confirmar contrasena"
-                  placeholder="Repeti la contrasena"
+                  label="Confirmar contraseña"
+                  placeholder="Repetí la contraseña"
                   autoComplete="new-password"
                 />
                 <Button className="bg-[#18b6a4] text-white hover:bg-[#119b8c] md:col-span-2">
-                  Actualizar contrasena
+                  Actualizar contraseña
                 </Button>
               </form>
             </article>
@@ -258,7 +258,7 @@ export default async function FamilyProfilePage({ searchParams }: ProfilePagePro
               <ShieldCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
               <h2 className="mt-4 font-display text-2xl font-bold">Editable ahora</h2>
               <div className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-[#33423c]">
-                {["Nombre visible", "Contrasena de acceso", "Hijos desde el panel"].map((item) => (
+                {["Nombre visible", "Contraseña de acceso", "Hijos desde el panel"].map((item) => (
                   <p key={item} className="flex gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#18b6a4]" />
                     {item}

@@ -30,14 +30,14 @@ export const billingCopy = {
     },
     {
       question: "Puedo cambiar de plan?",
-      answer: "Si. Podes subir, bajar o volver al plan Free cuando lo necesites.",
+      answer: "Si. Podés subir, bajar o volver al plan Free cuando lo necesites.",
     },
     {
       question: "Hay permanencia minima?",
       answer: "No. Los planes mensuales no tienen permanencia.",
     },
     {
-      question: "Como pagan colegios e instituciones?",
+      question: "¿Cómo pagan colegios e instituciones?",
       answer: "Los planes institucionales pueden coordinarse por transferencia y factura.",
     },
   ],
@@ -75,7 +75,7 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
       "5 actividades o recursos proximos",
       "Acceso para siempre",
     ],
-    excludes: ["PDF y Word", "Rubricas y evaluaciones", "Alineacion jurisdiccional", "Reportes"],
+    excludes: ["PDF y Word", "Rúbricas y evaluaciones", "Alineación jurisdiccional", "Reportes"],
     note: "Sin tarjeta. Los creditos no vencen.",
   },
   {
@@ -90,7 +90,7 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     includes: [
       "10 planificaciones por mes",
       "20 actividades o recursos",
-      "Rubricas y criterios",
+      "Rúbricas y criterios",
       "Exportacion PDF y Word",
       "Banco personal de recursos",
       "Reporte mensual",
@@ -104,16 +104,16 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     audience: "Plan recomendado",
     price: "$24.900/mes",
     description:
-      "Produccion docente mas profunda para planificar, evaluar y reutilizar materiales.",
+      "Producción docente más profunda para planificar, evaluar y reutilizar materiales.",
     featured: true,
     ctaLabel: "Elegir Docente Pro",
     ctaHref: "/registro?producto=educai&plan=docente-pro",
     includes: [
       "40 planificaciones por mes",
       "80 actividades o recursos",
-      "Rubricas y evaluaciones",
+      "Rúbricas y evaluaciones",
       "Secuencias multisemana",
-      "Alineacion a 24 jurisdicciones",
+      "Alineación a 24 jurisdicciones",
       "Exportacion PDF y Word",
       "Banco avanzado de recursos",
       "Reporte semanal",
@@ -132,9 +132,9 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     includes: [
       "10 docentes activos incluidos",
       "$18.000/mes por docente activo adicional",
-      "Docente activo: genero al menos 1 planificacion en el mes",
+      "Docente activo: generó al menos 1 planificación en el mes",
       "Ejemplo: 15 docentes = $270.000/mes",
-      "Acompanamiento para implementacion",
+      "Acompañamiento para implementacion",
     ],
   },
   {
@@ -143,13 +143,13 @@ export const educaiPublicPlans: PublicPricingPlan[] = [
     name: "Institucional",
     audience: "Municipios, redes y organizaciones",
     price: "Desde $2.500/alumno/mes",
-    description: "Propuesta por alumno segun modulos, alcance y acompaniamiento requerido.",
+    description: "Propuesta por alumno según módulos, alcance y acompañamiento requerido.",
     ctaLabel: "Hablar con ventas",
     ctaHref: "/contacto?producto=educai&plan=institucional",
     includes: [
-      "$2.500 a $4.500 por alumno/mes segun modulos",
+      "$2.500 a $4.500 por alumno/mes según módulos",
       "Contratacion por transferencia y factura",
-      "Configuracion institucional",
+      "Configuración institucional",
       "Seguimiento y reportes acordados",
     ],
   },
@@ -166,24 +166,24 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
     ctaLabel: "Registrarse gratis",
     ctaHref: "/registro?producto=apoyoai&plan=free",
     includes: ["10 consultas de tutor por app", "2 fotos de tareas", "1 perfil de hijo"],
-    excludes: ["WhatsApp", "Audio", "Diagnostico adaptativo", "Reportes"],
+    excludes: ["WhatsApp", "Audio", "Diagnóstico adaptativo", "Reportes"],
     note: "Solo tutor por app. WhatsApp empieza en Basico.",
   },
   {
     id: "basico",
     product: "apoyoai",
     name: "Basico",
-    audience: "Acompanamiento inicial",
+    audience: "Acompañamiento inicial",
     price: "$14.900/mes",
     description: "Un hijo con apoyo por WhatsApp y app para dudas frecuentes.",
-    ctaLabel: "Elegir Basico",
+    ctaLabel: "Elegir Básico",
     ctaHref: "/registro?producto=apoyoai&plan=basico",
     includes: [
       "1 hijo",
       "WhatsApp texto: 20 mensajes por dia",
       "Tutor por app con uso generoso",
       "Perfil personalizado",
-      "1 diagnostico inicial",
+      "1 diagnóstico inicial",
     ],
     excludes: ["Audio por WhatsApp", "Fotos semanales", "Reporte semanal"],
   },
@@ -203,7 +203,7 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
       "Tutor por app con uso generoso",
       "Audio por WhatsApp: 10 por semana",
       "Fotos de tareas: 5 por semana",
-      "Diagnostico: 1 por mes",
+      "Diagnóstico: 1 por mes",
       "Reporte semanal para familia",
       "Perfil personalizado",
     ],
@@ -214,7 +214,7 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
     name: "Familiar",
     audience: "Hasta 3 hijos",
     price: "$69.900/mes",
-    description: "Precio total familiar para acompanamiento sostenido por hijo.",
+    description: "Precio total familiar para acompañamiento sostenido por hijo.",
     ctaLabel: "Elegir Familiar",
     ctaHref: "/registro?producto=apoyoai&plan=familiar",
     includes: [
@@ -222,7 +222,7 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
       "WhatsApp texto: 25 mensajes por dia por hijo",
       "Audio: 15 por semana por hijo",
       "Fotos de tareas: 8 por semana por hijo",
-      "Diagnostico: 1 por mes por hijo",
+      "Diagnóstico: 1 por mes por hijo",
       "Reporte semanal por hijo",
       "Perfil personalizado por hijo",
     ],
@@ -234,7 +234,7 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
     name: "Intensivo",
     audience: "Alto uso y examenes",
     price: "$119.900/mes",
-    description: "Mayor intensidad de apoyo y diagnostico semanal por hijo.",
+    description: "Mayor intensidad de apoyo y diagnóstico semanal por hijo.",
     ctaLabel: "Elegir Intensivo",
     ctaHref: "/registro?producto=apoyoai&plan=intensivo",
     includes: [
@@ -242,11 +242,11 @@ export const apoyoAiPublicPlans: PublicPricingPlan[] = [
       "WhatsApp texto: 40 mensajes por dia por hijo",
       "Audio: 20 por semana por hijo",
       "Fotos de tareas: 12 por semana por hijo",
-      "Diagnostico semanal por hijo",
+      "Diagnóstico semanal por hijo",
       "Reporte semanal por hijo",
       "Perfil personalizado por hijo",
     ],
-    note: "La diferencia frente a Familiar es el diagnostico semanal.",
+    note: "La diferencia frente a Familiar es el diagnóstico semanal.",
   },
 ];
 
@@ -289,7 +289,7 @@ export const pricingAssumptions = {
   internalDollar: "$1.500 ARS/USD",
   paymentRail: "Mercado Pago",
   reviewCycle: "Revision mensual por costos dolarizados",
-  principle: "WhatsApp medido, app mas generosa, audio e imagen desde Plus.",
+  principle: "WhatsApp medido, app más generosa, audio e imagen desde Plus.",
 };
 
 export const pricingPlans: PricingPlan[] = [
@@ -304,7 +304,7 @@ export const pricingPlans: PricingPlan[] = [
     reports: "Sin reporte avanzado",
     costRange: "$900-$1.800",
     marginRange: "Captacion",
-    includes: ["Diagnostico inicial breve", "Tutor por texto", "Limite anti-abuso diario"],
+    includes: ["Diagnóstico inicial breve", "Tutor por texto", "Limite anti-abuso diario"],
   },
   {
     name: "Apoyo Basico",
@@ -318,7 +318,7 @@ export const pricingPlans: PricingPlan[] = [
     reports: "Reporte mensual",
     costRange: "$3.500-$5.500",
     marginRange: "63%-77%",
-    includes: ["Tutor socratico", "Practica guiada", "Resumen mensual para padres"],
+    includes: ["Tutor socrático", "Práctica guiada", "Resumen mensual para padres"],
   },
   {
     name: "Apoyo Plus",
@@ -333,7 +333,7 @@ export const pricingPlans: PricingPlan[] = [
     costRange: "$8.000-$12.000",
     marginRange: "60%-73%",
     featured: true,
-    includes: ["Modo examen", "Fotos de tareas", "Audio limitado", "Alertas pedagogicas"],
+    includes: ["Modo examen", "Fotos de tareas", "Audio limitado", "Alertas pedagógicas"],
   },
   {
     name: "Apoyo Familiar",
@@ -360,7 +360,7 @@ export const pricingPlans: PricingPlan[] = [
     reports: "Semanal + avance",
     costRange: "$36.000-$48.000",
     marginRange: "52%-64%",
-    includes: ["Mayor prioridad", "Semana de examen incluida", "Diagnosticos adicionales"],
+    includes: ["Mayor prioridad", "Semana de examen incluida", "Diagnósticos adicionales"],
   },
 ];
 
@@ -383,12 +383,12 @@ export const usageCosts: UsageCost[] = [
   {
     label: "Foto de tarea",
     cost: "$40-$120",
-    note: "Vision/OCR, razonamiento y devolucion pedagogica.",
+    note: "Vision/OCR, razonamiento y devolucion pedagógica.",
   },
   {
-    label: "Diagnostico adaptativo",
+    label: "Diagnóstico adaptativo",
     cost: "$300-$900",
-    note: "Varias interacciones con evaluacion y resumen.",
+    note: "Varias interacciones con evaluación y resumen.",
   },
   {
     label: "Reporte semanal",
@@ -402,7 +402,7 @@ export const creditRules = [
   "Texto WhatsApp: 1 consulta",
   "Audio corto: 3 consultas",
   "Foto o tarea: 4-5 consultas",
-  "Diagnostico completo: 20-30 consultas",
+  "Diagnóstico completo: 20-30 consultas",
   "Reporte avanzado: 10 consultas",
 ];
 
@@ -410,7 +410,7 @@ export const addOnPacks: AddOnPack[] = [
   {
     name: "100 consultas extra",
     price: "$7.900",
-    detail: "Para semanas de mas tarea sin subir de plan.",
+    detail: "Para semanas de más tarea sin subir de plan.",
   },
   {
     name: "300 consultas extra",
@@ -423,7 +423,7 @@ export const addOnPacks: AddOnPack[] = [
     detail: "Practica intensiva con prioridad y reportes.",
   },
   {
-    name: "Diagnostico adicional",
+    name: "Diagnóstico adicional",
     price: "$4.900-$9.900",
     detail: "Nueva materia, cambio de grado o seguimiento.",
   },
@@ -433,7 +433,7 @@ export const schoolPlans: SchoolPlan[] = [
   {
     name: "Piloto escuela",
     price: "$250.000-$600.000/mes",
-    scope: "30-50 alumnos, configuracion inicial y seguimiento.",
+    scope: "30-50 alumnos, configuración inicial y seguimiento.",
   },
   {
     name: "Escuela Starter",
@@ -448,6 +448,6 @@ export const schoolPlans: SchoolPlan[] = [
   {
     name: "DocenteAI",
     price: "$12.000-$20.000/docente/mes",
-    scope: "Planificacion, recursos, evaluacion y reportes.",
+    scope: "Planificación, recursos, evaluación y reportes.",
   },
 ];

@@ -17,14 +17,14 @@ export default async function GovDashboardHome() {
       <PageHeader
         eyebrow="PANEL OPERATIVO"
         title="Resumen ministerial en vivo"
-        subtitle="Conteos y distribuciones reales de colegios, alumnos, curriculas, planificaciones y handoffs."
+        subtitle="Conteos y distribuciones reales de colegios, alumnos, currículas, planificaciones y handoffs."
       />
 
       <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <KpiCard icon={School} label="Colegios" value={dashboard.metrics.schoolCount} />
         <KpiCard icon={Users} label="Alumnos" value={dashboard.metrics.studentCount} />
         <KpiCard icon={GraduationCap} label="Docentes" value={dashboard.metrics.teacherCount} />
-        <KpiCard icon={BookOpen} label="Curriculas" value={dashboard.metrics.curriculumCount} />
+        <KpiCard icon={BookOpen} label="Currículas" value={dashboard.metrics.curriculumCount} />
         <KpiCard icon={Activity} label="Planes IA" value={dashboard.metrics.lessonPlanCount} />
         <KpiCard
           icon={Inbox}
@@ -59,7 +59,7 @@ export default async function GovDashboardHome() {
 
         <article className="gov-card rounded-xl border border-slate-200 bg-white p-6 shadow-whisper">
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900">
-            Produccion por materia
+            Producción por materia
           </h2>
           <div className="mt-5 grid gap-3">
             {dashboard.lessonPlansBySubject.map((item) => (

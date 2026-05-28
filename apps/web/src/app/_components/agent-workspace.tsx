@@ -25,7 +25,7 @@ const scenarios = [
     context:
       "Curso 7A. El docente necesita trabajar proporcionalidad con inicio claro, practica guiada y cierre evaluable.",
     objective:
-      "Crear una secuencia didactica concreta con tiempos, consignas y criterios de exito.",
+      "Crear una secuencia didáctica concreta con tiempos, consignas y criterios de exito.",
     guardrail:
       "Mantener control docente sobre contenido, tono y nivel de dificultad antes de usarlo.",
     outputs: [
@@ -39,7 +39,7 @@ const scenarios = [
     id: "assessment-feedback",
     title: "Feedback y rubrica rapida",
     context:
-      "Grupo 6B. Hay producciones escritas heterogeneas y el docente necesita corregir con criterios consistentes.",
+      "Grupo 6B. Hay producciónes escritas heterogeneas y el docente necesita corregir con criterios consistentes.",
     objective:
       "Generar una rubrica breve, comentarios modelo y sugerencias de mejora por nivel de desempeno.",
     guardrail:
@@ -55,7 +55,7 @@ const scenarios = [
     id: "resource-pack",
     title: "Kit de recursos para una unidad",
     context:
-      "La escuela prepara una unidad de ciencias y necesita actividades, preguntas disparadoras y evaluacion corta.",
+      "La escuela prepara una unidad de ciencias y necesita actividades, preguntas disparadoras y evaluación corta.",
     objective:
       "Producir materiales editables para una semana de clases sin perder coherencia curricular.",
     guardrail:
@@ -64,14 +64,14 @@ const scenarios = [
       "Guia de clase por dia",
       "Preguntas para debate",
       "Actividad practica",
-      "Evaluacion corta con criterios",
+      "Evaluación corta con criterios",
     ],
   },
 ];
 
 const steps = [
   { label: "Definir", icon: Target, detail: "Objetivo, curso, tiempo y evidencia esperada" },
-  { label: "Producir", icon: FileText, detail: "Plan, consignas, recursos y rubricas" },
+  { label: "Producir", icon: FileText, detail: "Plan, consignas, recursos y rúbricas" },
   { label: "Ordenar", icon: Route, detail: "Secuencia aplicable para aula real" },
   { label: "Comunicar", icon: MessageCircle, detail: "Resumen docente o institucional" },
   { label: "Evaluar", icon: ClipboardList, detail: "Criterios, feedback y proximo paso" },
@@ -152,7 +152,7 @@ export function AgentWorkspace() {
                 Agente IA docente
               </p>
               <h2 className="mt-1 font-display text-3xl font-bold tracking-tight">
-                Produccion pedagogica revisable
+                Producción pedagógica revisable
               </h2>
               <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
                 El agente no solo responde: organiza el pedido, produce borradores docentes,

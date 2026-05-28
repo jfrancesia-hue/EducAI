@@ -19,7 +19,7 @@ export default async function ReportsModulePage() {
       color: "bg-[#e7fbf7] text-[#087968]",
     },
     {
-      label: "Diagnosticos completos",
+      label: "Diagnósticos completos",
       value: `${dashboard?.metrics.diagnosticCompletionRate ?? 0}%`,
       note: "sobre perfiles disponibles",
       icon: Brain,
@@ -28,7 +28,7 @@ export default async function ReportsModulePage() {
     {
       label: "Planes generados",
       value: dashboard?.metrics.lessonPlanCount ?? 0,
-      note: "produccion total del alcance",
+      note: "producción total del alcance",
       icon: CheckCircle2,
       color: "bg-[#fff8d7] text-[#876100]",
     },
@@ -41,11 +41,11 @@ export default async function ReportsModulePage() {
           <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <Badge className="bg-[#e7fbf7] text-[#087968]">Analitica educativa</Badge>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-              Indicadores del trabajo pedagogico
+              Indicadores del trabajo pedagógico
             </h2>
             <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-              Esta vista resume estudiantes, diagnosticos, planificaciones y uso por materia para
-              acompanar decisiones pedagogicas.
+              Esta vista resume estudiantes, diagnósticos, planificaciones y uso por materia para
+              acompañar decisiones pedagógicas.
             </p>
           </div>
 
@@ -88,7 +88,7 @@ export default async function ReportsModulePage() {
                 ))
               ) : (
                 <div className="p-4 text-[15px] leading-6 text-[#4f5f58]">
-                  Aun no hay planificaciones suficientes para mostrar desglose por materia.
+                  Aún no hay planificaciones suficientes para mostrar desglose por materia.
                 </div>
               )}
             </div>
@@ -104,7 +104,7 @@ export default async function ReportsModulePage() {
             <div className="mt-5 grid gap-3">
               {[
                 `Minutos de aprendizaje esta semana: ${dashboard?.metrics.learningMinutesThisWeek ?? 0}`,
-                `Curriculas cargadas: ${dashboard?.metrics.curriculumCount ?? 0}`,
+                `Currículas cargadas: ${dashboard?.metrics.curriculumCount ?? 0}`,
                 `Handoffs humanos abiertos: ${dashboard?.metrics.openHandoffCount ?? 0}`,
               ].map((item) => (
                 <div key={item} className="rounded-lg bg-white/10 p-4">

@@ -33,7 +33,7 @@ function metricCards(data: NonNullable<Awaited<ReturnType<typeof fetchInstitutio
       tone: "bg-[#fff8d7] text-[#876100]",
     },
     {
-      label: "Diagnosticos completos",
+      label: "Diagnósticos completos",
       value: `${data.metrics.diagnosticCompletionRate}%`,
       note: "sobre perfiles disponibles",
       icon: Brain,
@@ -66,8 +66,8 @@ export default async function EducAiAppPage() {
                 Tu mesa de trabajo para crear mejores clases.
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/82">
-                Empeza por una planificacion editable, revisa el seguimiento de estudiantes y mira
-                indicadores utiles sin cambiar de herramienta.
+                Empezá por una planificación editable, revisá el seguimiento de estudiantes y mirá
+                indicadores útiles sin cambiar de herramienta.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild className="bg-[#ff7a1a] text-white hover:bg-[#ea6508]">
@@ -130,10 +130,10 @@ export default async function EducAiAppPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                        Planificaciones recientes
+                        Planificaciónes recientes
                       </p>
                       <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-                        Produccion docente
+                        Producción docente
                       </h2>
                     </div>
                     <BookOpenCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
@@ -162,7 +162,7 @@ export default async function EducAiAppPage() {
                       ))
                     ) : (
                       <p className="text-[15px] leading-6 text-[#4f5f58]">
-                        Todavia no hay planificaciones generadas en este alcance.
+                        Todavía no hay planificaciones generadas en este alcance.
                       </p>
                     )}
                   </div>
@@ -175,7 +175,7 @@ export default async function EducAiAppPage() {
                         Mezcla por materia
                       </p>
                       <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-                        Que se esta planificando
+                        Qué se está planificando
                       </h2>
                     </div>
                     <GraduationCap className="h-6 w-6 text-[#4f3ee2]" aria-hidden="true" />
@@ -204,7 +204,7 @@ export default async function EducAiAppPage() {
               <AlertTriangle className="h-6 w-6 text-[#b82170]" aria-hidden="true" />
               <h2 className="mt-4 font-display text-2xl font-bold">No pudimos cargar el panel</h2>
               <p className="mt-2 text-[15px] leading-6 text-[#4f5f58]">
-                No pudimos traer la informacion de tu espacio. Reintenta en unos minutos.
+                No pudimos traer la información de tu espacio. Reintentá en unos minutos.
               </p>
             </article>
           )}
@@ -241,7 +241,7 @@ export default async function EducAiAppPage() {
                           : "bg-[#fff8d7] text-[#876100]"
                       }
                     >
-                      {student.diagnosticCompleted ? "Diagnostico listo" : "Pendiente"}
+                      {student.diagnosticCompleted ? "Diagnóstico listo" : "Pendiente"}
                     </Badge>
                   </div>
                   <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
@@ -254,13 +254,13 @@ export default async function EducAiAppPage() {
             </div>
             <Button asChild variant="ghost" size="sm" className="mt-4 px-0 text-[#11231f]">
               <Link href="/app/estudiantes" prefetch={false}>
-                Abrir modulo de estudiantes
+                Abrir módulo de estudiantes
               </Link>
             </Button>
           </section>
 
           <section className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-5 text-white shadow-whisper">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Acciones utiles</h2>
+            <h2 className="font-display text-2xl font-bold tracking-tight">Acciones útiles</h2>
             <div className="mt-5 grid gap-3">
               {[
                 { label: "Crear una clase editable", href: "/app/planificar" as Route },

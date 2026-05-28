@@ -17,13 +17,13 @@ export default async function IndicadoresPage() {
       <PageHeader
         eyebrow="INDICADORES"
         title="Indicadores ministeriales"
-        subtitle="Lectura consolidada de cobertura de red, actividad pedagogica y derivaciones."
+        subtitle="Lectura consolidada de cobertura de red, actividad pedagógica y derivaciones."
       />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         <KpiCard icon={School} label="Colegios" value={dashboard.metrics.schoolCount} />
         <KpiCard icon={Users} label="Alumnos" value={dashboard.metrics.studentCount} />
-        <KpiCard icon={BookOpen} label="Curriculas" value={dashboard.metrics.curriculumCount} />
+        <KpiCard icon={BookOpen} label="Currículas" value={dashboard.metrics.curriculumCount} />
         <KpiCard icon={BarChart3} label="Planes IA" value={dashboard.metrics.lessonPlanCount} />
         <KpiCard
           icon={Inbox}

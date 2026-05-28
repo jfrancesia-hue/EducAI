@@ -14,13 +14,13 @@ export default async function AuditoriaPage() {
       <PageHeader
         eyebrow="AUDITORIA"
         title="Registro de auditoria"
-        subtitle="Eventos reales del sistema, agrupados por accion y con ultimos movimientos visibles."
+        subtitle="Eventos reales del sistema, agrupados por acción y con últimos movimientos visibles."
       />
 
       <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <article className="gov-card rounded-xl border border-slate-200 bg-white p-6 shadow-whisper">
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900">
-            Acciones mas frecuentes
+            Acciones más frecuentes
           </h2>
           <div className="mt-5 grid gap-3">
             {dashboard.auditActions.map((item) => (

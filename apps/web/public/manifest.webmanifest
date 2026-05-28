@@ -1,7 +1,7 @@
 {
   "name": "EducAI",
   "short_name": "EducAI",
-  "description": "Plataforma educativa con agente IA docente, planificacion, produccion de recursos y seguimiento institucional.",
+  "description": "Plataforma educativa con agente IA docente, planificación, producción de recursos y seguimiento institucional.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f8f3",

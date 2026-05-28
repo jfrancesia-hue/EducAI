@@ -59,9 +59,9 @@ const features = [
   },
   {
     icon: BookOpenCheck,
-    title: "Planificacion docente asistida",
+    title: "Planificación docente asistida",
     description:
-      "Convierte grado, tema, objetivos y tiempo disponible en secuencias didacticas listas para revisar y usar.",
+      "Convierte grado, tema, objetivos y tiempo disponible en secuencias didácticas listas para revisar y usar.",
     accent: "bg-[#f8d95c]",
     iconTone: "bg-[#fff6c9] text-[#876100]",
   },
@@ -77,7 +77,7 @@ const features = [
     icon: ShieldCheck,
     title: "Trabajo seguro con datos escolares",
     description:
-      "Disenado con privacidad, trazabilidad y control docente para trabajar con informacion educativa sensible.",
+      "Diseñado con privacidad, trazabilidad y control docente para trabajar con información educativa sensible.",
     accent: "bg-[#ef5da8]",
     iconTone: "bg-[#fdeaf4] text-[#b82170]",
   },
@@ -92,7 +92,7 @@ const journeys = [
   },
   {
     label: "Equipos",
-    title: "Coordinacion pedagogica con evidencias, reportes y seguimiento semanal.",
+    title: "Coordinacion pedagógica con evidencias, reportes y seguimiento semanal.",
     image: teacherImage,
     color: "bg-[#fff6c9] text-[#876100]",
   },
@@ -106,12 +106,12 @@ const journeys = [
 
 const safeguards = [
   "Espacios separados para escuelas, equipos docentes e instituciones.",
-  "Prompts pedagogicos orientados a planificacion, evaluacion y produccion de recursos.",
-  "Control docente sobre consignas, rubricas, feedback y mensajes antes de compartir.",
-  "Informacion organizada para acompanar decisiones pedagogicas con responsabilidad.",
+  "Prompts pedagógicos orientados a planificación, evaluación y producción de recursos.",
+  "Control docente sobre consignas, rúbricas, feedback y mensajes antes de compartir.",
+  "Información organizada para acompañar decisiones pedagógicas con responsabilidad.",
 ];
 
-const heroTags = ["Agente docente", "Docentes", "Planificacion", "Datos cuidados"];
+const heroTags = ["Agente docente", "Docentes", "Planificación", "Datos cuidados"];
 
 const heroTagStyles = [
   "border-[#18b6a4]/45 bg-[#18b6a4]/22",
@@ -128,7 +128,7 @@ export default function HomePage() {
       <section className="relative min-h-[92vh] px-4 py-4 sm:px-6 lg:px-8">
         <Image
           src={heroImage}
-          alt="Docente acompanando a estudiantes en un aula luminosa"
+          alt="Docente acompañando a estudiantes en un aula luminosa"
           fill
           priority
           sizes="100vw"
@@ -198,7 +198,7 @@ export default function HomePage() {
               La plataforma que hace que aprender vuelva a sentirse posible.
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)] sm:text-xl">
-              Planificacion, produccion de materiales, feedback y analitica pedagogica en un solo
+              Planificación, producción de materiales, feedback y analítica pedagógica en un solo
               sistema. Hermoso para usar, serio con los datos y pensado para docentes reales.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
@@ -279,7 +279,7 @@ export default function HomePage() {
             No es una landing bonita: es una experiencia de trabajo diario.
           </h2>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-            EducAI conecta planificacion, aula y seguimiento. Cada interaccion deja contexto util
+            EducAI conecta planificación, aula y seguimiento. Cada interacción deja contexto útil
             para preparar mejor, evaluar con claridad y reducir carga operativa docente.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -323,7 +323,7 @@ export default function HomePage() {
                 <div>
                   <p className="text-sm uppercase tracking-[0.08em] text-white/82">Panel docente</p>
                   <h3 className="mt-2 font-display text-2xl font-semibold tracking-tight">
-                    7A - Matematica
+                    7A - Matemática
                   </h3>
                 </div>
                 <Badge className="bg-emerald-400/20 text-emerald-100">En progreso</Badge>
@@ -351,7 +351,7 @@ export default function HomePage() {
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#4f3ee2]">
                   <Brain className="h-4 w-4" aria-hidden="true" />
-                  Planificacion activa
+                  Planificación activa
                 </div>
               </div>
               <div className="rounded-lg border border-white/15 bg-[#f8d95c] p-4 text-slate-950 shadow-float">
@@ -419,7 +419,7 @@ export default function HomePage() {
             La belleza importa. La seguridad importa mas.
           </h2>
           <p className="mt-5 text-lg leading-8 text-slate-600">
-            El diseno no tapa lo esencial: privacidad, trazabilidad, limites pedagogicos y revision
+            El diseño no tapa lo esencial: privacidad, trazabilidad, límites pedagógicos y revision
             docente antes de publicar o compartir materiales.
           </p>
         </div>
@@ -447,7 +447,7 @@ export default function HomePage() {
               dias.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-              Una experiencia pensada para que el trabajo docente sea mas claro, mas liviano y mas
+              Una experiencia pensada para que el trabajo docente sea más claro, más liviano y más
               facil de sostener todos los dias.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -480,7 +480,7 @@ export default function HomePage() {
                 "Datos cuidados",
                 "Planes editables",
                 "Seguimiento claro",
-                "Acompanamiento docente",
+                "Acompañamiento docente",
                 "Mejora continua",
               ].map((item) => (
                 <div

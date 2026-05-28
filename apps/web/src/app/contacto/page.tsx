@@ -19,9 +19,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const sent = params.enviado === "1";
   const errorMessage =
     params.error === "rate"
-      ? "Recibimos demasiados intentos desde esta conexion. Espera unos minutos y vuelve a intentar."
+      ? "Recibimos demasiados intentos desde esta conexión. Esperá unos minutos y volvé a intentar."
       : params.error
-        ? "No pudimos registrar la consulta. Revisa los datos e intenta otra vez."
+        ? "No pudimos registrar la consulta. Revisá los datos e intentá otra vez."
         : null;
 
   return (
@@ -38,7 +38,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           <div className="rounded-lg border border-[#163f36]/20 bg-[#11231f] p-6 text-white shadow-whisper">
             <Badge className="bg-white/12 text-white">Contacto comercial</Badge>
             <h1 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight">
-              Contanos que queres implementar.
+              Contanos qué querés implementar.
             </h1>
             <p className="mt-4 text-[15px] leading-7 text-white/80">
               Usamos estos datos para responder con el plan correcto, ya sea docente, familia,

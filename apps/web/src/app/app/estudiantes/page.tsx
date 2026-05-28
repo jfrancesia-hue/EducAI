@@ -20,8 +20,8 @@ export default async function StudentsModulePage() {
               Estudiantes y pulso de aprendizaje
             </h2>
             <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-              Lista de alumnos cargados, con foco de acompanamiento tomado desde sus perfiles y
-              diagnosticos.
+              Lista de alumnos cargados, con foco de acompañamiento tomado desde sus perfiles y
+              diagnósticos.
             </p>
           </div>
 
@@ -43,7 +43,7 @@ export default async function StudentsModulePage() {
                       </p>
                       <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
                         {student.opportunities.length
-                          ? `Acompanamiento sugerido: ${student.opportunities.slice(0, 3).join(", ")}`
+                          ? `Acompañamiento sugerido: ${student.opportunities.slice(0, 3).join(", ")}`
                           : "Sin oportunidades marcadas en perfil por el momento."}
                       </p>
                     </div>
@@ -56,8 +56,8 @@ export default async function StudentsModulePage() {
                       ].join(" ")}
                     >
                       {student.diagnosticCompleted
-                        ? "Diagnostico completo"
-                        : "Diagnostico pendiente"}
+                        ? "Diagnóstico completo"
+                        : "Diagnóstico pendiente"}
                     </span>
                   </div>
                 </article>
@@ -65,7 +65,7 @@ export default async function StudentsModulePage() {
             ) : (
               <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
                 <p className="text-[15px] leading-6 text-[#4f5f58]">
-                  Todavia no hay estudiantes disponibles para este alcance institucional.
+                  Todavía no hay estudiantes disponibles para este alcance institucional.
                 </p>
               </article>
             )}
@@ -81,7 +81,7 @@ export default async function StudentsModulePage() {
             <div className="mt-5 grid gap-3">
               {[
                 ["Estudiantes", dashboard?.metrics.studentCount ?? 0],
-                ["Diagnosticos completos", `${dashboard?.metrics.diagnosticCompletionRate ?? 0}%`],
+                ["Diagnósticos completos", `${dashboard?.metrics.diagnosticCompletionRate ?? 0}%`],
                 ["Minutos esta semana", dashboard?.metrics.learningMinutesThisWeek ?? 0],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg bg-white/10 p-4">
@@ -118,7 +118,7 @@ export default async function StudentsModulePage() {
                   ))
               ) : (
                 <p className="text-[15px] leading-6 text-[#4f5f58]">
-                  Los perfiles actuales todavia no tienen fortalezas cargadas para mostrar.
+                  Los perfiles actuales todavía no tienen fortalezas cargadas para mostrar.
                 </p>
               )}
             </div>

@@ -54,7 +54,7 @@ export function SchoolPriceCalculator() {
       </div>
 
       <p className="mt-4 text-sm leading-6 text-slate-600">
-        Docente activo es quien genero al menos una planificacion durante el mes.
+        Docente activo es quien generó al menos una planificación durante el mes.
       </p>
     </div>
   );

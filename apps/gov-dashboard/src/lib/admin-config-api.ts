@@ -47,7 +47,7 @@ export async function fetchAdminConfigDashboard(
   });
 
   if (!response.ok) {
-    throw new Error(`No se pudo cargar la configuracion administrativa (${response.status})`);
+    throw new Error(`No se pudo cargar la configuración administrativa (${response.status})`);
   }
 
   const payload = (await response.json()) as AdminConfigResponse;

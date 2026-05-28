@@ -19,17 +19,17 @@ function passwordMessage(code?: string) {
     case "short":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "La nueva contrasena debe tener al menos 8 caracteres.",
+        text: "La nueva contraseña debe tener al menos 8 caracteres.",
       };
     case "mismatch":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "Las contrasenas no coinciden.",
+        text: "Las contraseñas no coinciden.",
       };
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar la contrasena. Reintenta en unos minutos.",
+        text: "No pudimos actualizar la contraseña. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -57,10 +57,10 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
             <LockKeyhole className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight">
-            Crear nueva contrasena
+            Crear nueva contraseña
           </h1>
           <p className="mt-3 text-[15px] font-medium leading-7 text-[#4f5f58]">
-            Elegi una contrasena nueva para volver a ingresar con seguridad.
+            Elegí una contraseña nueva para volver a ingresar con seguridad.
           </p>
 
           {message ? (
@@ -72,18 +72,18 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
           <form action="/cuenta/restablecer/guardar" method="post" className="mt-6 grid gap-4">
             <PasswordField
               name="password"
-              label="Nueva contrasena"
-              placeholder="Minimo 8 caracteres"
+              label="Nueva contraseña"
+              placeholder="Mínimo 8 caracteres"
               autoComplete="new-password"
             />
             <PasswordField
               name="confirmPassword"
-              label="Confirmar contrasena"
-              placeholder="Repeti la contrasena"
+              label="Confirmar contraseña"
+              placeholder="Repetí la contraseña"
               autoComplete="new-password"
             />
             <Button className="bg-[#18b6a4] text-white hover:bg-[#119b8c]">
-              Guardar contrasena
+              Guardar contraseña
             </Button>
           </form>
 

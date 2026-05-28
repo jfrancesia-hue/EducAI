@@ -50,7 +50,7 @@ export function ImmersiveShowcase() {
             Que la plataforma se sienta como una ventana al aprendizaje real.
           </h2>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-700">
-            Fotos reales, senales pedagogicas y una capa visual que muestra como EducAI ayuda a
+            Fotos reales, senales pedagógicas y una capa visual que muestra como EducAI ayuda a
             planificar, producir recursos y seguir el aprendizaje sin invadir la experiencia de
             aula.
           </p>
@@ -153,7 +153,7 @@ export function ImmersiveShowcase() {
                   <div className="rounded-lg border border-cyan-200/20 bg-slate-950/90 p-4 text-cyan-50 shadow-float">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm uppercase tracking-[0.08em] text-cyan-100/82">
-                        Senales utiles
+                        Senales útiles
                       </span>
                       <span className="h-2 w-2 rounded-full bg-cyan-200" />
                     </div>

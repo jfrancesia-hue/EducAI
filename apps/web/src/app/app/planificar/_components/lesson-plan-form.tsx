@@ -39,36 +39,36 @@ const levelLabels: Record<
 > = {
   primaria: {
     title: "Primaria",
-    description: "Mas concreto, visual y guiado",
+    description: "Más concreto, visual y guiado",
     year: "Grado",
     gradeMin: 1,
     gradeMax: 7,
     defaultGrade: 4,
-    subject: "Area / materia",
-    subjects: ["Matematica", "Practicas del lenguaje", "Ciencias Naturales", "Ciencias Sociales"],
+    subject: "Área / materia",
+    subjects: ["Matemática", "Prácticas del lenguaje", "Ciencias Naturales", "Ciencias Sociales"],
     levelContext: {
       label: "Eje o proyecto del grado",
-      placeholder: "Ej: alfabetizacion, ciencias en el patio, feria escolar...",
+      placeholder: "Ej: alfabetización, ciencias en el patio, feria escolar...",
     },
-    topicPlaceholder: "Ej: fracciones equivalentes, ecosistemas, comprension lectora...",
+    topicPlaceholder: "Ej: fracciones equivalentes, ecosistemas, comprensión lectora...",
     goalPlaceholder: "Ej: reconocer fracciones equivalentes usando dibujos y ejemplos cercanos.",
     durationDefault: 40,
     durationPresets: [40, 60, 80],
   },
   secundaria: {
     title: "Secundaria",
-    description: "Practica, autonomia y criterios claros",
+    description: "Práctica, autonomía y criterios claros",
     year: "Año",
     gradeMin: 1,
     gradeMax: 7,
     defaultGrade: 2,
     subject: "Materia",
-    subjects: ["Matematica", "Lengua", "Biologia", "Fisica", "Quimica", "Historia", "Geografia"],
+    subjects: ["Matemática", "Lengua", "Biología", "Física", "Química", "Historia", "Geografía"],
     levelContext: {
-      label: "Orientacion o modalidad",
-      placeholder: "Ej: Ciencias Naturales, Economia, Tecnica en informatica...",
+      label: "Orientación o modalidad",
+      placeholder: "Ej: Ciencias Naturales, Economía, Técnica en informática...",
     },
-    topicPlaceholder: "Ej: proporcionalidad directa, texto argumentativo, fotosintesis...",
+    topicPlaceholder: "Ej: proporcionalidad directa, texto argumentativo, fotosíntesis...",
     goalPlaceholder:
       "Ej: resolver problemas de proporcionalidad directa y explicar la estrategia usada.",
     durationDefault: 80,
@@ -76,45 +76,45 @@ const levelLabels: Record<
   },
   terciario: {
     title: "Terciario",
-    description: "Aplicacion profesional y practica",
+    description: "Aplicación profesional y práctica",
     year: "Año",
     gradeMin: 1,
     gradeMax: 5,
     defaultGrade: 1,
     subject: "Asignatura",
-    subjects: ["Didactica", "Pedagogia", "Anatomia", "Administracion", "Practica profesional"],
+    subjects: ["Didáctica", "Pedagogía", "Anatomía", "Administración", "Práctica profesional"],
     levelContext: {
       label: "Perfil o trayecto profesional",
-      placeholder: "Ej: formacion docente, enfermeria, administracion...",
+      placeholder: "Ej: formación docente, enfermería, administración...",
     },
-    topicPlaceholder: "Ej: planificacion de proyectos, anatomia funcional, didactica...",
+    topicPlaceholder: "Ej: planificación de proyectos, anatomía funcional, didáctica...",
     goalPlaceholder:
-      "Ej: aplicar el concepto en una situacion profesional y justificar decisiones.",
+      "Ej: aplicar el concepto en una situación profesional y justificar decisiones.",
     durationDefault: 90,
     durationPresets: [60, 90, 120],
   },
   universitario: {
     title: "Universitario",
-    description: "Rigor disciplinar y fundamentacion",
+    description: "Rigor disciplinar y fundamentación",
     year: "Año",
     gradeMin: 1,
     gradeMax: 8,
     defaultGrade: 1,
-    subject: "Materia / catedra",
+    subject: "Materia / cátedra",
     subjects: [
-      "Analisis matematico",
+      "Análisis matemático",
       "Bases de datos",
       "Derecho administrativo",
-      "Anatomia",
-      "Metodologia de la investigacion",
+      "Anatomía",
+      "Metodología de la investigación",
     ],
     levelContext: {
       label: "Enfoque o plan de estudios",
-      placeholder: "Ej: catedra practica, plan 2024, seminario intensivo...",
+      placeholder: "Ej: cátedra práctica, plan 2024, seminario intensivo...",
     },
     topicPlaceholder: "Ej: derivadas parciales, derecho administrativo, bases de datos...",
     goalPlaceholder:
-      "Ej: resolver un problema disciplinar y fundamentar el procedimiento con precision.",
+      "Ej: resolver un problema disciplinar y fundamentar el procedimiento con precisión.",
     durationDefault: 120,
     durationPresets: [90, 120, 180],
   },
@@ -161,9 +161,9 @@ function GeneratingOverlay() {
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-[#075f53] text-white">
           <FileText className="h-7 w-7" aria-hidden="true" />
         </span>
-        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Generando tu guia</h2>
+        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Generando tu guía</h2>
         <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
-          Estamos armando la secuencia, actividades, recursos y evaluacion. Esto puede tardar unos
+          Estamos armando la secuencia, actividades, recursos y evaluación. Esto puede tardar unos
           minutos.
         </p>
         <div className="mx-auto mt-6 h-2 w-full max-w-sm overflow-hidden rounded-full bg-[#e3ebe7]">
@@ -212,12 +212,12 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
         {accessToken ? <input type="hidden" name="accessToken" value={accessToken} /> : null}
 
         <div className="border-b border-[#e3ebe7] p-5">
-          <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificacion</Badge>
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Nueva planificación</Badge>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-            Datos minimos de la clase
+            Datos mínimos de la clase
           </h2>
           <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-            Completa lo esencial. El formulario se adapta al nivel educativo y deja el contexto fino
+            Completá lo esencial. El formulario se adapta al nivel educativo y deja el contexto fino
             como opcional.
           </p>
         </div>
@@ -269,7 +269,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
               <span className="text-sm font-semibold text-[#33423c]">{labels.subject}</span>
               <input
                 name="subject"
-                defaultValue="Matematica"
+                defaultValue="Matemática"
                 list={subjectListId}
                 required
                 className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
@@ -288,7 +288,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                 <span className="text-sm font-semibold text-[#33423c]">Carrera</span>
                 <input
                   name="careerName"
-                  placeholder="Ej: Ingenieria en sistemas, Abogacia, Medicina..."
+                  placeholder="Ej: Ingeniería en sistemas, Abogacía, Medicina..."
                   required
                   className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                 />
@@ -318,7 +318,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
           </div>
 
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-semibold text-[#33423c]">Intencion de la clase</legend>
+            <legend className="text-sm font-semibold text-[#33423c]">Intención de la clase</legend>
             <div className="flex flex-wrap gap-2">
               {lessonIntentOptions.map((option) => {
                 const selected = lessonIntent === option.value;
@@ -369,7 +369,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                 className="text-sm font-semibold text-[#33423c]"
                 htmlFor="totalDurationMinutes"
               >
-                Duracion total en minutos
+                Duración total en minutos
               </label>
               <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                 <input
@@ -401,17 +401,17 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
 
           <details className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd]">
             <summary className="cursor-pointer px-4 py-3 font-semibold text-[#11231f]">
-              Contexto opcional para mejorar la precision
+              Contexto opcional para mejorar la precisión
             </summary>
             <div className="grid gap-4 border-t border-[#e3ebe7] p-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2">
                   <span className="text-sm font-semibold text-[#33423c]">
-                    Curso, division o comision
+                    Curso, división o comisión
                   </span>
                   <input
                     name="courseLabel"
-                    placeholder="Ej: 7A, 2do B, comision noche..."
+                    placeholder="Ej: 7A, 2do B, comisión noche..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
@@ -428,7 +428,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                   </label>
                 ) : (
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                    <span className="text-sm font-semibold text-[#33423c]">Institución</span>
                     <input
                       name="institutionName"
                       placeholder="Nombre de escuela, instituto o universidad..."
@@ -441,7 +441,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
               <div className="grid gap-4 md:grid-cols-2">
                 {isUniversity ? (
                   <label className="grid gap-2">
-                    <span className="text-sm font-semibold text-[#33423c]">Institucion</span>
+                    <span className="text-sm font-semibold text-[#33423c]">Institución</span>
                     <input
                       name="institutionName"
                       placeholder="Nombre de universidad o facultad..."
@@ -468,7 +468,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                   <textarea
                     name="groupProfile"
                     rows={3}
-                    placeholder="Ej: grupo heterogeneo, consignas breves, ritmo medio."
+                    placeholder="Ej: grupo heterogéneo, consignas breves, ritmo medio."
                     className="resize-none rounded-lg border border-[#cbd9d4] bg-white px-3 py-2 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
@@ -488,15 +488,15 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                   <span className="text-sm font-semibold text-[#33423c]">Recursos disponibles</span>
                   <input
                     name="availableResources"
-                    placeholder="Pizarron, fotocopias, proyector..."
+                    placeholder="Pizarrón, fotocopias, proyector..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-[#33423c]">Que queres evaluar</span>
+                  <span className="text-sm font-semibold text-[#33423c]">Qué querés evaluar</span>
                   <input
                     name="assessmentFocus"
-                    placeholder="Procedimiento, argumentacion, trabajo grupal..."
+                    placeholder="Procedimiento, argumentación, trabajo grupal..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
@@ -507,7 +507,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                   <span className="text-sm font-semibold text-[#33423c]">Marco curricular</span>
                   <input
                     name="curriculumContext"
-                    placeholder="NAP, diseno provincial, programa de catedra..."
+                    placeholder="NAP, diseño provincial, programa de cátedra..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
@@ -517,7 +517,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                   </span>
                   <input
                     name="inclusionNeeds"
-                    placeholder="Apoyo visual, consignas cortas, extension..."
+                    placeholder="Apoyo visual, consignas cortas, extensión..."
                     className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                   />
                 </label>
@@ -527,7 +527,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
                 <span className="text-sm font-semibold text-[#33423c]">Formato de salida</span>
                 <input
                   name="outputFormat"
-                  placeholder="Secuencia editable, guia para imprimir, rubrica breve..."
+                  placeholder="Secuencia editable, guía para imprimir, rúbrica breve..."
                   className="h-12 rounded-lg border border-[#cbd9d4] bg-white px-3 text-[15px] font-medium outline-none focus:border-[#18b6a4]"
                 />
               </label>
@@ -536,7 +536,7 @@ export function LessonPlanForm({ accessToken }: { accessToken?: string }) {
 
           <div className="flex flex-col gap-3 border-t border-[#e3ebe7] pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[15px] font-medium leading-6 text-[#4f5f58]">
-              La clase queda disponible en tu espacio docente al terminar la generacion.
+              La clase queda disponible en tu espacio docente al terminar la generación.
             </p>
             <SubmitButton isSubmitting={isSubmitting} />
           </div>

@@ -43,18 +43,18 @@ function studentMessage(code?: string) {
     case "limit":
       return {
         tone: "border-[#eadca8] bg-[#fff8dd] text-[#7a5c00]",
-        text: "Tu plan actual no permite agregar mas hijos desde el panel.",
+        text: "Tu plan actual no permite agregar más hijos desde el panel.",
       };
     case "invalid":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "Revisa nombre, apellido y grado antes de guardar.",
+        text: "Revisá nombre, apellido y grado antes de guardar.",
       };
     case "api":
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos guardar el hijo. Reintenta en unos minutos.",
+        text: "No pudimos guardar el hijo. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -148,7 +148,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
                   <p className="mt-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
                     {canAddStudent
                       ? "Carga otro perfil para que ApoyoAI pueda separarlo por grado y telefono."
-                      : "Para sumar mas hijos, cambia a un plan Familiar o Intensivo."}
+                      : "Para sumar más hijos, cambiá a un plan Familiar o Intensivo."}
                   </p>
                 </div>
                 {canAddStudent ? (
@@ -230,8 +230,8 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
               <h2 className="mt-4 font-display text-2xl font-bold">No pudimos cargar la cuenta</h2>
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
                 {error === "missing_api_url"
-                  ? "No pudimos cargar la informacion familiar en este momento."
-                  : "El servicio no respondio como esperabamos. Reintenta en unos minutos o contacta soporte."}
+                  ? "No pudimos cargar la información familiar en este momento."
+                  : "El servicio no respondio como esperabamos. Reintentá en unos minutos o contacta soporte."}
               </p>
             </article>
           ) : students.length ? (
@@ -274,7 +274,7 @@ export default async function FamilyHomePage({ searchParams }: FamilyHomePagePro
           ) : (
             <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper md:col-span-2">
               <MessageCircle className="h-7 w-7 text-[#ff7a1a]" aria-hidden="true" />
-              <h2 className="mt-4 font-display text-2xl font-bold">Todavia no hay hijos</h2>
+              <h2 className="mt-4 font-display text-2xl font-bold">Todavía no hay hijos</h2>
               <p className="mt-2 max-w-2xl text-[15px] leading-7 text-[#4f5f58]">
                 Crea el primer perfil desde este panel o desde el registro ApoyoAI.
               </p>

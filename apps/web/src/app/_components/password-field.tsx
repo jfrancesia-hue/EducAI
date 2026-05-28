@@ -14,8 +14,8 @@ type PasswordFieldProps = {
 
 export function PasswordField({
   name = "password",
-  label = "Contrasena",
-  placeholder = "Tu contrasena",
+  label = "Contraseña",
+  placeholder = "Tu contraseña",
   autoComplete = "current-password",
   disabled,
   required = true,
@@ -42,7 +42,7 @@ export function PasswordField({
           type="button"
           onClick={() => setVisible((current) => !current)}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#075f53] hover:bg-[#e7fbf7]"
-          aria-label={visible ? "Ocultar contrasena" : "Mostrar contrasena"}
+          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </button>

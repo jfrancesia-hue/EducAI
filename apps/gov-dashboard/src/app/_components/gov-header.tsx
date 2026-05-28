@@ -40,12 +40,12 @@ export function GovHeader({ userEmail, userRole, tenantName }: GovHeaderProps) {
           {formatRole(userRole)}
         </Badge>
         <span className="hidden max-w-[220px] truncate text-sm text-slate-600 md:block">
-          {userEmail || "sesion ministerial"}
+          {userEmail || "sesión ministerial"}
         </span>
         <Link
           href="/login/salir"
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 outline-none transition hover:bg-slate-50 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--ring))]"
-          aria-label="Cerrar sesion"
+          aria-label="Cerrar sesión"
         >
           <LogOut className="h-4 w-4" aria-hidden="true" />
         </Link>

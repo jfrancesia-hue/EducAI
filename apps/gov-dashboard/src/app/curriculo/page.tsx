@@ -14,7 +14,7 @@ export default async function CurriculoPage() {
       <PageHeader
         eyebrow="CURRICULO"
         title="Cobertura curricular"
-        subtitle="Distribucion real de curriculas cargadas por materia en la red."
+        subtitle="Distribucion real de currículas cargadas por materia en la red."
       />
 
       <section className="grid gap-4 md:grid-cols-2">
@@ -27,7 +27,7 @@ export default async function CurriculoPage() {
             <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-slate-900">
               {item.subject}
             </h2>
-            <p className="mt-3 text-sm text-slate-600">{item.count} curriculas registradas</p>
+            <p className="mt-3 text-sm text-slate-600">{item.count} currículas registradas</p>
           </article>
         ))}
       </section>

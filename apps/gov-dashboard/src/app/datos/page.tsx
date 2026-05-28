@@ -22,7 +22,7 @@ export default async function DatosPage() {
           ["Colegios conectados", dashboard.metrics.schoolCount],
           ["Alumnos registrados", dashboard.metrics.studentCount],
           ["Docentes registrados", dashboard.metrics.teacherCount],
-          ["Curriculas cargadas", dashboard.metrics.curriculumCount],
+          ["Currículas cargadas", dashboard.metrics.curriculumCount],
           ["Planes IA generados", dashboard.metrics.lessonPlanCount],
           ["Handoffs abiertos", dashboard.metrics.openHandoffCount],
         ].map(([label, value]) => (

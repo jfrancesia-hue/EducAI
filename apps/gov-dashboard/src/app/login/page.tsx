@@ -8,7 +8,7 @@ const errorMessages: Record<string, string> = {
   config:
     "Falta configurar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en gov-dashboard.",
   invalid: "Las credenciales no son validas o el usuario no existe en Supabase Auth.",
-  missing: "Completa email y contrasena para iniciar sesion.",
+  missing: "Completá email y contraseña para iniciar sesión.",
 };
 
 export default function GovLoginPage({
@@ -47,7 +47,7 @@ export default function GovLoginPage({
               Ingreso seguro para supervision ministerial.
             </h1>
             <p className="mt-5 text-lg leading-8 text-white/72">
-              El panel deja de ser una vista abierta de demostracion. La sesion vive en Supabase
+              El panel deja de ser una vista abierta de demostración. La sesión vive en Supabase
               Auth y prepara el terreno para permisos por jurisdiccion, nivel y rol.
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function GovLoginPage({
             <div className="rounded-lg border border-white/12 bg-white/8 p-4">
               <ShieldCheck className="h-5 w-5 text-[#7dd3fc]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-white/72">
-                Sesion real para equipos ministeriales y jurisdiccionales.
+                Sesión real para equipos ministeriales y jurisdiccionales.
               </p>
             </div>
             <div className="rounded-lg border border-white/12 bg-white/8 p-4">
@@ -91,13 +91,13 @@ export default function GovLoginPage({
                   </span>
                 </label>
                 <label className="block">
-                  <span className="text-sm font-medium text-[#475569]">Contrasena</span>
+                  <span className="text-sm font-medium text-[#475569]">Contraseña</span>
                   <span className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-[#d8e0eb] bg-[#f8fafc] px-3 text-[#64748b]">
                     <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                     <input
                       type="password"
                       name="password"
-                      placeholder="Tu contrasena"
+                      placeholder="Tu contraseña"
                       autoComplete="current-password"
                       disabled={!authReady}
                       className="h-full w-full border-0 bg-transparent p-0 text-[#0f172a] outline-none placeholder:text-[#94a3b8]"

@@ -42,7 +42,7 @@ export function HandoffCard({ handoff, onClose }: HandoffCardProps) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <CardTitle className="text-xl">
-              {handoff.source === "academic" ? "Consulta academica" : "Consulta institucional"}
+              {handoff.source === "academic" ? "Consulta académica" : "Consulta institucional"}
             </CardTitle>
             <CardDescription>
               {formatDate(handoff.requestedAt ?? handoff.createdAt)} -{" "}

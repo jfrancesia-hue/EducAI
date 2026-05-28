@@ -6,19 +6,19 @@ import { Button } from "@educai/ui";
 const sections = [
   {
     title: "Datos que podemos tratar",
-    body: "Datos de cuenta, rol, institucion, informacion de estudiantes cargada por adultos responsables o equipos autorizados, actividad de uso, preferencias pedagogicas y datos necesarios para pagos o soporte.",
+    body: "Datos de cuenta, rol, institución, información de estudiantes cargada por adultos responsables o equipos autorizados, actividad de uso, preferencias pedagógicas y datos necesarios para pagos o soporte.",
   },
   {
     title: "Para que se usan",
-    body: "Para prestar EducAI y ApoyoAI, personalizar la experiencia educativa, generar planificaciones o acompanamiento, proteger cuentas, cumplir obligaciones operativas y mejorar el servicio.",
+    body: "Para prestar EducAI y ApoyoAI, personalizar la experiencia educativa, generar planificaciones o acompañamiento, proteger cuentas, cumplir obligaciones operativas y mejorar el servicio.",
   },
   {
     title: "Menores de edad",
-    body: "Los datos de estudiantes deben ser cargados por un adulto responsable, una institucion educativa autorizada o una persona con facultades suficientes. No se debe cargar informacion sensible innecesaria.",
+    body: "Los datos de estudiantes deben ser cargados por un adulto responsable, una institución educativa autorizada o una persona con facultades suficientes. No se debe cargar información sensible innecesaria.",
   },
   {
     title: "Proveedores",
-    body: "Podemos usar proveedores de infraestructura, autenticacion, pagos, analitica, comunicacion e inteligencia artificial bajo criterios de seguridad, minimo acceso y finalidad educativa.",
+    body: "Podemos usar proveedores de infraestructura, autenticación, pagos, analítica, comunicación e inteligencia artificial bajo criterios de seguridad, mínimo acceso y finalidad educativa.",
   },
   {
     title: "Derechos y contacto",
@@ -50,11 +50,11 @@ export default function PrivacyPage() {
             Politica de privacidad
           </p>
           <h1 className="mt-4 max-w-3xl font-display text-5xl font-bold leading-tight tracking-tight">
-            Cuidamos la informacion educativa con acceso limitado y finalidad clara.
+            Cuidamos la información educativa con acceso limitado y finalidad clara.
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-            Esta politica resume como tratamos datos en EducAI y ApoyoAI. La informacion educativa
-            se usa para prestar el servicio, acompanar aprendizajes y proteger a estudiantes,
+            Esta politica resume como tratamos datos en EducAI y ApoyoAI. La información educativa
+            se usa para prestar el servicio, acompañar aprendizajes y proteger a estudiantes,
             familias e instituciones.
           </p>
         </section>

@@ -10,19 +10,19 @@ const loginHeroImage =
   "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1400&q=85";
 
 const errorMessages: Record<string, string> = {
-  config: "El acceso no esta disponible en este momento. Reintenta en unos minutos.",
-  google: "No pudimos iniciar sesion con Google. Intenta de nuevo.",
-  invalid: "Email o contrasena incorrectos.",
-  missing: "Completa email y contrasena para iniciar sesion.",
+  config: "El acceso no está disponible en este momento. Reintentá en unos minutos.",
+  google: "No pudimos iniciar sesión con Google. Intentá de nuevo.",
+  invalid: "Email o contraseña incorrectos.",
+  missing: "Completá email y contraseña para iniciar sesión.",
 };
 
 const registeredMessages: Record<string, string> = {
-  educai: "Cuenta docente creada. Ya podes ingresar a EducAI.",
-  apoyoai: "Cuenta familiar creada. Ya podes ingresar a ApoyoAI.",
+  educai: "Cuenta docente creada. Ya podés ingresar a EducAI.",
+  apoyoai: "Cuenta familiar creada. Ya podés ingresar a ApoyoAI.",
 };
 
 const passwordMessages: Record<string, string> = {
-  updated: "Contrasena actualizada. Ya podes ingresar con la nueva clave.",
+  updated: "Contraseña actualizada. Ya podés ingresar con la nueva clave.",
 };
 
 export default function LoginPage({
@@ -72,11 +72,11 @@ export default function LoginPage({
     ? payment === "success"
       ? registered === "educai"
         ? "Pago recibido. Vamos a activar tu plan docente y, si no ves cambios, escribinos."
-        : "Pago confirmado. Ya podes ingresar."
+        : "Pago confirmado. Ya podés ingresar."
       : payment === "pending"
         ? registered === "educai"
-          ? "Tu pago docente esta pendiente. Cuando se confirme, activamos el plan y te avisamos."
-          : "Tu pago esta pendiente. Cuando se confirme, vas a poder usar el plan contratado."
+          ? "Tu pago docente está pendiente. Cuando se confirme, activamos el plan y te avisamos."
+          : "Tu pago está pendiente. Cuando se confirme, vas a poder usar el plan contratado."
         : (registeredMessages[registered] ?? null)
     : null;
   const passwordMessage = password ? (passwordMessages[password] ?? null) : null;
@@ -87,7 +87,7 @@ export default function LoginPage({
         <section className="relative flex flex-col justify-between overflow-hidden bg-[#62dcca] p-6 text-slate-950 sm:p-10">
           <Image
             src={loginHeroImage}
-            alt="Docente acompanando a estudiantes felices en el aula"
+            alt="Docente acompañando a estudiantes felices en el aula"
             fill
             priority
             sizes="(min-width: 1024px) 45vw, 100vw"
@@ -110,10 +110,10 @@ export default function LoginPage({
               Acceso seguro
             </p>
             <h1 className="mt-5 font-display text-5xl font-bold leading-tight tracking-tight">
-              Entra a tu espacio de trabajo.
+              Entrá a tu espacio de trabajo.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Entra a EducAI para preparar clases o a ApoyoAI para acompanar el aprendizaje desde
+              Entrá a EducAI para preparar clases o a ApoyoAI para acompañar el aprendizaje desde
               casa, siempre con el acceso que corresponde a tu rol.
             </p>
           </div>
@@ -171,7 +171,7 @@ export default function LoginPage({
                     href="/recuperar-password"
                     className="text-sm font-bold text-[#075f53] underline"
                   >
-                    Olvide mi contrasena
+                    Olvidé mi contraseña
                   </Link>
                 </div>
                 {errorMessage ? (
@@ -181,7 +181,7 @@ export default function LoginPage({
                 ) : null}
                 {!authReady ? (
                   <p className="rounded-lg border border-[#eadca8] bg-[#fff8dd] px-3 py-2 text-sm text-[#7a5c00]">
-                    El acceso esta temporalmente fuera de servicio.
+                    El acceso está temporalmente fuera de servicio.
                   </p>
                 ) : null}
 
@@ -211,11 +211,11 @@ export default function LoginPage({
               </form>
 
               <p className="mt-5 text-sm leading-6 text-[#7b725f]">
-                Usamos tu cuenta para mostrarte las herramientas y la informacion que corresponden a
+                Usamos tu cuenta para mostrarte las herramientas y la información que corresponden a
                 tu rol.
               </p>
               <div className="mt-5 grid gap-3 border-t border-[#ded6c7] pt-5">
-                <p className="text-sm font-semibold text-[#4f5f58]">Todavia no tenes cuenta?</p>
+                <p className="text-sm font-semibold text-[#4f5f58]">¿Todavía no tenés cuenta?</p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button
                     asChild

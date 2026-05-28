@@ -88,7 +88,7 @@ export function AppShell({
               <p className="text-[15px] font-semibold leading-6">Flujo principal</p>
             </div>
             <p className="mt-2 text-[13px] leading-5 text-white/70">
-              Crear una clase ordenada con objetivos, actividades y evaluacion.
+              Crear una clase ordenada con objetivos, actividades y evaluación.
             </p>
             <Link
               href="/app/planificar"

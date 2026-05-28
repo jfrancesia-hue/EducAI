@@ -34,9 +34,9 @@ const modules = [
     icon: GraduationCap,
     accent: "bg-[#18b6a4] text-white",
     description:
-      "Para planificar clases, producir materiales, ordenar evaluaciones y dar visibilidad pedagogica a escuelas.",
+      "Para planificar clases, producir materiales, ordenar evaluaciones y dar visibilidad pedagógica a escuelas.",
     highlights: [
-      "Planificacion docente con IA",
+      "Planificación docente con IA",
       "Recursos editables para aula",
       "Planes individuales e institucionales",
     ],
@@ -51,11 +51,11 @@ const modules = [
     icon: UsersRound,
     accent: "bg-[#f8d95c] text-slate-950",
     description:
-      "Para acompanamiento escolar en casa, dudas por app o WhatsApp, tareas, examenes y seguimiento familiar.",
+      "Para acompañamiento escolar en casa, dudas por app o WhatsApp, tareas, examenes y seguimiento familiar.",
     highlights: [
       "Tutor para cada hijo",
       "WhatsApp en planes pagos",
-      "Reportes y diagnosticos segun plan",
+      "Reportes y diagnósticos según plan",
     ],
   },
 ] satisfies Array<{
@@ -173,7 +173,7 @@ export async function PublicPricingPage() {
         <div className="relative z-10 mx-auto grid max-w-7xl gap-10 py-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-end lg:py-24">
           <div>
             <Badge className="border-white/25 bg-[#18b6a4]/28 text-white" variant="outline">
-              Elegi el modulo correcto
+              Elegí el módulo correcto
             </Badge>
             <h1 className="mt-6 max-w-4xl font-display text-5xl font-bold leading-[0.96] tracking-tight text-white sm:text-6xl">
               Planes para docentes, escuelas y familias.
@@ -184,7 +184,7 @@ export async function PublicPricingPage() {
             </p>
             {sessionTarget ? (
               <p className="mt-5 inline-flex rounded-full border border-white/25 bg-white/14 px-4 py-2 text-sm font-bold text-white backdrop-blur">
-                Ya tenes una sesion iniciada. Podes revisar precios o volver a tu cuenta.
+                Ya tenés una sesión iniciada. Podés revisar precios o volver a tu cuenta.
               </p>
             ) : null}
           </div>
@@ -249,15 +249,15 @@ export async function PublicPricingPage() {
               Planes para preparar clases
             </h2>
             <p className="mt-3 max-w-2xl text-[15px] font-medium leading-6 text-slate-600">
-              Para docentes que quieren planificar mas rapido, generar recursos y ordenar el trabajo
-              pedagogico. Free sirve para probar; Pro es para uso intensivo.
+              Para docentes que quieren planificar más rápido, generar recursos y ordenar el trabajo
+              pedagógico. Free sirve para probar; Pro es para uso intensivo.
             </p>
           </div>
           <div className="grid gap-3 rounded-lg border border-[#b9e6dd] bg-[#e7fbf7] p-4 shadow-whisper sm:grid-cols-2">
             <div className="flex gap-3">
               <ClipboardList className="mt-1 h-5 w-5 shrink-0 text-[#087968]" aria-hidden="true" />
               <p className="text-sm font-semibold leading-6 text-slate-700">
-                Clases, actividades, rubricas y secuencias editables.
+                Clases, actividades, rúbricas y secuencias editables.
               </p>
             </div>
             <div className="flex gap-3">
@@ -296,7 +296,7 @@ export async function PublicPricingPage() {
               <p className="font-semibold text-[#075f53]">Ejemplo visible</p>
               <p className="text-sm font-medium leading-6 text-slate-600">
                 15 docentes activos = $270.000/mes. Se toma como activo el docente que genero al
-                menos una planificacion durante el mes.
+                menos una planificación durante el mes.
               </p>
             </div>
           </div>
@@ -309,7 +309,7 @@ export async function PublicPricingPage() {
           <div>
             <Badge className="bg-[#d8f7ee] text-[#075c50]">ApoyoAI</Badge>
             <h2 className="mt-4 font-display text-4xl font-bold tracking-tight">
-              Planes para acompanamiento familiar
+              Planes para acompañamiento familiar
             </h2>
             <p className="mt-3 max-w-2xl text-[15px] font-medium leading-6 text-slate-600">
               Para familias que necesitan ayuda con tareas, dudas y examenes. Free prueba el tutor
@@ -320,13 +320,13 @@ export async function PublicPricingPage() {
             <div className="flex gap-3">
               <MessageCircle className="mt-1 h-5 w-5 shrink-0 text-[#087968]" aria-hidden="true" />
               <p className="text-sm font-semibold leading-6 text-slate-700">
-                App y WhatsApp segun plan, pensado para el uso real de casa.
+                App y WhatsApp según plan, pensado para el uso real de casa.
               </p>
             </div>
             <div className="flex gap-3">
               <BookOpenCheck className="mt-1 h-5 w-5 shrink-0 text-[#087968]" aria-hidden="true" />
               <p className="text-sm font-semibold leading-6 text-slate-700">
-                Diagnosticos y reportes cuando la familia necesita seguimiento.
+                Diagnósticos y reportes cuando la familia necesita seguimiento.
               </p>
             </div>
           </div>

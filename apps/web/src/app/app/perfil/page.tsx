@@ -44,22 +44,22 @@ function passwordMessage(code?: string) {
     case "updated":
       return {
         tone: "border-[#18b6a4]/35 bg-[#e7fbf7] text-[#075c50]",
-        text: "Contrasena actualizada correctamente.",
+        text: "Contraseña actualizada correctamente.",
       };
     case "short":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "La nueva contrasena debe tener al menos 8 caracteres.",
+        text: "La nueva contraseña debe tener al menos 8 caracteres.",
       };
     case "mismatch":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "Las contrasenas no coinciden.",
+        text: "Las contraseñas no coinciden.",
       };
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar la contrasena. Reintenta en unos minutos.",
+        text: "No pudimos actualizar la contraseña. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -81,7 +81,7 @@ function profileMessage(code?: string) {
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar tus datos. Reintenta en unos minutos.",
+        text: "No pudimos actualizar tus datos. Reintentá en unos minutos.",
       };
     default:
       return null;
@@ -143,7 +143,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             <Badge className="bg-[#d8f7ee] text-[#075c50]">Perfil visible</Badge>
             <h2 className="mt-4 font-display text-2xl font-bold">Editar datos de cuenta</h2>
             <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-              Este nombre aparece dentro de EducAI. El email, rol, plan e institucion se cambian por
+              Este nombre aparece dentro de EducAI. El email, rol, plan e institución se cambian por
               flujos controlados.
             </p>
 
@@ -181,10 +181,10 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Badge className="bg-[#d8f7ee] text-[#075c50]">Seguridad</Badge>
-                <h2 className="mt-4 font-display text-2xl font-bold">Cambiar contrasena</h2>
+                <h2 className="mt-4 font-display text-2xl font-bold">Cambiar contraseña</h2>
                 <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
-                  Esta accion solo cambia la contrasena de acceso. No modifica rol, permisos,
-                  institucion ni plan.
+                  Esta acción solo cambia la contraseña de acceso. No modifica rol, permisos,
+                  institución ni plan.
                 </p>
               </div>
               <LockKeyhole className="h-6 w-6 text-[#087968]" aria-hidden="true" />
@@ -206,18 +206,18 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
               <input type="hidden" name="next" value="/app/perfil" />
               <PasswordField
                 name="password"
-                label="Nueva contrasena"
-                placeholder="Minimo 8 caracteres"
+                label="Nueva contraseña"
+                placeholder="Mínimo 8 caracteres"
                 autoComplete="new-password"
               />
               <PasswordField
                 name="confirmPassword"
-                label="Confirmar contrasena"
-                placeholder="Repeti la contrasena"
+                label="Confirmar contraseña"
+                placeholder="Repetí la contraseña"
                 autoComplete="new-password"
               />
               <Button className="bg-[#18b6a4] text-white hover:bg-[#119b8c] md:col-span-2">
-                Actualizar contrasena
+                Actualizar contraseña
               </Button>
             </form>
           </article>
@@ -228,7 +228,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             <ShieldCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
             <h2 className="mt-4 font-display text-2xl font-bold">Editable ahora</h2>
             <div className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-[#33423c]">
-              {["Nombre visible", "Contrasena de acceso"].map((item) => (
+              {["Nombre visible", "Contraseña de acceso"].map((item) => (
                 <p key={item} className="flex gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#18b6a4]" />
                   {item}
@@ -241,11 +241,11 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             <GraduationCap className="h-6 w-6 text-[#087968]" aria-hidden="true" />
             <h2 className="mt-4 font-display text-2xl font-bold">No editable desde perfil</h2>
             <p className="mt-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
-              Rol, permisos, producto, institucion vinculada y plan activo se cambian con flujos
+              Rol, permisos, producto, institución vinculada y plan activo se cambian con flujos
               controlados para proteger el acceso y el aislamiento de datos.
             </p>
             <div className="mt-4 rounded-lg bg-[#eef5f3] p-4 text-sm font-semibold leading-6 text-[#33423c]">
-              {schoolLinked ? "Institucion vinculada correctamente." : "Institucion pendiente."}
+              {schoolLinked ? "Institución vinculada correctamente." : "Institución pendiente."}
             </div>
           </article>
 

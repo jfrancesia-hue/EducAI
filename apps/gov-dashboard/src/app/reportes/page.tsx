@@ -27,7 +27,7 @@ export default async function ReportesPage() {
               ["Colegios", dashboard.metrics.schoolCount],
               ["Docentes", dashboard.metrics.teacherCount],
               ["Alumnos", dashboard.metrics.studentCount],
-              ["Curriculas", dashboard.metrics.curriculumCount],
+              ["Currículas", dashboard.metrics.curriculumCount],
               ["Planes IA", dashboard.metrics.lessonPlanCount],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-slate-50 p-4">
@@ -42,7 +42,7 @@ export default async function ReportesPage() {
 
         <article className="gov-card rounded-xl border border-slate-200 bg-white p-6 shadow-whisper">
           <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900">
-            Planificaciones por materia
+            Planificaciónes por materia
           </h2>
           <div className="mt-5 grid gap-3">
             {dashboard.lessonPlansBySubject.map((item) => (
