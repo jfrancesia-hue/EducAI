@@ -99,29 +99,49 @@ export class PlanGeneratorAgent {
         "Usa obligatoriamente la herramienta guardar_clase_docente. No respondas con texto libre.",
       ].join(" ");
 
-      return await this.llm.generate({
-        model: getEducAIModelForPlan("pro"),
-        responseFormat: "json",
-        maxTokens: 5200,
-        system: [{ type: "text", text: systemPrompt, cacheable: true }],
-        tools: [
-          {
-            name: "guardar_clase_docente",
-            description: "Guarda una clase docente completa, editable y lista para usar en EducAI.",
-            inputSchema: this.buildToolSchema(),
-          },
-        ],
-        toolChoice: "guardar_clase_docente",
-        messages: [
-          {
-            role: "user",
-            content: this.buildUserPrompt(input),
-          },
-        ],
-      });
+      return await this.withTimeout(
+        this.llm.generate({
+          model: getEducAIModelForPlan("pro"),
+          responseFormat: "json",
+          maxTokens: 5200,
+          system: [{ type: "text", text: systemPrompt, cacheable: true }],
+          tools: [
+            {
+              name: "guardar_clase_docente",
+              description:
+                "Guarda una clase docente completa, editable y lista para usar en EducAI.",
+              inputSchema: this.buildToolSchema(),
+            },
+          ],
+          toolChoice: "guardar_clase_docente",
+          messages: [
+            {
+              role: "user",
+              content: this.buildUserPrompt(input),
+            },
+          ],
+        }),
+        35_000,
+      );
     } catch {
       return null;
     }
+  }
+
+  private withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Plan generation timed out")), timeoutMs);
+      promise.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (error: unknown) => {
+          clearTimeout(timer);
+          reject(error instanceof Error ? error : new Error("Plan generation failed"));
+        },
+      );
+    });
   }
 
   private tryParseLlmPlan(content: string): LessonPlanOutput | null {
