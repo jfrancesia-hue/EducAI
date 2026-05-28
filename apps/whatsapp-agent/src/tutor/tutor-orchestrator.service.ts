@@ -20,6 +20,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
+import { InboundIdempotencyService } from "../webhooks/inbound-idempotency.service.js";
 
 export interface InboundMessage {
   messageSid: string;
@@ -31,7 +32,7 @@ export interface InboundMessage {
 }
 
 export interface OrchestratorOutcome {
-  status: "answered" | "rate_limited" | "not_enrolled" | "error" | "diagnostic";
+  status: "answered" | "rate_limited" | "not_enrolled" | "error" | "diagnostic" | "duplicate";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
@@ -76,6 +77,7 @@ export class TutorOrchestratorService {
     private readonly institutionalIntent: InstitutionalIntentService,
     private readonly institutionalAgent: InstitutionalAgentService,
     private readonly humanHandoff: HumanHandoffService,
+    private readonly idempotency: InboundIdempotencyService,
     logger: AppLogger,
   ) {
     this.log = logger.child({ component: "TutorOrchestrator" });
@@ -83,7 +85,30 @@ export class TutorOrchestratorService {
 
   async enqueueInboundMessage(message: InboundMessage): Promise<OrchestratorOutcome> {
     try {
-      return await this.handle(message);
+      const reservation = await this.idempotency.reserve(message.messageSid);
+      if (reservation.kind === "duplicate") {
+        this.log.info(
+          {
+            messageSid: message.messageSid,
+            previousReceivedAt: reservation.previousReceivedAt,
+          },
+          "orchestrator.duplicate_inbound_skipped",
+        );
+        return { status: "duplicate" };
+      }
+    } catch (error) {
+      this.log.warn(
+        {
+          messageSid: message.messageSid,
+          err: error instanceof Error ? error.message : String(error),
+        },
+        "orchestrator.idempotency_reserve_failed",
+      );
+    }
+
+    let outcome: OrchestratorOutcome;
+    try {
+      outcome = await this.handle(message);
     } catch (error) {
       this.log.error(
         {
@@ -98,8 +123,11 @@ export class TutorOrchestratorService {
         "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
       );
 
-      return { status: "error" };
+      outcome = { status: "error" };
     }
+
+    await this.idempotency.markCompleted(message.messageSid, outcome.status);
+    return outcome;
   }
 
   private async handle(message: InboundMessage): Promise<OrchestratorOutcome> {

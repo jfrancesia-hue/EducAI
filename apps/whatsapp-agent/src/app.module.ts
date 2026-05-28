@@ -24,6 +24,7 @@ import { RateLimiterService } from "./tutor/rate-limiter.service.js";
 import { StudentResolverService } from "./tutor/student-resolver.service.js";
 import { TutorOrchestratorService } from "./tutor/tutor-orchestrator.service.js";
 import { TwilioSenderService } from "./tutor/twilio-sender.service.js";
+import { InboundIdempotencyService } from "./webhooks/inbound-idempotency.service.js";
 import { TwilioSignatureGuard } from "./webhooks/twilio-signature.guard.js";
 import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js";
 
@@ -38,6 +39,7 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
     DiagnosticHandlerService,
     TwilioSenderService,
     TwilioSignatureGuard,
+    InboundIdempotencyService,
     TutorOrchestratorService,
     InstitutionalIntentService,
     InstitutionalToolsService,

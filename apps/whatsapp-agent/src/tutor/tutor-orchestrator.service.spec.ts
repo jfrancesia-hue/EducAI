@@ -55,6 +55,10 @@ interface Mocks {
   institutionalIntent: { detect: ReturnType<typeof vi.fn> };
   institutionalAgent: { respond: ReturnType<typeof vi.fn> };
   humanHandoff: { create: ReturnType<typeof vi.fn> };
+  idempotency: {
+    reserve: ReturnType<typeof vi.fn>;
+    markCompleted: ReturnType<typeof vi.fn>;
+  };
 }
 
 function buildMocks(): Mocks {
@@ -137,6 +141,10 @@ function buildMocks(): Mocks {
     humanHandoff: {
       create: vi.fn().mockResolvedValue({ id: "log_1" }),
     },
+    idempotency: {
+      reserve: vi.fn().mockResolvedValue({ kind: "first_time" }),
+      markCompleted: vi.fn().mockResolvedValue(undefined),
+    },
   };
 }
 
@@ -146,7 +154,7 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[13];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[14];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const resolver = m.resolver as unknown as ConstructorParameters<
@@ -178,6 +186,9 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const humanHandoff = m.humanHandoff as unknown as ConstructorParameters<
     typeof TutorOrchestratorService
   >[12];
+  const idempotency = m.idempotency as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[13];
 
   return new TutorOrchestratorService(
     resolver,
@@ -193,6 +204,7 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     institutionalIntent,
     institutionalAgent,
     humanHandoff,
+    idempotency,
     loggerStub,
   );
 }
@@ -440,5 +452,26 @@ describe("TutorOrchestratorService", () => {
       subject: string;
     };
     expect(inboundArg.subject).toBe("matematica");
+  });
+
+  it("idempotencia: MessageSid duplicado se ignora sin llamar al LLM ni enviar", async () => {
+    const m = buildMocks();
+    m.idempotency.reserve.mockResolvedValue({
+      kind: "duplicate",
+      previousReceivedAt: new Date("2026-05-28T10:00:00Z"),
+    });
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_dup_1",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "hola de vuelta",
+    });
+
+    expect(outcome.status).toBe("duplicate");
+    expect(m.resolver.resolveByWhatsapp).not.toHaveBeenCalled();
+    expect(m.llm.generate).not.toHaveBeenCalled();
+    expect(m.sender.send).not.toHaveBeenCalled();
   });
 });

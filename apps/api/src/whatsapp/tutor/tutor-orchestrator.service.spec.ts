@@ -56,6 +56,10 @@ interface Mocks {
   institutionalAgent: { respond: ReturnType<typeof vi.fn> };
   institutionalAudit: { record: ReturnType<typeof vi.fn> };
   humanHandoff: { create: ReturnType<typeof vi.fn> };
+  idempotency: {
+    reserve: ReturnType<typeof vi.fn>;
+    markCompleted: ReturnType<typeof vi.fn>;
+  };
 }
 
 function buildMocks(): Mocks {
@@ -141,6 +145,10 @@ function buildMocks(): Mocks {
     humanHandoff: {
       create: vi.fn().mockResolvedValue({ id: "log_1" }),
     },
+    idempotency: {
+      reserve: vi.fn().mockResolvedValue({ kind: "first_time" }),
+      markCompleted: vi.fn().mockResolvedValue(undefined),
+    },
   };
 }
 
@@ -150,7 +158,7 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
-} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[14];
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[15];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const resolver = m.resolver as unknown as ConstructorParameters<
@@ -185,6 +193,9 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
   const humanHandoff = m.humanHandoff as unknown as ConstructorParameters<
     typeof TutorOrchestratorService
   >[13];
+  const idempotency = m.idempotency as unknown as ConstructorParameters<
+    typeof TutorOrchestratorService
+  >[14];
 
   return new TutorOrchestratorService(
     resolver,
@@ -201,6 +212,7 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     institutionalAgent,
     institutionalAudit,
     humanHandoff,
+    idempotency,
     loggerStub,
   );
 }
@@ -452,5 +464,57 @@ describe("TutorOrchestratorService", () => {
       subject: string;
     };
     expect(inboundArg.subject).toBe("matematica");
+  });
+
+  it("idempotencia: MessageSid duplicado se ignora sin llamar al LLM ni enviar", async () => {
+    const m = buildMocks();
+    m.idempotency.reserve.mockResolvedValue({
+      kind: "duplicate",
+      previousReceivedAt: new Date("2026-05-28T10:00:00Z"),
+    });
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_dup_1",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "hola de vuelta",
+    });
+
+    expect(outcome.status).toBe("duplicate");
+    expect(m.resolver.resolveByWhatsapp).not.toHaveBeenCalled();
+    expect(m.llm.generate).not.toHaveBeenCalled();
+    expect(m.sender.send).not.toHaveBeenCalled();
+    expect(m.conversation.appendInboundMessage).not.toHaveBeenCalled();
+  });
+
+  it("idempotencia: si reserve() falla, se sigue procesando (no se pierde mensaje)", async () => {
+    const m = buildMocks();
+    m.idempotency.reserve.mockRejectedValue(new Error("DB indisponible momentáneamente"));
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_in_fallback",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "¿cómo sumo 1/2 + 1/4?",
+    });
+
+    expect(outcome.status).toBe("answered");
+    expect(m.llm.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it("idempotencia: se marca como completed con outcome status", async () => {
+    const m = buildMocks();
+    const orchestrator = buildOrchestrator(m);
+
+    await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_in_complete",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "hola",
+    });
+
+    expect(m.idempotency.markCompleted).toHaveBeenCalledWith("SM_in_complete", "answered");
   });
 });

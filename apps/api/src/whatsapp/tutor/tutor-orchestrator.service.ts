@@ -21,6 +21,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
+import { InboundIdempotencyService } from "../webhooks/inbound-idempotency.service.js";
 import {
   RateLimitExceededError,
   StudentNotEnrolledError,
@@ -45,7 +46,8 @@ export interface OrchestratorOutcome {
     | "selection_required"
     | "subscription_inactive"
     | "error"
-    | "diagnostic";
+    | "diagnostic"
+    | "duplicate";
   conversationId?: string;
   outboundSid?: string;
   bypassedLlm?: boolean;
@@ -91,35 +93,71 @@ export class TutorOrchestratorService {
     private readonly institutionalAgent: InstitutionalAgentService,
     private readonly institutionalAudit: InstitutionalAgentAuditService,
     private readonly humanHandoff: HumanHandoffService,
+    private readonly idempotency: InboundIdempotencyService,
     logger: AppLogger,
   ) {
     this.log = logger.child({ component: "TutorOrchestrator" });
   }
 
   async enqueueInboundMessage(message: InboundMessage): Promise<OrchestratorOutcome> {
+    // Guardia de idempotencia: Twilio reintenta el webhook si tarda >15s.
+    // Sin esta verificación, el mismo MessageSid se procesa varias veces y
+    // el alumno recibe respuestas duplicadas (con doble costo de LLM).
     try {
-      return await this.handle(message);
+      const reservation = await this.idempotency.reserve(message.messageSid);
+      if (reservation.kind === "duplicate") {
+        this.log.info(
+          {
+            messageSid: message.messageSid,
+            previousReceivedAt: reservation.previousReceivedAt,
+          },
+          "orchestrator.duplicate_inbound_skipped",
+        );
+        return { status: "duplicate" };
+      }
+    } catch (error) {
+      // Si la idempotencia falla (ej. DB momentáneamente caída), seguimos
+      // procesando — preferimos posibles duplicados a perder mensajes legítimos.
+      this.log.warn(
+        {
+          messageSid: message.messageSid,
+          err: error instanceof Error ? error.message : String(error),
+        },
+        "orchestrator.idempotency_reserve_failed",
+      );
+    }
+
+    let outcome: OrchestratorOutcome;
+    try {
+      outcome = await this.handle(message);
     } catch (error) {
       const known = await this.handleKnownOperationalError(error, message);
       if (known) {
-        return known;
+        outcome = known;
+      } else {
+        this.log.error(
+          {
+            err: error instanceof Error ? error.message : String(error),
+            messageSid: message.messageSid,
+          },
+          "orchestrator.error",
+        );
+
+        await this.safeSendFallback(
+          message.fromWhatsappPhone,
+          "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
+        );
+
+        outcome = { status: "error" };
       }
-
-      this.log.error(
-        {
-          err: error instanceof Error ? error.message : String(error),
-          messageSid: message.messageSid,
-        },
-        "orchestrator.error",
-      );
-
-      await this.safeSendFallback(
-        message.fromWhatsappPhone,
-        "Tuve un problema técnico recibiendo tu mensaje. ¿Lo intentás de nuevo en un minuto?",
-      );
-
-      return { status: "error" };
     }
+
+    // Best-effort: marcar el SID como completado para auditoría/observabilidad.
+    // tenantId/studentId se enriquecen en una iteración futura si hace falta
+    // hacer queries por tenant sobre ProcessedTwilioMessage.
+    await this.idempotency.markCompleted(message.messageSid, outcome.status);
+
+    return outcome;
   }
 
   private async handle(message: InboundMessage): Promise<OrchestratorOutcome> {
