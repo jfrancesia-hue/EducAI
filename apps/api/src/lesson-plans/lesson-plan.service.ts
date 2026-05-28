@@ -15,6 +15,7 @@ import {
 import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 
 type PrismaTx = Prisma.TransactionClient;
 const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 150_000;
@@ -351,5 +352,52 @@ export class LessonPlanService {
     }
 
     return { data: lessonPlan };
+  }
+
+  async saveFeedback(
+    id: string,
+    feedback: LessonPlanFeedbackDto,
+    access: { tenantId: string; teacherId?: string; schoolId?: string },
+  ) {
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+
+      const lessonPlan = await tx.lessonPlan.findFirst({
+        where: {
+          id,
+          tenantId: access.tenantId,
+          ...(access.teacherId ? { teacherId: access.teacherId } : {}),
+          ...(access.schoolId ? { teacher: { schoolId: access.schoolId } } : {}),
+        },
+      });
+
+      if (!lessonPlan) {
+        throw new NotFoundException("Lesson plan not found");
+      }
+
+      const adaptations = this.asJsonObject(lessonPlan.adaptations);
+      return tx.lessonPlan.update({
+        where: { id: lessonPlan.id },
+        data: {
+          rating: feedback.rating,
+          adaptations: {
+            ...adaptations,
+            feedback: {
+              rating: feedback.rating,
+              comment: feedback.comment?.trim() || null,
+              submittedAt: new Date().toISOString(),
+            },
+          },
+        },
+      });
+    });
+
+    return { data: { id: updated.id, rating: updated.rating } };
+  }
+
+  private asJsonObject(value: Prisma.JsonValue | null): Record<string, unknown> {
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
   }
 }

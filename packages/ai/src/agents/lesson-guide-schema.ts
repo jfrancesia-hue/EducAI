@@ -93,6 +93,32 @@ export const educaiLessonGuideSchema = z.object({
     grupoBase: boundedText(20, 900),
     extension: boundedText(20, 900),
   }),
+  recursosDidacticos: z.object({
+    adecuacionNivel: boundedText(30, 900),
+    recomendacionesClase: z.array(boundedText(20, 700)).min(2).max(6),
+    imagenesSugeridas: z
+      .array(
+        z.object({
+          titulo: boundedText(5, 120),
+          descripcion: boundedText(20, 700),
+          usoDidactico: boundedText(20, 700),
+          busquedaSugerida: boundedText(5, 180),
+        }),
+      )
+      .min(1)
+      .max(4),
+    videosSugeridos: z
+      .array(
+        z.object({
+          titulo: boundedText(5, 140),
+          busquedaYoutube: boundedText(5, 180),
+          criterioSeleccion: boundedText(20, 700),
+          momentoUso: boundedText(20, 700),
+        }),
+      )
+      .min(1)
+      .max(4),
+  }),
   erroresFrecuentes: z
     .array(
       z.object({

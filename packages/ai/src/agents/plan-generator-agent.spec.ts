@@ -111,6 +111,30 @@ const richGuide = {
     grupoBase: "Resolver una tabla y justificar por escrito.",
     extension: "Crear un problema proporcional y uno que no lo sea.",
   },
+  recursosDidacticos: {
+    adecuacionNivel:
+      "La clase usa precios y tablas adecuados para estudiantes de secundaria que ya trabajan multiplicacion.",
+    recomendacionesClase: [
+      "Mantener visible el valor unitario durante toda la practica.",
+      "Comparar una tabla correcta con una que no mantiene la razon.",
+    ],
+    imagenesSugeridas: [
+      {
+        titulo: "Puestos de feria con precios",
+        descripcion: "Imagen de productos con precios por unidad y por cantidad.",
+        usoDidactico: "Usarla en la apertura para preguntar si los precios mantienen proporcion.",
+        busquedaSugerida: "feria precios productos proporcionalidad",
+      },
+    ],
+    videosSugeridos: [
+      {
+        titulo: "Proporcionalidad directa con tablas",
+        busquedaYoutube: "proporcionalidad directa tablas secundaria",
+        criterioSeleccion: "Elegir un video corto con ejemplos de valor unitario.",
+        momentoUso: "Usarlo como repaso al cierre o tarea domiciliaria.",
+      },
+    ],
+  },
   erroresFrecuentes: [
     {
       error: "Sumar una cantidad fija.",

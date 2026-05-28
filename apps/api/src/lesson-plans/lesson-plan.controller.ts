@@ -8,6 +8,7 @@ import { Roles } from "../auth/roles.decorator.js";
 import { RolesGuard } from "../auth/roles.guard.js";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
 import { GenerateLessonPlanDto } from "./dto/generate-lesson-plan.dto.js";
+import { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 import { LessonPlanService } from "./lesson-plan.service.js";
 
 @ApiTags("lesson-plans")
@@ -38,6 +39,25 @@ export class LessonPlanController {
     }
 
     return this.lessonPlans.findOne(id, {
+      tenantId: requireUserClaim(user, "tenantId"),
+      teacherId: requireUserClaim(user, "teacherId"),
+    });
+  }
+
+  @Post(":id/feedback")
+  rate(
+    @Param("id") id: string,
+    @Body() body: LessonPlanFeedbackDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    if (user.role === "SCHOOL_ADMIN") {
+      return this.lessonPlans.saveFeedback(id, body, {
+        tenantId: requireUserClaim(user, "tenantId"),
+        schoolId: requireUserClaim(user, "schoolId"),
+      });
+    }
+
+    return this.lessonPlans.saveFeedback(id, body, {
       tenantId: requireUserClaim(user, "tenantId"),
       teacherId: requireUserClaim(user, "teacherId"),
     });

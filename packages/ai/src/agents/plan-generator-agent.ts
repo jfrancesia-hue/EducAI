@@ -302,7 +302,68 @@ export class PlanGeneratorAgent {
       guide.recursosOpcionales = [guide.recursosOpcionales];
     }
 
+    if (!isRecord(guide.recursosDidacticos)) {
+      guide.recursosDidacticos = this.buildDefaultTeachingResources(input);
+    } else {
+      const resources = { ...(guide.recursosDidacticos as Record<string, unknown>) };
+      if (typeof resources.adecuacionNivel !== "string") {
+        resources.adecuacionNivel = this.buildLevelFitText(input);
+      }
+      if (!Array.isArray(resources.recomendacionesClase)) {
+        resources.recomendacionesClase = [
+          `Elegir ejemplos y vocabulario acordes a ${this.describeLevel(input)}.`,
+          `Conectar ${input.topic} con situaciones reales de ${input.subject} y del curso.`,
+        ];
+      }
+      if (!Array.isArray(resources.imagenesSugeridas)) {
+        resources.imagenesSugeridas = this.buildDefaultTeachingResources(input).imagenesSugeridas;
+      }
+      if (!Array.isArray(resources.videosSugeridos)) {
+        resources.videosSugeridos = this.buildDefaultTeachingResources(input).videosSugeridos;
+      }
+      guide.recursosDidacticos = resources;
+    }
+
     return guide;
+  }
+
+  private buildDefaultTeachingResources(input: PlanGeneratorInput) {
+    return {
+      adecuacionNivel: this.buildLevelFitText(input),
+      recomendacionesClase: [
+        `Usar ejemplos cercanos a ${this.describeLevel(input)} y evitar materiales pensados para otro nivel educativo.`,
+        `Antes de proyectar un recurso externo, verificar duracion, vocabulario y que el ejemplo coincida con ${input.topic}.`,
+      ],
+      imagenesSugeridas: [
+        {
+          titulo: `Imagen disparadora sobre ${input.topic}`,
+          descripcion: `Una imagen clara que muestre una situacion reconocible de ${input.topic} en ${input.subject}.`,
+          usoDidactico:
+            "Usarla al inicio para pedir observaciones concretas antes de presentar la regla o procedimiento.",
+          busquedaSugerida: `${input.topic} ${input.subject} secundaria ejemplo visual`,
+        },
+      ],
+      videosSugeridos: [
+        {
+          titulo: `Video breve sobre ${input.topic}`,
+          busquedaYoutube: `${input.topic} ${input.subject} ${input.educationLevel} explicacion`,
+          criterioSeleccion:
+            "Elegir videos de menos de 8 minutos, con ejemplos claros, sin exceso de publicidad y con lenguaje adecuado para el curso.",
+          momentoUso:
+            "Usarlo como apoyo despues de la primera explicacion docente o como repaso domiciliario.",
+        },
+      ],
+    };
+  }
+
+  private buildLevelFitText(input: PlanGeneratorInput): string {
+    return `La propuesta debe ajustarse a ${this.describeLevel(input)}: consignas concretas, vocabulario de ${input.subject}, ejemplos cercanos al curso y nivel de autonomia esperable para esa edad.`;
+  }
+
+  private describeLevel(input: PlanGeneratorInput): string {
+    const course = input.courseLabel ? `${input.courseLabel}, ` : "";
+    const context = input.levelContext ? ` (${input.levelContext})` : "";
+    return `${course}${input.grade}° año de ${input.educationLevel}${context}`;
   }
 
   private extractJson(content: string): string {
@@ -410,6 +471,31 @@ export class PlanGeneratorAgent {
             grupoBase: "Tarea esperada.",
             extension: "Desafio para profundizar.",
           },
+          recursosDidacticos: {
+            adecuacionNivel:
+              "Justificacion de por que las consignas, ejemplos y recursos son adecuados para edad, curso, nivel educativo y orientacion.",
+            recomendacionesClase: [
+              "Recomendacion concreta para gestionar la clase segun el curso.",
+              "Recomendacion concreta para adaptar lenguaje, ritmo o ejemplos.",
+            ],
+            imagenesSugeridas: [
+              {
+                titulo: "Imagen sugerida",
+                descripcion: "Que deberia mostrar la imagen y por que ayuda.",
+                usoDidactico: "Momento de la clase y consigna para usarla.",
+                busquedaSugerida: "Busqueda breve para encontrar o crear la imagen.",
+              },
+            ],
+            videosSugeridos: [
+              {
+                titulo: "Video sugerido",
+                busquedaYoutube: "Busqueda exacta recomendada en YouTube, sin inventar URL.",
+                criterioSeleccion:
+                  "Que debe verificar el docente antes de usar el video con este curso.",
+                momentoUso: "Momento de la clase o tarea domiciliaria donde conviene usarlo.",
+              },
+            ],
+          },
           erroresFrecuentes: [
             {
               error: "Error del estudiante.",
@@ -430,6 +516,8 @@ export class PlanGeneratorAgent {
       "- Cada momento debe incluir consigna docente, actividad estudiante, ejemplo concreto e intervencion docente.",
       "- En evaluacion, cada criterio debe nombrar el contenido del tema.",
       "- Si el tema es Normas APA, inclui citas, referencias, errores tipicos, mini textos para corregir y ticket de salida.",
+      "- Reconoce el curso, edad aproximada, nivel educativo, orientacion/carrera y contexto informado; no recomiendes recursos infantiles para secundaria ni universitarios para primaria.",
+      "- Inclui recomendaciones de clase, imagenes sugeridas y videos de YouTube como busquedas/criterios, no como URLs inventadas.",
       "- Mantene la guia completa pero acotada: maximo 3 saberes clave, 2 objetivos, 1 actividad central, 1 material editable, 4 criterios de evaluacion y 3 errores frecuentes.",
       "- En cada campo textual escribi contenido concreto de aula, pero no parrafos largos. Prioriza consignas listas para usar, ejemplos y evidencia.",
     ].join("\n");
@@ -498,6 +586,7 @@ export class PlanGeneratorAgent {
         "materialesEditables",
         "evaluacion",
         "diferenciacion",
+        "recursosDidacticos",
         "erroresFrecuentes",
         "recursosOpcionales",
       ],
@@ -651,6 +740,48 @@ export class PlanGeneratorAgent {
             apoyoFuerte: { type: "string" },
             grupoBase: { type: "string" },
             extension: { type: "string" },
+          },
+        },
+        recursosDidacticos: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "adecuacionNivel",
+            "recomendacionesClase",
+            "imagenesSugeridas",
+            "videosSugeridos",
+          ],
+          properties: {
+            adecuacionNivel: { type: "string" },
+            recomendacionesClase: { type: "array", items: { type: "string" } },
+            imagenesSugeridas: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["titulo", "descripcion", "usoDidactico", "busquedaSugerida"],
+                properties: {
+                  titulo: { type: "string" },
+                  descripcion: { type: "string" },
+                  usoDidactico: { type: "string" },
+                  busquedaSugerida: { type: "string" },
+                },
+              },
+            },
+            videosSugeridos: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["titulo", "busquedaYoutube", "criterioSeleccion", "momentoUso"],
+                properties: {
+                  titulo: { type: "string" },
+                  busquedaYoutube: { type: "string" },
+                  criterioSeleccion: { type: "string" },
+                  momentoUso: { type: "string" },
+                },
+              },
+            },
           },
         },
         erroresFrecuentes: {
@@ -958,6 +1089,7 @@ export class PlanGeneratorAgent {
         grupoBase: `Resolver una situacion nueva sobre ${input.topic} y explicar el procedimiento usado.`,
         extension: `Crear una variante del problema sobre ${input.topic}, resolverla y justificar por que funciona.`,
       },
+      recursosDidacticos: this.buildDefaultTeachingResources(input),
       erroresFrecuentes: frequentErrors,
       recursosOpcionales: resources,
     });
@@ -969,4 +1101,8 @@ export class PlanGeneratorAgent {
 function readPositiveIntegerEnv(name: string, fallback: number): number {
   const value = Number.parseInt(process.env[name] ?? "", 10);
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

@@ -1,16 +1,22 @@
 import {
   AlertCircle,
+  ArrowLeft,
   BookOpenCheck,
   CheckCircle2,
   ClipboardCheck,
   Clock,
   FileText,
+  ImageIcon,
+  Lightbulb,
   ListChecks,
+  PlayCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
+import { LessonPlanDocumentActions } from "./_components/lesson-plan-document-actions";
+import { LessonPlanFeedback } from "./_components/lesson-plan-feedback";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
 import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
@@ -20,6 +26,7 @@ type PlanningModulePageProps = {
   searchParams?: {
     created?: string;
     error?: string;
+    feedback?: string;
   };
 };
 
@@ -37,12 +44,21 @@ const errorMessages: Record<string, string> = {
   network: "La conexión falló. Reintentá en unos minutos.",
 };
 
+const feedbackMessages: Record<string, string> = {
+  saved: "Feedback guardado. Gracias.",
+  invalid: "Elegí una calificación de 1 a 5 estrellas.",
+  auth: "Tu sesión expiró. Volvé a ingresar.",
+  error: "No pudimos guardar el feedback.",
+};
+
 const outputItems = [
   "Secuencia de clase con tiempos",
   "Actividad principal y consigna",
   "Criterios de evaluación",
   "Cierre o ticket de salida",
 ];
+
+const LESSON_DOCUMENT_ID = "generated-lesson-plan-document";
 
 type LessonSession = {
   number?: number;
@@ -107,12 +123,52 @@ type EducaiLessonGuide = {
     grupoBase?: string;
     extension?: string;
   };
+  recursosDidacticos?: {
+    adecuacionNivel?: string;
+    recomendacionesClase?: string[];
+    imagenesSugeridas?: Array<{
+      titulo?: string;
+      descripcion?: string;
+      usoDidactico?: string;
+      busquedaSugerida?: string;
+    }>;
+    videosSugeridos?: Array<{
+      titulo?: string;
+      busquedaYoutube?: string;
+      criterioSeleccion?: string;
+      momentoUso?: string;
+    }>;
+  };
   erroresFrecuentes?: Array<{ error?: string; comoDetectarlo?: string; comoIntervenir?: string }>;
   recursosOpcionales?: string[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function metadataValue(metadata: unknown, key: string) {
+  if (!isRecord(metadata)) {
+    return "";
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" ? value : "";
+}
+
+function canExportPlan(plan: string) {
+  return !["", "free"].includes(plan.trim().toLowerCase());
+}
+
+function youtubeSearchHref(query: string) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function stockSearchHref(provider: "pexels" | "unsplash", query: string) {
+  const encoded = encodeURIComponent(query);
+  return provider === "pexels"
+    ? `https://www.pexels.com/search/${encoded}/`
+    : `https://unsplash.com/s/photos/${encoded}`;
 }
 
 function toTextList(value: unknown): string[] {
@@ -213,6 +269,11 @@ function richGuide(plan: LessonPlanDetail): EducaiLessonGuide | null {
   return plan.adaptations.guide;
 }
 
+function lessonPlanTitle(plan: LessonPlanDetail) {
+  const guide = richGuide(plan);
+  return guide?.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`;
+}
+
 function RichGuideSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
@@ -222,7 +283,13 @@ function RichGuideSection({ title, children }: { title: string; children: ReactN
   );
 }
 
-function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
+function GeneratedLessonPlan({
+  documentId = LESSON_DOCUMENT_ID,
+  plan,
+}: {
+  documentId?: string;
+  plan: LessonPlanDetail;
+}) {
   const guide = richGuide(plan);
   const overview = planOverview(plan);
   const objectives = toTextList(plan.objectives);
@@ -234,9 +301,12 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
 
   if (guide) {
     return (
-      <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
-        <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
-          <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
+      <article
+        id={documentId}
+        className="mx-auto max-w-[980px] overflow-hidden rounded-lg border border-[#d5e1dc] bg-white shadow-whisper"
+      >
+        <div className="border-b border-[#e3ebe7] bg-[#fbfffd] px-6 py-7 sm:px-8">
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Guía docente</Badge>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
             {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
           </h2>
@@ -247,7 +317,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
           </div>
         </div>
 
-        <div className="grid gap-5 p-5">
+        <div className="grid gap-5 px-5 py-6 sm:px-8">
           <RichGuideSection title="Vista docente">
             <div className="grid gap-3 text-[15px] leading-7 text-[#33423c]">
               {guide.vistaDocente?.resumen ? <p>{guide.vistaDocente.resumen}</p> : null}
@@ -424,6 +494,122 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
             ) : null}
           </div>
 
+          {guide.recursosDidacticos ? (
+            <RichGuideSection title="Recursos y recomendaciones">
+              <div className="grid gap-4">
+                {guide.recursosDidacticos.adecuacionNivel ? (
+                  <div className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]">
+                    <div className="flex items-center gap-2 font-semibold text-[#075f53]">
+                      <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                      Adecuación al curso
+                    </div>
+                    <p className="mt-2">{guide.recursosDidacticos.adecuacionNivel}</p>
+                  </div>
+                ) : null}
+
+                {guide.recursosDidacticos.recomendacionesClase?.length ? (
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="font-semibold">Recomendaciones para la clase</p>
+                    <ul className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                      {guide.recursosDidacticos.recomendacionesClase.map((recommendation) => (
+                        <li key={recommendation}>{recommendation}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {guide.recursosDidacticos.imagenesSugeridas?.length ? (
+                    <div className="rounded-lg bg-white p-3">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <ImageIcon className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                        Imágenes sugeridas
+                      </div>
+                      <div className="mt-3 grid gap-3">
+                        {guide.recursosDidacticos.imagenesSugeridas.map((image, index) => (
+                          <div key={`${image.titulo}-${index}`} className="text-[15px] leading-6">
+                            <p className="font-semibold text-[#33423c]">{image.titulo}</p>
+                            {image.descripcion ? (
+                              <p className="mt-1 text-[#33423c]">{image.descripcion}</p>
+                            ) : null}
+                            {image.usoDidactico ? (
+                              <p className="mt-1 text-[#33423c]">
+                                <span className="font-semibold">Uso:</span> {image.usoDidactico}
+                              </p>
+                            ) : null}
+                            {image.busquedaSugerida ? (
+                              <div className="educai-no-export mt-2 flex flex-wrap gap-2">
+                                <a
+                                  href={stockSearchHref("pexels", image.busquedaSugerida)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                >
+                                  Pexels
+                                </a>
+                                <a
+                                  href={stockSearchHref("unsplash", image.busquedaSugerida)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                >
+                                  Unsplash
+                                </a>
+                              </div>
+                            ) : null}
+                            {image.busquedaSugerida ? (
+                              <p className="mt-2 text-sm text-[#5b6962]">
+                                Búsqueda: {image.busquedaSugerida}. Crédito sugerido: foto de
+                                autor/a en Pexels o Unsplash.
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {guide.recursosDidacticos.videosSugeridos?.length ? (
+                    <div className="rounded-lg bg-white p-3">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <PlayCircle className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                        Videos sugeridos
+                      </div>
+                      <div className="mt-3 grid gap-3">
+                        {guide.recursosDidacticos.videosSugeridos.map((video, index) => (
+                          <div key={`${video.titulo}-${index}`} className="text-[15px] leading-6">
+                            <p className="font-semibold text-[#33423c]">{video.titulo}</p>
+                            {video.busquedaYoutube ? (
+                              <a
+                                href={youtubeSearchHref(video.busquedaYoutube)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="educai-no-export mt-1 inline-flex text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
+                              >
+                                Buscar en YouTube
+                              </a>
+                            ) : null}
+                            {video.criterioSeleccion ? (
+                              <p className="mt-1 text-[#33423c]">
+                                <span className="font-semibold">Criterio:</span>{" "}
+                                {video.criterioSeleccion}
+                              </p>
+                            ) : null}
+                            {video.momentoUso ? (
+                              <p className="mt-1 text-[#33423c]">
+                                <span className="font-semibold">Uso:</span> {video.momentoUso}
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </RichGuideSection>
+          ) : null}
+
           {guide.materialesEditables?.length ? (
             <RichGuideSection title="Materiales editables">
               <div className="grid gap-3">
@@ -470,7 +656,10 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
   }
 
   return (
-    <article className="rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper">
+    <article
+      id={documentId}
+      className="mx-auto max-w-[980px] rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper"
+    >
       <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
         <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
         <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
@@ -622,7 +811,7 @@ function GeneratedLessonPlan({ plan }: { plan: LessonPlanDetail }) {
 }
 
 export default async function PlanningModulePage({ searchParams }: PlanningModulePageProps) {
-  const { accessToken } = await getEducaiAppAuth();
+  const { accessToken, user } = await getEducaiAppAuth();
 
   const createdId = searchParams?.created;
   const [dashboard, createdPlan] = accessToken
@@ -632,6 +821,71 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
       ])
     : [null, null];
   const error = searchParams?.error;
+  const feedback = searchParams?.feedback;
+  const userPlan = metadataValue(user?.app_metadata, "plan") || "free";
+  const documentTitle = createdPlan ? lessonPlanTitle(createdPlan) : "Guía EducAI";
+  const exportEnabled = canExportPlan(userPlan);
+
+  if (createdPlan) {
+    return (
+      <AppShell
+        title="Guía generada"
+        eyebrow="Planificación docente"
+        statusNote="Revisá, exportá y ajustá la clase antes de usarla."
+      >
+        <div className="grid gap-5 bg-[#f4f8f6] p-4 sm:p-6">
+          <div className="educai-no-print mx-auto flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-3">
+            <a
+              href="/app/planificar"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cbdad4] bg-white px-4 text-sm font-bold text-[#33423c] transition hover:border-[#18b6a4]"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Nueva planificación
+            </a>
+            <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#5b6962] shadow-whisper">
+              Plan actual: {userPlan}
+            </span>
+          </div>
+
+          <div className="mx-auto grid w-full max-w-[1120px] gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="grid gap-4">
+              <LessonPlanDocumentActions
+                documentId={LESSON_DOCUMENT_ID}
+                enabled={exportEnabled}
+                title={documentTitle}
+              />
+              <GeneratedLessonPlan documentId={LESSON_DOCUMENT_ID} plan={createdPlan} />
+              <LessonPlanFeedback
+                initialRating={createdPlan.rating}
+                message={feedback ? feedbackMessages[feedback] : undefined}
+                planId={createdPlan.id}
+              />
+            </div>
+
+            <aside className="educai-no-print grid content-start gap-4">
+              <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+                <h2 className="font-display text-xl font-bold tracking-tight">Antes de usarla</h2>
+                <div className="mt-4 grid gap-3 text-[15px] leading-6 text-[#33423c]">
+                  <p>Revisá que ejemplos, edad, nivel y recursos coincidan con tu curso real.</p>
+                  <p>Elegí un video o imagen si suma a la clase; no hace falta usar todo.</p>
+                  <p>Imprimí o copiá el material editable y el ticket de salida.</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+                <h2 className="font-display text-xl font-bold tracking-tight">Después</h2>
+                <div className="mt-4 grid gap-3 text-[15px] leading-6 text-[#33423c]">
+                  <p>Corregí rápido con los criterios de evaluación.</p>
+                  <p>Usá los errores frecuentes para decidir si repasás o avanzás.</p>
+                  <p>Dejá feedback con estrellas para mejorar las próximas guías.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell

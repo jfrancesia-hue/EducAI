@@ -12,6 +12,7 @@ export type LessonPlanDetail = {
   assessment: unknown;
   adaptations: unknown;
   generatedByAI: boolean;
+  rating?: number | null;
   createdAt: string;
   updatedAt: string;
 };
