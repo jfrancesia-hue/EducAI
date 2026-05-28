@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CalendarDays, FileText, Loader2, Sparkles } from "lucide-react";
+import { CalendarDays, CheckCircle2, Circle, FileText, Loader2, Sparkles } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
 
@@ -151,27 +151,102 @@ function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
 }
 
 function GeneratingOverlay() {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const steps = [
+    "Leyendo nivel, curso y objetivo",
+    "Armando la secuencia de clase",
+    "Preparando actividad y material editable",
+    "Sumando recursos, imágenes y videos",
+    "Revisando evaluación y cierre",
+  ];
+  const activeStep = Math.min(steps.length - 1, Math.floor(elapsedSeconds / 18));
+  const progress = Math.min(94, 8 + elapsedSeconds * 1.1);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((value) => value + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#f8fbf7]/95 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#eef5f3]/95 px-4 backdrop-blur-sm">
       <section
         role="status"
         aria-live="polite"
-        className="w-full max-w-lg rounded-lg border border-[#18b6a4]/30 bg-white p-6 text-center shadow-float"
+        className="w-full max-w-xl overflow-hidden rounded-lg border border-[#18b6a4]/30 bg-white text-left shadow-float"
       >
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-[#075f53] text-white">
-          <FileText className="h-7 w-7" aria-hidden="true" />
-        </span>
-        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight">Generando tu guía</h2>
-        <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
-          Estamos armando la secuencia, actividades, recursos y evaluación. Esto puede tardar unos
-          minutos.
-        </p>
-        <div className="mx-auto mt-6 h-2 w-full max-w-sm overflow-hidden rounded-full bg-[#e3ebe7]">
-          <div className="h-full w-1/2 animate-[pulse_1.1s_ease-in-out_infinite] rounded-full bg-[#ff7a1a]" />
+        <div className="border-b border-[#d5e1dc] bg-[#fbfffd] p-6">
+          <div className="flex items-start gap-4">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[#075f53] text-white shadow-[0_14px_30px_rgba(7,95,83,0.22)]">
+              <FileText className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#087968]">
+                Planificación docente
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">
+                Generando tu guía
+              </h2>
+              <p className="mt-3 text-[15px] font-medium leading-6 text-[#4f5f58]">
+                Estamos armando una clase lista para revisar, imprimir y adaptar. Puede tardar unos
+                minutos.
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-[#075f53]">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          No cierres esta pantalla
+
+        <div className="grid gap-5 p-6">
+          <div>
+            <div className="mb-2 flex items-center justify-between text-sm font-bold text-[#33423c]">
+              <span>Progreso estimado</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-[#e3ebe7]">
+              <div
+                className="h-full rounded-full bg-[#ff7a1a] transition-[width] duration-700 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {steps.map((step, index) => {
+              const done = index < activeStep;
+              const current = index === activeStep;
+              return (
+                <div
+                  key={step}
+                  className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                    done || current ? "border-[#bce7df] bg-[#f3fffc]" : "border-[#e3ebe7] bg-white"
+                  }`}
+                >
+                  {done ? (
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-[#087968]" aria-hidden="true" />
+                  ) : current ? (
+                    <Loader2
+                      className="h-5 w-5 shrink-0 animate-spin text-[#ff7a1a]"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Circle className="h-5 w-5 shrink-0 text-[#a0ada7]" aria-hidden="true" />
+                  )}
+                  <span
+                    className={`text-[15px] font-semibold ${
+                      done || current ? "text-[#24342e]" : "text-[#6b7872]"
+                    }`}
+                  >
+                    {step}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-lg bg-[#fff8d7] px-4 py-3 text-sm font-bold text-[#725200]">
+            No cierres esta pantalla. Cuando termine, te llevamos directo a la guía.
+          </div>
         </div>
       </section>
     </div>

@@ -285,7 +285,7 @@ function RichGuideSection({ title, children }: { title: string; children: ReactN
 
 function A4Page({ children }: { children: ReactNode }) {
   return (
-    <section className="lesson-a4-page min-h-[1120px] rounded-sm border border-[#d5e1dc] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(31,42,36,0.12)] sm:px-10 sm:py-12">
+    <section className="lesson-a4-page min-h-[1120px] w-full max-w-[210mm] rounded-sm border border-[#d5e1dc] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(31,42,36,0.12)] sm:px-10 sm:py-12">
       {children}
     </section>
   );
@@ -731,62 +731,63 @@ function GeneratedLessonPlan({
   }
 
   return (
-    <article
-      id={documentId}
-      className="mx-auto max-w-[980px] rounded-lg border border-[#18b6a4]/30 bg-white shadow-whisper"
-    >
-      <div className="border-b border-[#e3ebe7] bg-[#fbfffd] p-5">
-        <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
-        <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-          {plan.subject} - {plan.topic}
-        </h2>
-        <div className="mt-3 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
-          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
-          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
-          <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
+    <article id={documentId} className="lesson-a4-document mx-auto grid w-full max-w-[820px] gap-6">
+      <A4Page>
+        <div className="border-b border-[#d5e1dc] pb-7">
+          <Badge className="bg-[#e7fbf7] text-[#087968]">Guía generada</Badge>
+          <h2 className="mt-3 font-display text-4xl font-bold tracking-tight">
+            {plan.subject} - {plan.topic}
+          </h2>
+          <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
+            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="grid gap-5 p-5">
-        {overview ? (
-          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-            <p className="text-[15px] font-medium leading-7 text-[#33423c]">{overview}</p>
-          </section>
-        ) : null}
+        <div className="mt-8 grid gap-6">
+          {overview ? (
+            <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+              <p className="text-[15px] font-medium leading-7 text-[#33423c]">{overview}</p>
+            </section>
+          ) : null}
 
-        {objectives.length ? (
-          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-            <div className="flex items-center gap-2">
-              <ListChecks className="h-5 w-5 text-[#087968]" aria-hidden="true" />
-              <h3 className="font-display text-xl font-bold tracking-tight">Objetivos</h3>
-            </div>
-            <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
-              {objectives.map((objective) => (
-                <li key={objective} className="rounded-lg bg-white px-3 py-2">
-                  {objective}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+          {objectives.length ? (
+            <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+              <div className="flex items-center gap-2">
+                <ListChecks className="h-5 w-5 text-[#087968]" aria-hidden="true" />
+                <h3 className="font-display text-xl font-bold tracking-tight">Objetivos</h3>
+              </div>
+              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                {objectives.map((objective) => (
+                  <li key={objective} className="rounded-lg bg-white px-3 py-2">
+                    {objective}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-        {competences.length ? (
-          <section className="rounded-lg border border-[#e3ebe7] bg-white p-4">
-            <h3 className="font-display text-xl font-bold tracking-tight">Capacidades</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {competences.map((competence) => (
-                <span
-                  key={competence}
-                  className="rounded-lg bg-[#eef5f3] px-3 py-2 text-sm font-bold text-[#33423c]"
-                >
-                  {competence}
-                </span>
-              ))}
-            </div>
-          </section>
-        ) : null}
+          {competences.length ? (
+            <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+              <h3 className="font-display text-xl font-bold tracking-tight">Capacidades</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {competences.map((competence) => (
+                  <span
+                    key={competence}
+                    className="rounded-lg bg-[#eef5f3] px-3 py-2 text-sm font-bold text-[#33423c]"
+                  >
+                    {competence}
+                  </span>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </A4Page>
 
-        {sessions.length ? (
+      {sessions.length ? (
+        <A4Page>
           <section className="grid gap-3">
             <div className="flex items-center gap-2">
               <ClipboardCheck className="h-5 w-5 text-[#087968]" aria-hidden="true" />
@@ -839,48 +840,56 @@ function GeneratedLessonPlan({
               </div>
             ))}
           </section>
-        ) : null}
+        </A4Page>
+      ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {resources.length ? (
-            <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-              <h3 className="font-display text-xl font-bold tracking-tight">Recursos</h3>
-              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                {resources.map((resource) => (
-                  <li key={resource}>{resource}</li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+      <A4Page>
+        <div className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            {resources.length ? (
+              <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+                <h3 className="font-display text-xl font-bold tracking-tight">Recursos</h3>
+                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  {resources.map((resource) => (
+                    <li key={resource}>{resource}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
-          {assessment.length ? (
-            <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-              <h3 className="font-display text-xl font-bold tracking-tight">Evaluación</h3>
-              <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                {assessment.map((item) => (
-                  <li key={item}>{item}</li>
+            {assessment.length ? (
+              <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+                <h3 className="font-display text-xl font-bold tracking-tight">Evaluación</h3>
+                <ul className="mt-3 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  {assessment.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </div>
+
+          {printables.length ? (
+            <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
+              <h3 className="font-display text-xl font-bold tracking-tight">
+                Materiales editables
+              </h3>
+              <div className="mt-3 grid gap-3">
+                {printables.map((printable) => (
+                  <div key={printable.name} className="rounded-lg bg-white p-3">
+                    <p className="font-semibold">{printable.name}</p>
+                    {printable.prompt ? (
+                      <p className="mt-1 text-[15px] leading-6 text-[#33423c]">
+                        {printable.prompt}
+                      </p>
+                    ) : null}
+                  </div>
                 ))}
-              </ul>
+              </div>
             </section>
           ) : null}
         </div>
-
-        {printables.length ? (
-          <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
-            <h3 className="font-display text-xl font-bold tracking-tight">Materiales editables</h3>
-            <div className="mt-3 grid gap-3">
-              {printables.map((printable) => (
-                <div key={printable.name} className="rounded-lg bg-white p-3">
-                  <p className="font-semibold">{printable.name}</p>
-                  {printable.prompt ? (
-                    <p className="mt-1 text-[15px] leading-6 text-[#33423c]">{printable.prompt}</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
+      </A4Page>
     </article>
   );
 }
@@ -909,53 +918,31 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
         statusNote="Revisá, exportá y ajustá la clase antes de usarla."
       >
         <div className="grid gap-5 bg-[#f4f8f6] p-4 sm:p-6">
-          <div className="educai-no-print mx-auto flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-3">
+          <div className="educai-no-print mx-auto flex w-full max-w-[980px] flex-wrap items-center justify-between gap-3">
             <a
               href="/app/planificar"
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#cbdad4] bg-white px-4 text-sm font-bold text-[#33423c] transition hover:border-[#18b6a4]"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Nueva planificación
+              Volver
             </a>
             <span className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#5b6962] shadow-whisper">
               Plan actual: {userPlan}
             </span>
           </div>
 
-          <div className="mx-auto grid w-full max-w-[1120px] gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="grid gap-4">
-              <LessonPlanDocumentActions
-                documentId={LESSON_DOCUMENT_ID}
-                enabled={exportEnabled}
-                title={documentTitle}
-              />
-              <GeneratedLessonPlan documentId={LESSON_DOCUMENT_ID} plan={createdPlan} />
-              <LessonPlanFeedback
-                initialRating={createdPlan.rating}
-                message={feedback ? feedbackMessages[feedback] : undefined}
-                planId={createdPlan.id}
-              />
-            </div>
-
-            <aside className="educai-no-print grid content-start gap-4">
-              <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-                <h2 className="font-display text-xl font-bold tracking-tight">Antes de usarla</h2>
-                <div className="mt-4 grid gap-3 text-[15px] leading-6 text-[#33423c]">
-                  <p>Revisá que ejemplos, edad, nivel y recursos coincidan con tu curso real.</p>
-                  <p>Elegí un video o imagen si suma a la clase; no hace falta usar todo.</p>
-                  <p>Imprimí o copiá el material editable y el ticket de salida.</p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-                <h2 className="font-display text-xl font-bold tracking-tight">Después</h2>
-                <div className="mt-4 grid gap-3 text-[15px] leading-6 text-[#33423c]">
-                  <p>Corregí rápido con los criterios de evaluación.</p>
-                  <p>Usá los errores frecuentes para decidir si repasás o avanzás.</p>
-                  <p>Dejá feedback con estrellas para mejorar las próximas guías.</p>
-                </div>
-              </div>
-            </aside>
+          <div className="mx-auto grid w-full max-w-[980px] items-start gap-4">
+            <LessonPlanDocumentActions
+              documentId={LESSON_DOCUMENT_ID}
+              enabled={exportEnabled}
+              title={documentTitle}
+            />
+            <GeneratedLessonPlan documentId={LESSON_DOCUMENT_ID} plan={createdPlan} />
+            <LessonPlanFeedback
+              initialRating={createdPlan.rating}
+              message={feedback ? feedbackMessages[feedback] : undefined}
+              planId={createdPlan.id}
+            />
           </div>
         </div>
       </AppShell>
