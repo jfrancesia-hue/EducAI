@@ -396,8 +396,6 @@ export class LessonPlanService {
   }
 
   private asJsonObject(value: Prisma.JsonValue | null): Record<string, unknown> {
-    return value && typeof value === "object" && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   }
 }
