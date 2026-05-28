@@ -19,6 +19,7 @@ import { LessonPlanDocumentActions } from "./_components/lesson-plan-document-ac
 import { LessonPlanFeedback } from "./_components/lesson-plan-feedback";
 import { LessonPlanForm } from "./_components/lesson-plan-form";
 import { LessonPlanOpenRetry } from "./_components/lesson-plan-open-retry";
+import { UnsplashTrackedImage } from "./_components/unsplash-tracked-image";
 import { fetchPlanningDashboard } from "../../../lib/api/institutional-dashboard";
 import { fetchLessonPlan, type LessonPlanDetail } from "../../../lib/api/lesson-plans";
 import { fetchTeacherCourses } from "../../../lib/api/teacher-courses";
@@ -656,14 +657,28 @@ function GeneratedLessonPlan({
                               key={`${image.titulo}-${index}`}
                               className="overflow-hidden rounded-lg border border-[#e3ebe7] bg-[#fbfffd]"
                             >
-                              {safeHttpUrl(image.urls?.medium) ? (
-                                <img
-                                  src={safeHttpUrl(image.urls?.medium)}
-                                  alt={image.descripcion ?? image.titulo ?? "Imagen sugerida"}
-                                  className="h-44 w-full object-cover"
-                                  loading="lazy"
-                                />
-                              ) : null}
+                              {(() => {
+                                const safeImageUrl = safeHttpUrl(image.urls?.medium);
+                                if (!safeImageUrl) return null;
+                                const safeDownload = safeHttpUrl(image.downloadLocation);
+                                const altText =
+                                  image.descripcion ?? image.titulo ?? "Imagen sugerida";
+                                return image.proveedor === "unsplash" ? (
+                                  <UnsplashTrackedImage
+                                    src={safeImageUrl}
+                                    alt={altText}
+                                    className="h-44 w-full object-cover"
+                                    downloadLocation={safeDownload}
+                                  />
+                                ) : (
+                                  <img
+                                    src={safeImageUrl}
+                                    alt={altText}
+                                    className="h-44 w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                );
+                              })()}
                               <figcaption className="p-3 text-[15px] leading-6">
                                 <p className="font-semibold text-[#11231f]">{image.titulo}</p>
                                 {image.descripcion ? (
