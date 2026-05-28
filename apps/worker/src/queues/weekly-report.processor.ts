@@ -10,9 +10,17 @@ export interface WeeklyReportJob {
 
 /**
  * Job semanal (domingos 20:00 AR) por familia con Premium/Familiar.
- * Fase 1 implementara: agregacion de LearningSession + Message + Achievement,
- * generacion de resumen narrativo con Claude, persistencia en ParentReport,
- * envio por email (React Email + Resend) y WhatsApp (Twilio).
+ *
+ * La lógica completa vive en el API:
+ * `apps/api/src/parent-reports/parent-report.service.ts` (WeeklyReportService).
+ * Hace agregación de LearningSession + Message + Achievement, llama a Claude
+ * (con fallback determinístico), persiste en ParentReport y notifica al adulto
+ * responsable por WhatsApp vía Twilio. Email queda como TODO hasta cablear Resend.
+ *
+ * Mientras el worker no se deploya (ver docs/DEPLOY.md), el disparo es manual:
+ * `POST /parent-reports/run-weekly` con un Bearer SUPER_ADMIN. Cuando este
+ * processor se reactive, debería hacer una llamada interna a ese mismo endpoint
+ * (o importar el service compartido si movemos la lógica a un package común).
  */
 @Processor("weekly-report")
 export class WeeklyReportProcessor extends WorkerHost {
@@ -20,7 +28,7 @@ export class WeeklyReportProcessor extends WorkerHost {
 
   process(job: Job<WeeklyReportJob>): Promise<void> {
     this.logger.log(`weekly-report ${job.id} family=${job.data.familyId}`);
-    // Implementacion completa en Fase 1.
+    // TODO: llamar a POST /parent-reports/run-weekly del API con un service key.
     return Promise.resolve();
   }
 }

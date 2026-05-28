@@ -89,6 +89,6 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
       inject: [WHATSAPP_AGENT_LLM],
     },
   ],
-  exports: [WebTutorService],
+  exports: [WebTutorService, TwilioSenderService],
 })
 export class WhatsappModule {}

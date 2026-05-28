@@ -9,6 +9,7 @@ import { HandoffModule } from "./handoffs/handoff.module.js";
 import { HealthController } from "./health.controller.js";
 import { LessonPlanModule } from "./lesson-plans/lesson-plan.module.js";
 import { OnboardingModule } from "./onboarding/onboarding.module.js";
+import { ParentReportModule } from "./parent-reports/parent-report.module.js";
 import { PaymentsModule } from "./payments/payments.module.js";
 import { PrismaModule } from "./prisma/prisma.module.js";
 import { TenantContextInterceptor } from "./prisma/tenant-context.interceptor.js";
@@ -28,6 +29,7 @@ import { WhatsappModule } from "./whatsapp/whatsapp.module.js";
     LessonPlanModule,
     HandoffModule,
     OnboardingModule,
+    ParentReportModule,
     PaymentsModule,
     PublicIntakeModule,
     WhatsappModule,
