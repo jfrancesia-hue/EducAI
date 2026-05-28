@@ -37,6 +37,7 @@ export function LessonPlanDocumentActions({
   <style>
     body { font-family: Arial, sans-serif; color: #1f2a24; line-height: 1.5; }
     h1, h2, h3 { color: #075f53; }
+    .lesson-a4-page { width: 210mm; min-height: 297mm; padding: 18mm; box-sizing: border-box; page-break-after: always; }
     section, article, div { break-inside: avoid; }
     .educai-no-export { display: none !important; }
   </style>
@@ -95,6 +96,19 @@ export function LessonPlanDocumentActions({
             max-width: none !important;
             border: 0 !important;
             box-shadow: none !important;
+            gap: 0 !important;
+            background: white !important;
+          }
+
+          #${documentId} .lesson-a4-page {
+            width: 210mm !important;
+            min-height: 297mm !important;
+            margin: 0 auto !important;
+            padding: 18mm !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            break-after: page;
+            page-break-after: always;
           }
 
           .educai-no-print,

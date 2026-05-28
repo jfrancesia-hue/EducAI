@@ -276,9 +276,17 @@ function lessonPlanTitle(plan: LessonPlanDetail) {
 
 function RichGuideSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+    <section className="border-t border-[#d5e1dc] pt-5 first:border-t-0 first:pt-0">
       <h3 className="font-display text-xl font-bold tracking-tight">{title}</h3>
       <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
+function A4Page({ children }: { children: ReactNode }) {
+  return (
+    <section className="lesson-a4-page min-h-[1120px] rounded-sm border border-[#d5e1dc] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(31,42,36,0.12)] sm:px-10 sm:py-12">
+      {children}
     </section>
   );
 }
@@ -303,83 +311,87 @@ function GeneratedLessonPlan({
     return (
       <article
         id={documentId}
-        className="mx-auto max-w-[980px] overflow-hidden rounded-lg border border-[#d5e1dc] bg-white shadow-whisper"
+        className="lesson-a4-document mx-auto grid w-full max-w-[820px] gap-6"
       >
-        <div className="border-b border-[#e3ebe7] bg-[#fbfffd] px-6 py-7 sm:px-8">
-          <Badge className="bg-[#e7fbf7] text-[#087968]">Guía docente</Badge>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
-            {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
-          </h2>
-          <div className="mt-3 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
-            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
-            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
-            <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
-          </div>
-        </div>
-
-        <div className="grid gap-5 px-5 py-6 sm:px-8">
-          <RichGuideSection title="Vista docente">
-            <div className="grid gap-3 text-[15px] leading-7 text-[#33423c]">
-              {guide.vistaDocente?.resumen ? <p>{guide.vistaDocente.resumen}</p> : null}
-              {guide.vistaDocente?.focoPedagogico ? (
-                <p>
-                  <span className="font-semibold">Foco:</span> {guide.vistaDocente.focoPedagogico}
-                </p>
-              ) : null}
-              {guide.vistaDocente?.productoEsperado ? (
-                <p>
-                  <span className="font-semibold">Producto esperado:</span>{" "}
-                  {guide.vistaDocente.productoEsperado}
-                </p>
-              ) : null}
+        <A4Page>
+          <div className="border-b border-[#d5e1dc] pb-7">
+            <Badge className="bg-[#e7fbf7] text-[#087968]">Guía docente</Badge>
+            <h2 className="mt-3 font-display text-4xl font-bold tracking-tight">
+              {guide.vistaDocente?.titulo || `${plan.subject} - ${plan.topic}`}
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-2 text-[15px] font-medium text-[#4f5f58]">
+              <span className="rounded-lg bg-[#eef5f3] px-3 py-1">Año {plan.grade}</span>
+              <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.durationMinutes} min</span>
+              <span className="rounded-lg bg-[#eef5f3] px-3 py-1">{plan.status}</span>
             </div>
-          </RichGuideSection>
+          </div>
 
-          {guide.saberesClave?.length ? (
-            <RichGuideSection title="Saberes clave">
-              <div className="grid gap-3 md:grid-cols-2">
-                {guide.saberesClave.map((item, index) => (
-                  <div key={`${item.nombre}-${index}`} className="rounded-lg bg-white p-3">
-                    <p className="font-semibold">{item.nombre}</p>
-                    <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
-                      {item.explicacionSimple}
-                    </p>
-                    {item.ejemploDelTema ? (
-                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
-                        <span className="font-semibold">Ejemplo:</span> {item.ejemploDelTema}
-                      </p>
-                    ) : null}
-                    {item.errorComun ? (
-                      <p className="mt-2 text-[15px] leading-6 text-[#8d174f]">
-                        <span className="font-semibold">Error común:</span> {item.errorComun}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
+          <div className="mt-8 grid gap-6">
+            <RichGuideSection title="Vista docente">
+              <div className="grid gap-3 text-[15px] leading-7 text-[#33423c]">
+                {guide.vistaDocente?.resumen ? <p>{guide.vistaDocente.resumen}</p> : null}
+                {guide.vistaDocente?.focoPedagogico ? (
+                  <p>
+                    <span className="font-semibold">Foco:</span> {guide.vistaDocente.focoPedagogico}
+                  </p>
+                ) : null}
+                {guide.vistaDocente?.productoEsperado ? (
+                  <p>
+                    <span className="font-semibold">Producto esperado:</span>{" "}
+                    {guide.vistaDocente.productoEsperado}
+                  </p>
+                ) : null}
               </div>
             </RichGuideSection>
-          ) : null}
 
-          {guide.objetivosAprendizaje?.length ? (
-            <RichGuideSection title="Objetivos y evidencias">
-              <ul className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                {guide.objetivosAprendizaje.map((objective, index) => (
-                  <li
-                    key={`${objective.objetivo}-${index}`}
-                    className="rounded-lg bg-white px-3 py-2"
-                  >
-                    <span className="font-semibold">{objective.objetivo}</span>
-                    {objective.evidenciaObservable
-                      ? ` Evidencia: ${objective.evidenciaObservable}`
-                      : ""}
-                  </li>
-                ))}
-              </ul>
-            </RichGuideSection>
-          ) : null}
+            {guide.saberesClave?.length ? (
+              <RichGuideSection title="Saberes clave">
+                <div className="grid gap-3 md:grid-cols-2">
+                  {guide.saberesClave.map((item, index) => (
+                    <div key={`${item.nombre}-${index}`} className="rounded-lg bg-white p-3">
+                      <p className="font-semibold">{item.nombre}</p>
+                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                        {item.explicacionSimple}
+                      </p>
+                      {item.ejemploDelTema ? (
+                        <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                          <span className="font-semibold">Ejemplo:</span> {item.ejemploDelTema}
+                        </p>
+                      ) : null}
+                      {item.errorComun ? (
+                        <p className="mt-2 text-[15px] leading-6 text-[#8d174f]">
+                          <span className="font-semibold">Error común:</span> {item.errorComun}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </RichGuideSection>
+            ) : null}
 
-          {guide.secuencia?.length ? (
-            <section className="grid gap-3">
+            {guide.objetivosAprendizaje?.length ? (
+              <RichGuideSection title="Objetivos y evidencias">
+                <ul className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                  {guide.objetivosAprendizaje.map((objective, index) => (
+                    <li
+                      key={`${objective.objetivo}-${index}`}
+                      className="rounded-lg bg-white px-3 py-2"
+                    >
+                      <span className="font-semibold">{objective.objetivo}</span>
+                      {objective.evidenciaObservable
+                        ? ` Evidencia: ${objective.evidenciaObservable}`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+              </RichGuideSection>
+            ) : null}
+          </div>
+        </A4Page>
+
+        {guide.secuencia?.length ? (
+          <A4Page>
+            <section className="grid gap-4">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-5 w-5 text-[#087968]" aria-hidden="true" />
                 <h3 className="font-display text-xl font-bold tracking-tight">Secuencia</h3>
@@ -429,228 +441,291 @@ function GeneratedLessonPlan({
                 </div>
               ))}
             </section>
-          ) : null}
+          </A4Page>
+        ) : null}
 
-          {guide.actividadCentral ? (
-            <RichGuideSection title="Actividad central">
-              <div className="grid gap-3 text-[15px] leading-6 text-[#33423c]">
-                <p className="font-semibold">{guide.actividadCentral.titulo}</p>
-                <p>{guide.actividadCentral.consignaListaParaUsar}</p>
-                {guide.actividadCentral.pasos?.length ? (
-                  <ol className="grid list-decimal gap-1 pl-5">
-                    {guide.actividadCentral.pasos.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ol>
-                ) : null}
-                {guide.actividadCentral.produccionEsperada ? (
-                  <p>
-                    <span className="font-semibold">Producción esperada:</span>{" "}
-                    {guide.actividadCentral.produccionEsperada}
-                  </p>
-                ) : null}
-              </div>
-            </RichGuideSection>
-          ) : null}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {guide.evaluacion ? (
-              <RichGuideSection title="Evaluación">
-                <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                  {guide.evaluacion.criterios?.map((criterion) => (
-                    <p key={criterion}>{criterion}</p>
-                  ))}
-                  {guide.evaluacion.instrumento ? (
-                    <p>
-                      <span className="font-semibold">Instrumento:</span>{" "}
-                      {guide.evaluacion.instrumento}
-                    </p>
-                  ) : null}
-                  {guide.evaluacion.ticketSalida ? (
-                    <p>
-                      <span className="font-semibold">Ticket:</span> {guide.evaluacion.ticketSalida}
-                    </p>
-                  ) : null}
-                </div>
-              </RichGuideSection>
-            ) : null}
-
-            {guide.diferenciacion ? (
-              <RichGuideSection title="Diferenciación">
-                <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                  {[
-                    ["Apoyo fuerte", guide.diferenciacion.apoyoFuerte],
-                    ["Grupo base", guide.diferenciacion.grupoBase],
-                    ["Extensión", guide.diferenciacion.extension],
-                  ].map(([label, value]) =>
-                    value ? (
-                      <p key={label}>
-                        <span className="font-semibold">{label}:</span> {value}
-                      </p>
-                    ) : null,
-                  )}
-                </div>
-              </RichGuideSection>
-            ) : null}
-          </div>
-
-          {guide.recursosDidacticos ? (
-            <RichGuideSection title="Recursos y recomendaciones">
-              <div className="grid gap-4">
-                {guide.recursosDidacticos.adecuacionNivel ? (
-                  <div className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]">
-                    <div className="flex items-center gap-2 font-semibold text-[#075f53]">
-                      <Lightbulb className="h-4 w-4" aria-hidden="true" />
-                      Adecuación al curso
-                    </div>
-                    <p className="mt-2">{guide.recursosDidacticos.adecuacionNivel}</p>
-                  </div>
-                ) : null}
-
-                {guide.recursosDidacticos.recomendacionesClase?.length ? (
-                  <div className="rounded-lg bg-white p-3">
-                    <p className="font-semibold">Recomendaciones para la clase</p>
-                    <ul className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
-                      {guide.recursosDidacticos.recomendacionesClase.map((recommendation) => (
-                        <li key={recommendation}>{recommendation}</li>
+        <A4Page>
+          <div className="grid gap-6">
+            {guide.actividadCentral ? (
+              <RichGuideSection title="Actividad central">
+                <div className="grid gap-3 text-[15px] leading-6 text-[#33423c]">
+                  <p className="font-semibold">{guide.actividadCentral.titulo}</p>
+                  <p>{guide.actividadCentral.consignaListaParaUsar}</p>
+                  {guide.actividadCentral.pasos?.length ? (
+                    <ol className="grid list-decimal gap-1 pl-5">
+                      {guide.actividadCentral.pasos.map((step) => (
+                        <li key={step}>{step}</li>
                       ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  {guide.recursosDidacticos.imagenesSugeridas?.length ? (
-                    <div className="rounded-lg bg-white p-3">
-                      <div className="flex items-center gap-2 font-semibold">
-                        <ImageIcon className="h-4 w-4 text-[#087968]" aria-hidden="true" />
-                        Imágenes sugeridas
-                      </div>
-                      <div className="mt-3 grid gap-3">
-                        {guide.recursosDidacticos.imagenesSugeridas.map((image, index) => (
-                          <div key={`${image.titulo}-${index}`} className="text-[15px] leading-6">
-                            <p className="font-semibold text-[#33423c]">{image.titulo}</p>
-                            {image.descripcion ? (
-                              <p className="mt-1 text-[#33423c]">{image.descripcion}</p>
-                            ) : null}
-                            {image.usoDidactico ? (
-                              <p className="mt-1 text-[#33423c]">
-                                <span className="font-semibold">Uso:</span> {image.usoDidactico}
-                              </p>
-                            ) : null}
-                            {image.busquedaSugerida ? (
-                              <div className="educai-no-export mt-2 flex flex-wrap gap-2">
-                                <a
-                                  href={stockSearchHref("pexels", image.busquedaSugerida)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
-                                >
-                                  Pexels
-                                </a>
-                                <a
-                                  href={stockSearchHref("unsplash", image.busquedaSugerida)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
-                                >
-                                  Unsplash
-                                </a>
-                              </div>
-                            ) : null}
-                            {image.busquedaSugerida ? (
-                              <p className="mt-2 text-sm text-[#5b6962]">
-                                Búsqueda: {image.busquedaSugerida}. Crédito sugerido: foto de
-                                autor/a en Pexels o Unsplash.
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    </ol>
                   ) : null}
-
-                  {guide.recursosDidacticos.videosSugeridos?.length ? (
-                    <div className="rounded-lg bg-white p-3">
-                      <div className="flex items-center gap-2 font-semibold">
-                        <PlayCircle className="h-4 w-4 text-[#087968]" aria-hidden="true" />
-                        Videos sugeridos
-                      </div>
-                      <div className="mt-3 grid gap-3">
-                        {guide.recursosDidacticos.videosSugeridos.map((video, index) => (
-                          <div key={`${video.titulo}-${index}`} className="text-[15px] leading-6">
-                            <p className="font-semibold text-[#33423c]">{video.titulo}</p>
-                            {video.busquedaYoutube ? (
-                              <a
-                                href={youtubeSearchHref(video.busquedaYoutube)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="educai-no-export mt-1 inline-flex text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
-                              >
-                                Buscar en YouTube
-                              </a>
-                            ) : null}
-                            {video.criterioSeleccion ? (
-                              <p className="mt-1 text-[#33423c]">
-                                <span className="font-semibold">Criterio:</span>{" "}
-                                {video.criterioSeleccion}
-                              </p>
-                            ) : null}
-                            {video.momentoUso ? (
-                              <p className="mt-1 text-[#33423c]">
-                                <span className="font-semibold">Uso:</span> {video.momentoUso}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  {guide.actividadCentral.produccionEsperada ? (
+                    <p>
+                      <span className="font-semibold">Producción esperada:</span>{" "}
+                      {guide.actividadCentral.produccionEsperada}
+                    </p>
                   ) : null}
                 </div>
-              </div>
-            </RichGuideSection>
-          ) : null}
+              </RichGuideSection>
+            ) : null}
 
-          {guide.materialesEditables?.length ? (
-            <RichGuideSection title="Materiales editables">
-              <div className="grid gap-3">
-                {guide.materialesEditables.map((material, index) => (
-                  <div key={`${material.nombre}-${index}`} className="rounded-lg bg-white p-3">
-                    <p className="font-semibold">{material.nombre}</p>
-                    <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
-                      {material.contenido}
-                    </p>
-                    {material.comoUsarlo ? (
-                      <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
-                        <span className="font-semibold">Cómo usarlo:</span> {material.comoUsarlo}
+            <div className="grid gap-4 md:grid-cols-2">
+              {guide.evaluacion ? (
+                <RichGuideSection title="Evaluación">
+                  <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                    {guide.evaluacion.criterios?.map((criterion) => (
+                      <p key={criterion}>{criterion}</p>
+                    ))}
+                    {guide.evaluacion.instrumento ? (
+                      <p>
+                        <span className="font-semibold">Instrumento:</span>{" "}
+                        {guide.evaluacion.instrumento}
+                      </p>
+                    ) : null}
+                    {guide.evaluacion.ticketSalida ? (
+                      <p>
+                        <span className="font-semibold">Ticket:</span>{" "}
+                        {guide.evaluacion.ticketSalida}
                       </p>
                     ) : null}
                   </div>
-                ))}
-              </div>
-            </RichGuideSection>
-          ) : null}
+                </RichGuideSection>
+              ) : null}
 
-          {guide.erroresFrecuentes?.length ? (
-            <RichGuideSection title="Errores frecuentes">
-              <div className="grid gap-3">
-                {guide.erroresFrecuentes.map((error, index) => (
-                  <div
-                    key={`${error.error}-${index}`}
-                    className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
-                  >
-                    <p className="font-semibold text-[#8d174f]">{error.error}</p>
-                    <p className="mt-2">
-                      <span className="font-semibold">Cómo detectarlo:</span> {error.comoDetectarlo}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Cómo intervenir:</span> {error.comoIntervenir}
-                    </p>
+              {guide.diferenciacion ? (
+                <RichGuideSection title="Diferenciación">
+                  <div className="grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                    {[
+                      ["Apoyo fuerte", guide.diferenciacion.apoyoFuerte],
+                      ["Grupo base", guide.diferenciacion.grupoBase],
+                      ["Extensión", guide.diferenciacion.extension],
+                    ].map(([label, value]) =>
+                      value ? (
+                        <p key={label}>
+                          <span className="font-semibold">{label}:</span> {value}
+                        </p>
+                      ) : null,
+                    )}
                   </div>
-                ))}
-              </div>
-            </RichGuideSection>
-          ) : null}
-        </div>
+                </RichGuideSection>
+              ) : null}
+            </div>
+          </div>
+        </A4Page>
+
+        {guide.recursosDidacticos ? (
+          <A4Page>
+            <div className="grid gap-6">
+              <RichGuideSection title="Recursos y recomendaciones">
+                <div className="grid gap-4">
+                  {guide.recursosDidacticos.adecuacionNivel ? (
+                    <div className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]">
+                      <div className="flex items-center gap-2 font-semibold text-[#075f53]">
+                        <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                        Adecuación al curso
+                      </div>
+                      <p className="mt-2">{guide.recursosDidacticos.adecuacionNivel}</p>
+                    </div>
+                  ) : null}
+
+                  {guide.recursosDidacticos.recomendacionesClase?.length ? (
+                    <div className="rounded-lg bg-white p-3">
+                      <p className="font-semibold">Recomendaciones para la clase</p>
+                      <ul className="mt-2 grid gap-2 text-[15px] leading-6 text-[#33423c]">
+                        {guide.recursosDidacticos.recomendacionesClase.map((recommendation) => (
+                          <li key={recommendation}>{recommendation}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {guide.recursosDidacticos.imagenesSugeridas?.length ? (
+                      <div className="rounded-lg bg-white p-3">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <ImageIcon className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                          Imágenes sugeridas
+                        </div>
+                        <div className="mt-3 grid gap-3">
+                          {guide.recursosDidacticos.imagenesSugeridas.map((image, index) => (
+                            <div key={`${image.titulo}-${index}`} className="text-[15px] leading-6">
+                              <p className="font-semibold text-[#33423c]">{image.titulo}</p>
+                              {image.descripcion ? (
+                                <p className="mt-1 text-[#33423c]">{image.descripcion}</p>
+                              ) : null}
+                              {image.usoDidactico ? (
+                                <p className="mt-1 text-[#33423c]">
+                                  <span className="font-semibold">Uso:</span> {image.usoDidactico}
+                                </p>
+                              ) : null}
+                              {image.busquedaSugerida ? (
+                                <div className="educai-no-export mt-2 flex flex-wrap gap-2">
+                                  <a
+                                    href={stockSearchHref("pexels", image.busquedaSugerida)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                  >
+                                    Pexels
+                                  </a>
+                                  <a
+                                    href={stockSearchHref("unsplash", image.busquedaSugerida)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                  >
+                                    Unsplash
+                                  </a>
+                                </div>
+                              ) : null}
+                              {image.busquedaSugerida ? (
+                                <p className="mt-2 text-sm text-[#5b6962]">
+                                  Búsqueda: {image.busquedaSugerida}. Crédito sugerido: foto de
+                                  autor/a en Pexels o Unsplash.
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {guide.recursosDidacticos.videosSugeridos?.length ? (
+                      <div className="rounded-lg bg-white p-3">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <PlayCircle className="h-4 w-4 text-[#087968]" aria-hidden="true" />
+                          Videos sugeridos
+                        </div>
+                        <div className="mt-3 grid gap-3">
+                          {guide.recursosDidacticos.videosSugeridos.map((video, index) => (
+                            <div key={`${video.titulo}-${index}`} className="text-[15px] leading-6">
+                              <p className="font-semibold text-[#33423c]">{video.titulo}</p>
+                              {video.busquedaYoutube ? (
+                                <a
+                                  href={youtubeSearchHref(video.busquedaYoutube)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="educai-no-export mt-1 inline-flex text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
+                                >
+                                  Buscar en YouTube
+                                </a>
+                              ) : null}
+                              {video.criterioSeleccion ? (
+                                <p className="mt-1 text-[#33423c]">
+                                  <span className="font-semibold">Criterio:</span>{" "}
+                                  {video.criterioSeleccion}
+                                </p>
+                              ) : null}
+                              {video.momentoUso ? (
+                                <p className="mt-1 text-[#33423c]">
+                                  <span className="font-semibold">Uso:</span> {video.momentoUso}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </RichGuideSection>
+
+              {guide.materialesEditables?.length ? (
+                <RichGuideSection title="Materiales editables">
+                  <div className="grid gap-3">
+                    {guide.materialesEditables.map((material, index) => (
+                      <div key={`${material.nombre}-${index}`} className="rounded-lg bg-white p-3">
+                        <p className="font-semibold">{material.nombre}</p>
+                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
+                          {material.contenido}
+                        </p>
+                        {material.comoUsarlo ? (
+                          <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                            <span className="font-semibold">Cómo usarlo:</span>{" "}
+                            {material.comoUsarlo}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </RichGuideSection>
+              ) : null}
+
+              {guide.erroresFrecuentes?.length ? (
+                <RichGuideSection title="Errores frecuentes">
+                  <div className="grid gap-3">
+                    {guide.erroresFrecuentes.map((error, index) => (
+                      <div
+                        key={`${error.error}-${index}`}
+                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
+                      >
+                        <p className="font-semibold text-[#8d174f]">{error.error}</p>
+                        <p className="mt-2">
+                          <span className="font-semibold">Cómo detectarlo:</span>{" "}
+                          {error.comoDetectarlo}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Cómo intervenir:</span>{" "}
+                          {error.comoIntervenir}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </RichGuideSection>
+              ) : null}
+            </div>
+          </A4Page>
+        ) : guide.materialesEditables?.length || guide.erroresFrecuentes?.length ? (
+          <A4Page>
+            <div className="grid gap-6">
+              {guide.materialesEditables?.length ? (
+                <RichGuideSection title="Materiales editables">
+                  <div className="grid gap-3">
+                    {guide.materialesEditables.map((material, index) => (
+                      <div
+                        key={`${material.nombre}-${index}`}
+                        className="rounded-lg bg-[#fbfffd] p-3"
+                      >
+                        <p className="font-semibold">{material.nombre}</p>
+                        <p className="mt-2 whitespace-pre-line text-[15px] leading-6 text-[#33423c]">
+                          {material.contenido}
+                        </p>
+                        {material.comoUsarlo ? (
+                          <p className="mt-2 text-[15px] leading-6 text-[#33423c]">
+                            <span className="font-semibold">Cómo usarlo:</span>{" "}
+                            {material.comoUsarlo}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </RichGuideSection>
+              ) : null}
+
+              {guide.erroresFrecuentes?.length ? (
+                <RichGuideSection title="Errores frecuentes">
+                  <div className="grid gap-3">
+                    {guide.erroresFrecuentes.map((error, index) => (
+                      <div
+                        key={`${error.error}-${index}`}
+                        className="rounded-lg bg-white p-3 text-[15px] leading-6 text-[#33423c]"
+                      >
+                        <p className="font-semibold text-[#8d174f]">{error.error}</p>
+                        <p className="mt-2">
+                          <span className="font-semibold">Cómo detectarlo:</span>{" "}
+                          {error.comoDetectarlo}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Cómo intervenir:</span>{" "}
+                          {error.comoIntervenir}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </RichGuideSection>
+              ) : null}
+            </div>
+          </A4Page>
+        ) : null}
       </article>
     );
   }
