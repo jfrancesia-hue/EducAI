@@ -305,7 +305,7 @@ export class PlanGeneratorAgent {
     if (!isRecord(guide.recursosDidacticos)) {
       guide.recursosDidacticos = this.buildDefaultTeachingResources(input);
     } else {
-      const resources = { ...(guide.recursosDidacticos as Record<string, unknown>) };
+      const resources = { ...guide.recursosDidacticos };
       if (typeof resources.adecuacionNivel !== "string") {
         resources.adecuacionNivel = this.buildLevelFitText(input);
       }
