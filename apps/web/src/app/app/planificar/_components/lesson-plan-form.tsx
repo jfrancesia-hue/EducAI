@@ -190,13 +190,40 @@ function mapApiErrorToQuery(code: string | undefined) {
   return "api";
 }
 
-async function readGenerateApiError(response: Response): Promise<GenerateApiError> {
-  try {
-    const body = (await response.json()) as GenerateApiError;
-    return body;
-  } catch {
-    return {};
+type NetworkErrorDetail = {
+  name: string;
+  message: string;
+  cause?: string;
+};
+
+function describeNetworkError(error: unknown): NetworkErrorDetail {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      cause: error.cause instanceof Error ? error.cause.message : undefined,
+    };
   }
+  return { name: "UnknownError", message: String(error) };
+}
+
+async function safeJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch (error) {
+    // El servidor devolvió un body que no es JSON parseable (504 cacheado, payload truncado, etc.).
+    console.warn("lesson_plan_generate_parse_failed", {
+      status: response.status,
+      ...describeNetworkError(error),
+    });
+    return null;
+  }
+}
+
+async function readGenerateApiError(response: Response): Promise<GenerateApiError> {
+  const body = await safeJson(response);
+  if (body && typeof body === "object") return body;
+  return {};
 }
 
 async function submitGenerateDirectly(form: HTMLFormElement) {
@@ -210,6 +237,15 @@ async function submitGenerateDirectly(form: HTMLFormElement) {
   }
 
   const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+
+  // La generación puede tardar ~290s; refrescamos la sesión antes para evitar que el access_token
+  // expire en el medio y la API responda 401 al final.
+  try {
+    await supabase.auth.refreshSession();
+  } catch (error) {
+    console.warn("lesson_plan_generate_refresh_failed", describeNetworkError(error));
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -219,24 +255,49 @@ async function submitGenerateDirectly(form: HTMLFormElement) {
     return;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(buildGeneratePayload(new FormData(form))),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const apiError = await readGenerateApiError(response);
-    redirectToPlanning({ error: mapApiErrorToQuery(apiError.code) });
+  const startedAt = Date.now();
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(buildGeneratePayload(new FormData(form))),
+      cache: "no-store",
+    });
+  } catch (error) {
+    const elapsedMs = Date.now() - startedAt;
+    const detail = describeNetworkError(error);
+    console.error("lesson_plan_generate_network_failed", { elapsedMs, ...detail });
+    redirectToPlanning({ error: "network" });
     return;
   }
 
-  const body = (await response.json()) as { data?: { id?: string } };
-  redirectToPlanning({ created: body.data?.id ?? "ok" });
+  const elapsedMs = Date.now() - startedAt;
+
+  if (!response.ok) {
+    const apiError = await readGenerateApiError(response);
+    console.error("lesson_plan_generate_api_failed", {
+      status: response.status,
+      elapsedMs,
+      code: apiError.code,
+    });
+    const errorQuery =
+      response.status === 401 || response.status === 403
+        ? "auth"
+        : mapApiErrorToQuery(apiError.code);
+    redirectToPlanning({ error: errorQuery });
+    return;
+  }
+
+  const body = await safeJson(response);
+  const planId =
+    body && typeof body === "object" ? (body as { data?: { id?: string } }).data?.id : undefined;
+  console.warn("lesson_plan_generate_api_completed", { elapsedMs, planId: planId ?? null });
+  redirectToPlanning({ created: planId ?? "ok" });
 }
 
 function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
@@ -397,7 +458,8 @@ export function LessonPlanForm() {
         onSubmit={(event) => {
           event.preventDefault();
           setIsSubmitting(true);
-          submitGenerateDirectly(event.currentTarget).catch(() => {
+          submitGenerateDirectly(event.currentTarget).catch((error) => {
+            console.error("lesson_plan_generate_unexpected_failed", describeNetworkError(error));
             redirectToPlanning({ error: "network" });
           });
         }}
