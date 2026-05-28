@@ -40,16 +40,13 @@ export class CreateTeacherCourseDto {
   @Max(500)
   studentCount?: number;
 
-  // Los campos pedagógicos opcionales abajo se aceptan en el DTO para
-  // mantener el contrato del producto, pero hoy NO se persisten:
-  // el schema Prisma no tiene un JSON libre en Classroom. Los dejamos
-  // ingresados para que el frontend ya pueda enviarlos y, cuando se
-  // amplíe Classroom (campo metadata Json?), se persistan sin romper
-  // el contrato. Por ahora el service los ignora sin tirar error.
+  // Campos pedagógicos opcionales que se persisten en `Classroom.metadata`
+  // (JSON libre) y alimentan el prompt del generador cuando el docente elige
+  // este curso al planificar.
   @ApiProperty({
     example: "Grupo heterogéneo, ritmo medio, mucha participación oral",
     required: false,
-    description: "Perfil del grupo. Opcional. Hoy no se persiste (pendiente de migración).",
+    description: "Perfil del grupo. Opcional.",
   })
   @IsOptional()
   @IsString()
@@ -59,7 +56,7 @@ export class CreateTeacherCourseDto {
   @ApiProperty({
     example: "Ya trabajaron fracciones y tablas simples",
     required: false,
-    description: "Saberes previos del grupo. Opcional. Hoy no se persiste.",
+    description: "Saberes previos del grupo. Opcional.",
   })
   @IsOptional()
   @IsString()
@@ -69,7 +66,7 @@ export class CreateTeacherCourseDto {
   @ApiProperty({
     example: "Pizarrón, fotocopias, proyector compartido",
     required: false,
-    description: "Recursos disponibles. Opcional. Hoy no se persiste.",
+    description: "Recursos disponibles. Opcional.",
   })
   @IsOptional()
   @IsString()
@@ -79,7 +76,7 @@ export class CreateTeacherCourseDto {
   @ApiProperty({
     example: "Consignas breves y apoyo visual para algunos estudiantes",
     required: false,
-    description: "Adaptaciones generales. Opcional. Hoy no se persiste.",
+    description: "Adaptaciones generales. Opcional.",
   })
   @IsOptional()
   @IsString()

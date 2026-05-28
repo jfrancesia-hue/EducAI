@@ -186,16 +186,22 @@ export class LessonPlanService {
     const studentCountHint =
       typeof course.studentCount === "number" ? `${course.studentCount} estudiantes` : undefined;
     const shiftHint = course.shift ? `turno ${course.shift}` : undefined;
-    const groupProfileFromCourse = [course.name, studentCountHint, shiftHint]
-      .filter(Boolean)
-      .join(", ");
+    const baseGroupProfile = [course.name, studentCountHint, shiftHint].filter(Boolean).join(", ");
+    // Si el docente cargó un perfil pedagógico en el curso, lo prepende al hint estructural.
+    const groupProfileFromCourse = course.groupProfile
+      ? `${course.groupProfile}${baseGroupProfile ? ` (${baseGroupProfile})` : ""}`
+      : baseGroupProfile;
 
     return {
       ...input,
       courseLabel: input.courseLabel ?? course.name,
       // Si el form no trajo materia (no debería pasar, es required), tomamos la del curso.
       subject: input.subject || course.subject,
+      institutionName: input.institutionName ?? course.institutionName ?? undefined,
       groupProfile: input.groupProfile ?? (groupProfileFromCourse || undefined),
+      priorKnowledge: input.priorKnowledge ?? course.priorKnowledge ?? undefined,
+      availableResources: input.availableResources ?? course.availableResources ?? undefined,
+      inclusionNeeds: input.inclusionNeeds ?? course.inclusionNotes ?? undefined,
     };
   }
 

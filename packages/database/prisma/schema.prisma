@@ -218,7 +218,15 @@ model Classroom {
   teacherId   String?
   name        String
   grade       Int
+  /// Materia principal del curso (p. ej. "Matemática"). Reemplaza el workaround
+  /// de serializar el subject dentro de `shift` que usábamos antes de esta
+  /// migración. El service mantiene compatibilidad hacia atrás para registros
+  /// viejos donde la materia vive en `shift` con prefijo "json:".
+  subject     String?
   shift       String?
+  /// Contexto pedagógico libre del curso (groupProfile, priorKnowledge,
+  /// availableResources, inclusionNotes, studentCount, etc.).
+  metadata    Json?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?

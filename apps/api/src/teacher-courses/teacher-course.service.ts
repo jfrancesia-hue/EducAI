@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Prisma } from "@educai/database";
 import type { Logger } from "pino";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
@@ -12,24 +13,32 @@ import {
 } from "./errors/teacher-course.errors.js";
 
 /**
- * Metadata serializada dentro de `Classroom.shift`.
- *
- * Limitación temporal: el schema actual de `Classroom` no tiene un JSON
- * libre ni campo `subject`. Para no bloquear el feature, serializamos los
- * datos pedagógicos básicos del curso en el campo `shift` (que originalmente
- * era el turno). Cuando se amplíe el schema con un `metadata Json?` y un
- * `subject String?` la migración hacia campos nativos es directa.
+ * Estructura de `Classroom.metadata` (JSON libre). Todos los campos son
+ * opcionales: el docente decide qué cargar.
  */
-type ClassroomShiftMetadata = {
-  /** Materia principal (obligatoria para el curso). */
+type ClassroomMetadata = {
+  studentCount?: number;
+  groupProfile?: string;
+  priorKnowledge?: string;
+  availableResources?: string;
+  inclusionNotes?: string;
+  institutionName?: string;
+};
+
+/**
+ * Estructura legacy: antes de la migración `20260528200000_classroom_subject_and_metadata`
+ * serializábamos `{subject, shift, studentCount}` como JSON dentro de
+ * `Classroom.shift` con prefijo `json:`. La migración SQL backfilea los
+ * registros existentes a los campos nativos, pero leemos ambos layouts por
+ * una release como red de seguridad por si quedó algún Classroom sin migrar.
+ */
+type LegacyShiftPayload = {
   subject?: string;
-  /** Turno real (mañana, tarde, noche...). */
   shift?: string;
-  /** Cantidad de alumnos declarados por el docente. */
   studentCount?: number;
 };
 
-const SHIFT_METADATA_PREFIX = "json:";
+const LEGACY_SHIFT_PREFIX = "json:";
 
 export type TeacherCourseSummary = {
   id: string;
@@ -38,6 +47,11 @@ export type TeacherCourseSummary = {
   subject: string;
   shift: string | null;
   studentCount: number | null;
+  groupProfile: string | null;
+  priorKnowledge: string | null;
+  availableResources: string | null;
+  inclusionNotes: string | null;
+  institutionName: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -54,6 +68,22 @@ export type TeacherCourseContextForLlm = {
   subject: string;
   shift: string | null;
   studentCount: number | null;
+  groupProfile: string | null;
+  priorKnowledge: string | null;
+  availableResources: string | null;
+  inclusionNotes: string | null;
+  institutionName: string | null;
+};
+
+type ClassroomRow = {
+  id: string;
+  name: string;
+  grade: number;
+  subject: string | null;
+  shift: string | null;
+  metadata: Prisma.JsonValue | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 @Injectable()
@@ -81,7 +111,9 @@ export class TeacherCourseService {
         id: true,
         name: true,
         grade: true,
+        subject: true,
         shift: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -102,7 +134,9 @@ export class TeacherCourseService {
         id: true,
         name: true,
         grade: true,
+        subject: true,
         shift: true,
+        metadata: true,
         teacherId: true,
         schoolId: true,
         createdAt: true,
@@ -122,7 +156,9 @@ export class TeacherCourseService {
       id: row.id,
       name: row.name,
       grade: row.grade,
+      subject: row.subject,
       shift: row.shift,
+      metadata: row.metadata,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
@@ -130,7 +166,8 @@ export class TeacherCourseService {
     return {
       data: {
         ...summary,
-        teacherId: row.teacherId,
+        // El check de igualdad de arriba ya garantiza row.teacherId === context.teacherId.
+        teacherId: context.teacherId,
         schoolId: row.schoolId,
       },
     };
@@ -140,6 +177,7 @@ export class TeacherCourseService {
     dto: CreateTeacherCourseDto,
     context: { tenantId: string; teacherId: string; schoolId: string },
   ): Promise<{ data: TeacherCourseSummary }> {
+    const metadata = this.buildMetadataPatch({}, dto);
     const created = await this.prisma.classroom.create({
       data: {
         tenantId: context.tenantId,
@@ -147,17 +185,18 @@ export class TeacherCourseService {
         schoolId: context.schoolId,
         name: dto.name.trim(),
         grade: dto.grade,
-        shift: this.encodeShiftMetadata({
-          subject: dto.subject.trim(),
-          shift: dto.shift?.trim() || undefined,
-          studentCount: dto.studentCount,
-        }),
+        subject: dto.subject.trim(),
+        shift: this.normalizeShift(dto.shift),
+        metadata:
+          Object.keys(metadata).length > 0 ? (metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
       select: {
         id: true,
         name: true,
         grade: true,
+        subject: true,
         shift: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -183,31 +222,35 @@ export class TeacherCourseService {
     context: { tenantId: string; teacherId: string },
   ): Promise<{ data: TeacherCourseSummary }> {
     const existing = await this.findOne(id, context);
-    const currentMetadata: ClassroomShiftMetadata = {
-      subject: existing.data.subject,
-      shift: existing.data.shift ?? undefined,
+    const existingMetadata: ClassroomMetadata = {
       studentCount: existing.data.studentCount ?? undefined,
+      groupProfile: existing.data.groupProfile ?? undefined,
+      priorKnowledge: existing.data.priorKnowledge ?? undefined,
+      availableResources: existing.data.availableResources ?? undefined,
+      inclusionNotes: existing.data.inclusionNotes ?? undefined,
+      institutionName: existing.data.institutionName ?? undefined,
     };
 
-    const nextMetadata: ClassroomShiftMetadata = {
-      subject: dto.subject !== undefined ? dto.subject.trim() : currentMetadata.subject,
-      shift: dto.shift !== undefined ? dto.shift.trim() || undefined : currentMetadata.shift,
-      studentCount:
-        dto.studentCount !== undefined ? dto.studentCount : currentMetadata.studentCount,
-    };
-
+    const nextMetadata = this.buildMetadataPatch(existingMetadata, dto);
     const updated = await this.prisma.classroom.update({
       where: { id },
       data: {
         name: dto.name !== undefined ? dto.name.trim() : undefined,
         grade: dto.grade !== undefined ? dto.grade : undefined,
-        shift: this.encodeShiftMetadata(nextMetadata),
+        subject: dto.subject !== undefined ? dto.subject.trim() : undefined,
+        shift: dto.shift !== undefined ? this.normalizeShift(dto.shift) : undefined,
+        metadata:
+          Object.keys(nextMetadata).length > 0
+            ? (nextMetadata as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
       },
       select: {
         id: true,
         name: true,
         grade: true,
+        subject: true,
         shift: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -228,7 +271,6 @@ export class TeacherCourseService {
     id: string,
     context: { tenantId: string; teacherId: string },
   ): Promise<{ data: { id: string; deletedAt: Date } }> {
-    // Aseguramos pertenencia antes de tocar nada.
     await this.findOne(id, context);
 
     const deletedAt = new Date();
@@ -244,10 +286,6 @@ export class TeacherCourseService {
 
   /**
    * Resuelve el `teacherId` aplicable para el usuario autenticado.
-   * Reutiliza la misma semántica que `LessonPlanService.resolveTeacherIdForPlanning`:
-   * - Si el usuario tiene `teacherId`, lo usa.
-   * - Si es `SCHOOL_ADMIN`, toma el primer docente disponible del colegio.
-   * - En otro caso devuelve 403 con códigos estables para el frontend.
    */
   async resolveTeacherContext(user: AuthenticatedUser): Promise<{
     tenantId: string;
@@ -336,6 +374,11 @@ export class TeacherCourseService {
         subject: data.subject,
         shift: data.shift,
         studentCount: data.studentCount,
+        groupProfile: data.groupProfile,
+        priorKnowledge: data.priorKnowledge,
+        availableResources: data.availableResources,
+        inclusionNotes: data.inclusionNotes,
+        institutionName: data.institutionName,
       };
     } catch (error) {
       if (
@@ -348,54 +391,111 @@ export class TeacherCourseService {
     }
   }
 
-  private toSummary(row: {
-    id: string;
-    name: string;
-    grade: number;
-    shift: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }): TeacherCourseSummary {
-    const metadata = this.decodeShiftMetadata(row.shift);
+  private toSummary(row: ClassroomRow): TeacherCourseSummary {
+    const legacy = this.decodeLegacyShift(row.shift);
+    const metadata = this.parseMetadata(row.metadata);
+
     return {
       id: row.id,
       name: row.name,
       grade: row.grade,
-      subject: metadata.subject ?? "",
-      shift: metadata.shift ?? null,
-      studentCount: metadata.studentCount ?? null,
+      // Preferir nativo; fallback a legacy si quedó algún Classroom sin migrar.
+      subject: row.subject ?? legacy.subject ?? "",
+      shift: row.subject ? row.shift : (legacy.shift ?? row.shift),
+      studentCount: metadata.studentCount ?? legacy.studentCount ?? null,
+      groupProfile: metadata.groupProfile ?? null,
+      priorKnowledge: metadata.priorKnowledge ?? null,
+      availableResources: metadata.availableResources ?? null,
+      inclusionNotes: metadata.inclusionNotes ?? null,
+      institutionName: metadata.institutionName ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
   }
 
-  private encodeShiftMetadata(metadata: ClassroomShiftMetadata): string {
-    const cleaned: ClassroomShiftMetadata = {};
-    if (metadata.subject && metadata.subject.trim()) {
-      cleaned.subject = metadata.subject.trim();
+  private buildMetadataPatch(
+    current: ClassroomMetadata,
+    dto: Partial<{
+      studentCount?: number;
+      groupProfile?: string;
+      priorKnowledge?: string;
+      availableResources?: string;
+      inclusionNotes?: string;
+      institutionName?: string;
+    }>,
+  ): ClassroomMetadata {
+    const next: ClassroomMetadata = { ...current };
+
+    const writeString = (
+      key:
+        | "groupProfile"
+        | "priorKnowledge"
+        | "availableResources"
+        | "inclusionNotes"
+        | "institutionName",
+    ) => {
+      const incoming = dto[key];
+      if (incoming === undefined) return;
+      const trimmed = incoming.trim();
+      if (trimmed) {
+        next[key] = trimmed;
+      } else {
+        delete next[key];
+      }
+    };
+
+    writeString("groupProfile");
+    writeString("priorKnowledge");
+    writeString("availableResources");
+    writeString("inclusionNotes");
+    writeString("institutionName");
+
+    if (dto.studentCount !== undefined) {
+      if (Number.isFinite(dto.studentCount)) {
+        next.studentCount = dto.studentCount;
+      } else {
+        delete next.studentCount;
+      }
     }
-    if (metadata.shift && metadata.shift.trim()) {
-      cleaned.shift = metadata.shift.trim();
-    }
-    if (typeof metadata.studentCount === "number" && Number.isFinite(metadata.studentCount)) {
-      cleaned.studentCount = metadata.studentCount;
-    }
-    return `${SHIFT_METADATA_PREFIX}${JSON.stringify(cleaned)}`;
+
+    return next;
   }
 
-  private decodeShiftMetadata(raw: string | null): ClassroomShiftMetadata {
-    if (!raw) {
-      return {};
-    }
-    if (!raw.startsWith(SHIFT_METADATA_PREFIX)) {
-      // Compatibilidad hacia atrás: cursos viejos donde `shift` era turno crudo.
-      return { shift: raw };
-    }
+  private normalizeShift(shift: string | undefined): string | null | undefined {
+    if (shift === undefined) return undefined;
+    const trimmed = shift.trim();
+    return trimmed || null;
+  }
+
+  private parseMetadata(raw: Prisma.JsonValue | null): ClassroomMetadata {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const candidate = raw as Record<string, unknown>;
+    return {
+      studentCount:
+        typeof candidate.studentCount === "number" && Number.isFinite(candidate.studentCount)
+          ? candidate.studentCount
+          : undefined,
+      groupProfile: typeof candidate.groupProfile === "string" ? candidate.groupProfile : undefined,
+      priorKnowledge:
+        typeof candidate.priorKnowledge === "string" ? candidate.priorKnowledge : undefined,
+      availableResources:
+        typeof candidate.availableResources === "string" ? candidate.availableResources : undefined,
+      inclusionNotes:
+        typeof candidate.inclusionNotes === "string" ? candidate.inclusionNotes : undefined,
+      institutionName:
+        typeof candidate.institutionName === "string" ? candidate.institutionName : undefined,
+    };
+  }
+
+  /**
+   * Decodifica el formato legacy de `Classroom.shift` (JSON con prefijo `json:`).
+   * Sólo se usa como red de seguridad por si la migración no aplicó a algún registro.
+   */
+  private decodeLegacyShift(raw: string | null): LegacyShiftPayload {
+    if (!raw || !raw.startsWith(LEGACY_SHIFT_PREFIX)) return {};
     try {
-      const parsed = JSON.parse(raw.slice(SHIFT_METADATA_PREFIX.length)) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return {};
-      }
+      const parsed = JSON.parse(raw.slice(LEGACY_SHIFT_PREFIX.length)) as unknown;
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
       const candidate = parsed as Record<string, unknown>;
       return {
         subject: typeof candidate.subject === "string" ? candidate.subject : undefined,

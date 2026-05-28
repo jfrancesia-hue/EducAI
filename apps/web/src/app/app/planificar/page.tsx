@@ -162,6 +162,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+/**
+ * Acepta una URL solo si el scheme es `http:` o `https:`. Bloquea `javascript:`,
+ * `data:`, `file:`, etc. — defensa contra XSS cuando renderizamos URLs que vienen
+ * de servicios externos (autor de Unsplash, embed de YouTube, thumbnail de Pexels).
+ * Devuelve undefined si la URL no pasa validación; el caller decide qué hacer.
+ */
+function safeHttpUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function metadataValue(metadata: unknown, key: string) {
   if (!isRecord(metadata)) {
     return "";
@@ -638,9 +656,9 @@ function GeneratedLessonPlan({
                               key={`${image.titulo}-${index}`}
                               className="overflow-hidden rounded-lg border border-[#e3ebe7] bg-[#fbfffd]"
                             >
-                              {image.urls?.medium ? (
+                              {safeHttpUrl(image.urls?.medium) ? (
                                 <img
-                                  src={image.urls.medium}
+                                  src={safeHttpUrl(image.urls?.medium)}
                                   alt={image.descripcion ?? image.titulo ?? "Imagen sugerida"}
                                   className="h-44 w-full object-cover"
                                   loading="lazy"
@@ -658,9 +676,9 @@ function GeneratedLessonPlan({
                                 ) : null}
                                 {image.attribution ? (
                                   <p className="mt-2 text-xs leading-5 text-[#5b6962]">
-                                    {image.autor?.profileUrl ? (
+                                    {safeHttpUrl(image.autor?.profileUrl) ? (
                                       <a
-                                        href={image.autor.profileUrl}
+                                        href={safeHttpUrl(image.autor?.profileUrl)}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="underline-offset-4 hover:underline"
@@ -711,10 +729,10 @@ function GeneratedLessonPlan({
                               key={`${video.titulo}-${index}`}
                               className="overflow-hidden rounded-lg border border-[#e3ebe7] bg-[#fbfffd]"
                             >
-                              {video.thumbnail ? (
+                              {safeHttpUrl(video.thumbnail) ? (
                                 <div className="relative">
                                   <img
-                                    src={video.thumbnail}
+                                    src={safeHttpUrl(video.thumbnail)}
                                     alt={`Vista previa: ${video.titulo ?? "video sugerido"}`}
                                     className="h-44 w-full object-cover"
                                     loading="lazy"
@@ -740,19 +758,24 @@ function GeneratedLessonPlan({
                                     <span className="font-semibold">Uso:</span> {video.momentoUso}
                                   </p>
                                 ) : null}
-                                {video.busquedaYoutube ? (
-                                  <a
-                                    href={
-                                      video.urlBusqueda ?? youtubeSearchHref(video.busquedaYoutube)
-                                    }
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="educai-no-export mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
-                                  >
-                                    <PlayCircle className="h-4 w-4" aria-hidden="true" />
-                                    Buscar en YouTube
-                                  </a>
-                                ) : null}
+                                {video.busquedaYoutube
+                                  ? (() => {
+                                      const href =
+                                        safeHttpUrl(video.urlBusqueda) ??
+                                        youtubeSearchHref(video.busquedaYoutube);
+                                      return href ? (
+                                        <a
+                                          href={href}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="educai-no-export mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
+                                        >
+                                          <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                                          Buscar en YouTube
+                                        </a>
+                                      ) : null;
+                                    })()
+                                  : null}
                               </figcaption>
                             </figure>
                           ))}

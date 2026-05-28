@@ -108,20 +108,26 @@ export const educaiLessonGuideSchema = z.object({
           // estos valores (no podría: no tiene acceso a las APIs).
           urls: z
             .object({
-              thumbnail: z.string().url(),
-              medium: z.string().url(),
-              large: z.string().url(),
+              thumbnail: z.string().regex(/^https?:\/\//u, { message: "URL must use http(s)" }),
+              medium: z.string().regex(/^https?:\/\//u, { message: "URL must use http(s)" }),
+              large: z.string().regex(/^https?:\/\//u, { message: "URL must use http(s)" }),
             })
             .optional(),
           autor: z
             .object({
               name: z.string(),
-              profileUrl: z.string().url().optional(),
+              profileUrl: z
+                .string()
+                .regex(/^https?:\/\//u, { message: "URL must use http(s)" })
+                .optional(),
             })
             .optional(),
           attribution: z.string().optional(),
           proveedor: z.enum(["pexels", "unsplash"]).optional(),
-          downloadLocation: z.string().url().optional(),
+          downloadLocation: z
+            .string()
+            .regex(/^https?:\/\//u, { message: "URL must use http(s)" })
+            .optional(),
         }),
       )
       .min(1)
@@ -137,9 +143,18 @@ export const educaiLessonGuideSchema = z.object({
           // existe cuando el server tiene confianza alta; si no, queda
           // el botón "Buscar en YouTube" con `urlBusqueda`.
           embedId: z.string().optional(),
-          urlEmbed: z.string().url().optional(),
-          urlBusqueda: z.string().url().optional(),
-          thumbnail: z.string().url().optional(),
+          urlEmbed: z
+            .string()
+            .regex(/^https?:\/\//u, { message: "URL must use http(s)" })
+            .optional(),
+          urlBusqueda: z
+            .string()
+            .regex(/^https?:\/\//u, { message: "URL must use http(s)" })
+            .optional(),
+          thumbnail: z
+            .string()
+            .regex(/^https?:\/\//u, { message: "URL must use http(s)" })
+            .optional(),
           verificado: z.boolean().optional(),
         }),
       )
