@@ -134,12 +134,24 @@ type EducaiLessonGuide = {
       descripcion?: string;
       usoDidactico?: string;
       busquedaSugerida?: string;
+      // Campos enriquecidos por el server post-LLM (fase B). Pueden venir vacíos
+      // en guías históricas o si Pexels/Unsplash no devolvió nada.
+      urls?: { thumbnail?: string; medium?: string; large?: string };
+      autor?: { name?: string; profileUrl?: string };
+      attribution?: string;
+      proveedor?: "pexels" | "unsplash";
+      downloadLocation?: string;
     }>;
     videosSugeridos?: Array<{
       titulo?: string;
       busquedaYoutube?: string;
       criterioSeleccion?: string;
       momentoUso?: string;
+      embedId?: string;
+      urlEmbed?: string;
+      urlBusqueda?: string;
+      thumbnail?: string;
+      verificado?: boolean;
     }>;
   };
   erroresFrecuentes?: Array<{ error?: string; comoDetectarlo?: string; comoIntervenir?: string }>;
@@ -620,45 +632,68 @@ function GeneratedLessonPlan({
                           <ImageIcon className="h-4 w-4 text-[#087968]" aria-hidden="true" />
                           Imágenes sugeridas
                         </div>
-                        <div className="mt-3 grid gap-3">
+                        <div className="mt-3 grid gap-4">
                           {guide.recursosDidacticos.imagenesSugeridas.map((image, index) => (
-                            <div key={`${image.titulo}-${index}`} className="text-[15px] leading-6">
-                              <p className="font-semibold text-[#11231f]">{image.titulo}</p>
-                              {image.descripcion ? (
-                                <p className="mt-1 text-[#11231f]">{image.descripcion}</p>
+                            <figure
+                              key={`${image.titulo}-${index}`}
+                              className="overflow-hidden rounded-lg border border-[#e3ebe7] bg-[#fbfffd]"
+                            >
+                              {image.urls?.medium ? (
+                                <img
+                                  src={image.urls.medium}
+                                  alt={image.descripcion ?? image.titulo ?? "Imagen sugerida"}
+                                  className="h-44 w-full object-cover"
+                                  loading="lazy"
+                                />
                               ) : null}
-                              {image.usoDidactico ? (
-                                <p className="mt-1 text-[#11231f]">
-                                  <span className="font-semibold">Uso:</span> {image.usoDidactico}
-                                </p>
-                              ) : null}
-                              {image.busquedaSugerida ? (
-                                <div className="educai-no-export mt-2 flex flex-wrap gap-2">
-                                  <a
-                                    href={stockSearchHref("pexels", image.busquedaSugerida)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
-                                  >
-                                    Pexels
-                                  </a>
-                                  <a
-                                    href={stockSearchHref("unsplash", image.busquedaSugerida)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
-                                  >
-                                    Unsplash
-                                  </a>
-                                </div>
-                              ) : null}
-                              {image.busquedaSugerida ? (
-                                <p className="mt-2 text-sm text-[#11231f]">
-                                  Búsqueda: {image.busquedaSugerida}. Crédito sugerido: foto de
-                                  autor/a en Pexels o Unsplash.
-                                </p>
-                              ) : null}
-                            </div>
+                              <figcaption className="p-3 text-[15px] leading-6">
+                                <p className="font-semibold text-[#11231f]">{image.titulo}</p>
+                                {image.descripcion ? (
+                                  <p className="mt-1 text-[#11231f]">{image.descripcion}</p>
+                                ) : null}
+                                {image.usoDidactico ? (
+                                  <p className="mt-1 text-[#11231f]">
+                                    <span className="font-semibold">Uso:</span> {image.usoDidactico}
+                                  </p>
+                                ) : null}
+                                {image.attribution ? (
+                                  <p className="mt-2 text-xs leading-5 text-[#5b6962]">
+                                    {image.autor?.profileUrl ? (
+                                      <a
+                                        href={image.autor.profileUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="underline-offset-4 hover:underline"
+                                      >
+                                        {image.attribution}
+                                      </a>
+                                    ) : (
+                                      image.attribution
+                                    )}
+                                  </p>
+                                ) : null}
+                                {!image.urls?.medium && image.busquedaSugerida ? (
+                                  <div className="educai-no-export mt-2 flex flex-wrap gap-2">
+                                    <a
+                                      href={stockSearchHref("pexels", image.busquedaSugerida)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                    >
+                                      Buscar en Pexels
+                                    </a>
+                                    <a
+                                      href={stockSearchHref("unsplash", image.busquedaSugerida)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="rounded-lg bg-[#eef5f3] px-3 py-1 text-sm font-bold text-[#087968] transition hover:bg-[#e7fbf7]"
+                                    >
+                                      Buscar en Unsplash
+                                    </a>
+                                  </div>
+                                ) : null}
+                              </figcaption>
+                            </figure>
                           ))}
                         </div>
                       </div>
@@ -670,32 +705,56 @@ function GeneratedLessonPlan({
                           <PlayCircle className="h-4 w-4 text-[#087968]" aria-hidden="true" />
                           Videos sugeridos
                         </div>
-                        <div className="mt-3 grid gap-3">
+                        <div className="mt-3 grid gap-4">
                           {guide.recursosDidacticos.videosSugeridos.map((video, index) => (
-                            <div key={`${video.titulo}-${index}`} className="text-[15px] leading-6">
-                              <p className="font-semibold text-[#11231f]">{video.titulo}</p>
-                              {video.busquedaYoutube ? (
-                                <a
-                                  href={youtubeSearchHref(video.busquedaYoutube)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="educai-no-export mt-1 inline-flex text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
-                                >
-                                  Buscar en YouTube
-                                </a>
+                            <figure
+                              key={`${video.titulo}-${index}`}
+                              className="overflow-hidden rounded-lg border border-[#e3ebe7] bg-[#fbfffd]"
+                            >
+                              {video.thumbnail ? (
+                                <div className="relative">
+                                  <img
+                                    src={video.thumbnail}
+                                    alt={`Vista previa: ${video.titulo ?? "video sugerido"}`}
+                                    className="h-44 w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/15">
+                                    <PlayCircle
+                                      className="h-12 w-12 text-white drop-shadow-lg"
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                </div>
                               ) : null}
-                              {video.criterioSeleccion ? (
-                                <p className="mt-1 text-[#11231f]">
-                                  <span className="font-semibold">Criterio:</span>{" "}
-                                  {video.criterioSeleccion}
-                                </p>
-                              ) : null}
-                              {video.momentoUso ? (
-                                <p className="mt-1 text-[#11231f]">
-                                  <span className="font-semibold">Uso:</span> {video.momentoUso}
-                                </p>
-                              ) : null}
-                            </div>
+                              <figcaption className="p-3 text-[15px] leading-6">
+                                <p className="font-semibold text-[#11231f]">{video.titulo}</p>
+                                {video.criterioSeleccion ? (
+                                  <p className="mt-1 text-[#11231f]">
+                                    <span className="font-semibold">Criterio:</span>{" "}
+                                    {video.criterioSeleccion}
+                                  </p>
+                                ) : null}
+                                {video.momentoUso ? (
+                                  <p className="mt-1 text-[#11231f]">
+                                    <span className="font-semibold">Uso:</span> {video.momentoUso}
+                                  </p>
+                                ) : null}
+                                {video.busquedaYoutube ? (
+                                  <a
+                                    href={
+                                      video.urlBusqueda ?? youtubeSearchHref(video.busquedaYoutube)
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="educai-no-export mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#087968] underline-offset-4 hover:underline"
+                                  >
+                                    <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                                    Buscar en YouTube
+                                  </a>
+                                ) : null}
+                              </figcaption>
+                            </figure>
                           ))}
                         </div>
                       </div>
