@@ -55,7 +55,7 @@ type ApiResponse = {
   bodyText: string;
 };
 
-async function readApiError(response: ApiResponse): Promise<ApiErrorPayload> {
+function readApiError(response: ApiResponse): ApiErrorPayload {
   try {
     const body = JSON.parse(response.bodyText) as {
       code?: unknown;
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
       payload,
     );
     if (!response.ok) {
-      const apiError = await readApiError(response);
+      const apiError = readApiError(response);
       const code = apiError.code;
       console.error("lesson_plan_generate_api_failed", {
         status: response.status,
@@ -256,7 +256,7 @@ export async function POST(request: NextRequest) {
     }
 
     const planId = readApiSuccessId(response);
-    console.log("lesson_plan_generate_api_completed", {
+    console.warn("lesson_plan_generate_api_completed", {
       status: response.status,
       elapsedMs: Date.now() - startedAt,
       planId,
