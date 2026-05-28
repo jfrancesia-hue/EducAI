@@ -913,6 +913,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
   if (createdPlan) {
     return (
       <AppShell
+        hideNavigation
         title="Guía generada"
         eyebrow="Planificación docente"
         statusNote="Revisá, exportá y ajustá la clase antes de usarla."
