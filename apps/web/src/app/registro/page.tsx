@@ -234,7 +234,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="parentFullName"
                       required
-                      placeholder="Jorge Francesia"
+                      placeholder="Nombre y apellido"
                       className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
@@ -246,7 +246,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="parentWhatsappPhone"
                       required
-                      placeholder="+5493834000000"
+                      placeholder="+5491100000000"
                       className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
@@ -257,7 +257,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     type="email"
                     name="parentEmail"
                     required
-                    placeholder="familia@email.com"
+                    placeholder="adulto@email.com"
                     className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none"
                   />
                 </label>
@@ -277,7 +277,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="studentFirstName"
                       required
-                      placeholder="Mateo"
+                      placeholder="Nombre"
                       className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                     />
                   </label>
@@ -286,7 +286,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="studentLastName"
                       required
-                      placeholder="Francesia"
+                      placeholder="Apellido"
                       className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                     />
                   </label>
@@ -315,7 +315,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                   </span>
                   <input
                     name="studentWhatsappPhone"
-                    placeholder="+5493834000001"
+                    placeholder="+5491100000001"
                     className="h-12 rounded-lg border border-[#d5e1dc] bg-white px-3 font-medium outline-none"
                   />
                 </label>
@@ -376,7 +376,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
                     <input
                       name="fullName"
                       required
-                      placeholder="Mariana Lopez"
+                      placeholder="Nombre y apellido"
                       className="h-full w-full bg-transparent font-medium outline-none"
                     />
                   </span>
