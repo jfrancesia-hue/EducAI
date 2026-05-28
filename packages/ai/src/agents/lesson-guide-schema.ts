@@ -103,6 +103,25 @@ export const educaiLessonGuideSchema = z.object({
           descripcion: boundedText(20, 700),
           usoDidactico: boundedText(20, 700),
           busquedaSugerida: boundedText(5, 180),
+          // Campos opcionales que se llenan en el server post-LLM al
+          // enriquecer la ref con Pexels/Unsplash. El LLM NUNCA inventa
+          // estos valores (no podría: no tiene acceso a las APIs).
+          urls: z
+            .object({
+              thumbnail: z.string().url(),
+              medium: z.string().url(),
+              large: z.string().url(),
+            })
+            .optional(),
+          autor: z
+            .object({
+              name: z.string(),
+              profileUrl: z.string().url().optional(),
+            })
+            .optional(),
+          attribution: z.string().optional(),
+          proveedor: z.enum(["pexels", "unsplash"]).optional(),
+          downloadLocation: z.string().url().optional(),
         }),
       )
       .min(1)
@@ -114,6 +133,14 @@ export const educaiLessonGuideSchema = z.object({
           busquedaYoutube: boundedText(5, 180),
           criterioSeleccion: boundedText(20, 700),
           momentoUso: boundedText(20, 700),
+          // Mismo enfoque: el LLM solo provee el query. El embedId solo
+          // existe cuando el server tiene confianza alta; si no, queda
+          // el botón "Buscar en YouTube" con `urlBusqueda`.
+          embedId: z.string().optional(),
+          urlEmbed: z.string().url().optional(),
+          urlBusqueda: z.string().url().optional(),
+          thumbnail: z.string().url().optional(),
+          verificado: z.boolean().optional(),
         }),
       )
       .min(1)

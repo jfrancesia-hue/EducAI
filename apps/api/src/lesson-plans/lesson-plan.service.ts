@@ -14,6 +14,9 @@ import {
 } from "@educai/ai";
 import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
+import { ImageEnrichmentService } from "../media/image-enrichment.service.js";
+import { VideoEnrichmentService } from "../media/video-enrichment.service.js";
+import type { ImagenRef, VideoRef } from "../media/types.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { TeacherCourseService } from "../teacher-courses/teacher-course.service.js";
 import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
@@ -59,6 +62,8 @@ export class LessonPlanService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly teacherCourses: TeacherCourseService,
+    private readonly imageEnrichment: ImageEnrichmentService,
+    private readonly videoEnrichment: VideoEnrichmentService,
   ) {
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY?.trim();
     this.aiProviderConfigured = Boolean(anthropicApiKey);
@@ -350,6 +355,7 @@ export class LessonPlanService {
     generation: LessonPlanGenerationResult,
   ): Promise<void> {
     const plan = generation.plan;
+    const enrichedGuide = await this.enrichGuideMedia(plan.guide, lessonPlanId);
     await this.prisma.$transaction(async (tx) => {
       await this.enableRlsBypass(tx);
       const existing = await tx.lessonPlan.findUnique({
@@ -373,13 +379,105 @@ export class LessonPlanService {
             })),
             overview: plan.overview,
             printables: plan.printables,
-            guide: plan.guide,
+            guide: enrichedGuide,
           },
           status: "ready",
           generatedByAI: generation.source === "llm",
         },
       });
     });
+  }
+
+  /**
+   * El LLM devuelve refs abstractas de imágenes y videos (titulo + busqueda).
+   * Acá las resolvemos a URLs reales contra Pexels/Unsplash/YouTube antes de
+   * persistirlas, así el detalle de la guía las puede renderear directo.
+   * Fail-soft: cualquier error de las APIs externas se loggea y la guía
+   * queda con la ref sin URL — el frontend muestra placeholder.
+   */
+  private async enrichGuideMedia<
+    G extends {
+      recursosDidacticos?: {
+        imagenesSugeridas?: Array<Record<string, unknown>>;
+        videosSugeridos?: Array<Record<string, unknown>>;
+      };
+    },
+  >(guide: G, lessonPlanId: string): Promise<G> {
+    if (!guide?.recursosDidacticos) return guide;
+    const { imagenesSugeridas, videosSugeridos } = guide.recursosDidacticos;
+
+    const readString = (value: unknown): string => (typeof value === "string" ? value : "");
+
+    try {
+      const imageRefs: ImagenRef[] = (imagenesSugeridas ?? []).map((entry) => ({
+        tipo: "unsplash",
+        query: readString(entry.busquedaSugerida),
+        orientacion: "horizontal",
+        alt: readString(entry.titulo) || readString(entry.descripcion),
+      }));
+
+      const videoRefs: VideoRef[] = (videosSugeridos ?? []).map((entry) => ({
+        titulo: readString(entry.titulo),
+        queryBusqueda: readString(entry.busquedaYoutube),
+        resumen: typeof entry.criterioSeleccion === "string" ? entry.criterioSeleccion : undefined,
+      }));
+
+      const [enrichedImages, enrichedVideos] = await Promise.all([
+        this.imageEnrichment.enrichAll(imageRefs),
+        this.videoEnrichment.enrichAll(videoRefs),
+      ]);
+
+      const mergedImages = (imagenesSugeridas ?? []).map((entry, index) => {
+        const enriched = enrichedImages[index];
+        if (!enriched) return entry;
+        return {
+          ...entry,
+          urls: enriched.urls,
+          autor: enriched.autor,
+          attribution: enriched.attribution,
+          proveedor: enriched.urls ? enriched.tipo : undefined,
+          downloadLocation: enriched.downloadLocation,
+        };
+      });
+
+      const mergedVideos = (videosSugeridos ?? []).map((entry, index) => {
+        const enriched = enrichedVideos[index];
+        if (!enriched) return entry;
+        return {
+          ...entry,
+          embedId: enriched.embedId,
+          urlEmbed: enriched.urlEmbed,
+          urlBusqueda: enriched.urlBusqueda,
+          thumbnail: enriched.thumbnail,
+          verificado: enriched.verificado,
+        };
+      });
+
+      this.logger.log({
+        event: "lesson_plan_media_enriched",
+        lessonPlanId,
+        imagesAttempted: imageRefs.length,
+        imagesResolved: enrichedImages.filter((image) => Boolean(image.urls)).length,
+        videosAttempted: videoRefs.length,
+        videosVerified: enrichedVideos.filter((video) => video.verificado).length,
+      });
+
+      return {
+        ...guide,
+        recursosDidacticos: {
+          ...guide.recursosDidacticos,
+          imagenesSugeridas: mergedImages,
+          videosSugeridos: mergedVideos,
+        },
+      };
+    } catch (error) {
+      this.logger.warn({
+        event: "lesson_plan_media_enrichment_failed",
+        lessonPlanId,
+        errorMessage: error instanceof Error ? error.message : "unknown",
+      });
+      return guide;
+    }
   }
 
   private async assertCanGenerateLessonPlan(input: {
