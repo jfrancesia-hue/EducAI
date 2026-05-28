@@ -160,28 +160,46 @@ export class InstitutionalToolsService {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 6,
+      take: 30,
       select: {
         role: true,
-        content: true,
         createdAt: true,
-        modelUsed: true,
       },
     });
+
+    // Privacidad del menor: el padre tiene derecho a saber QUE su hijo está
+    // usando el tutor (cuándo, cuánto, con qué frecuencia) pero NO a leer
+    // las transcripciones de la conversación. El tool sólo expone metadata
+    // agregada — nunca el contenido textual de los mensajes.
+    const studentRoles = new Set(["student", "user", "web_student"]);
+    const tutorRoles = new Set(["tutor", "assistant", "system"]);
+
+    let studentMessages = 0;
+    let tutorMessages = 0;
+    for (const message of messages) {
+      const role = message.role.toLowerCase();
+      if (studentRoles.has(role)) {
+        studentMessages += 1;
+      } else if (tutorRoles.has(role)) {
+        tutorMessages += 1;
+      }
+    }
+
+    const last = messages[0]?.createdAt ?? null;
+    const first = messages[messages.length - 1]?.createdAt ?? null;
 
     return {
       tool: "recent_activity",
       summary:
         messages.length > 0
-          ? `Hay ${messages.length} mensajes recientes vinculados al alumno.`
+          ? `Hay ${messages.length} mensajes recientes vinculados al alumno (${studentMessages} del alumno, ${tutorMessages} del tutor).`
           : "No hay mensajes recientes registrados.",
       payload: {
-        messages: messages.map((message) => ({
-          role: message.role,
-          content: message.content.slice(0, 240),
-          createdAt: message.createdAt.toISOString(),
-          modelUsed: message.modelUsed,
-        })),
+        totalMessages: messages.length,
+        studentMessages,
+        tutorMessages,
+        lastInteractionAt: last?.toISOString() ?? null,
+        firstInteractionAt: first?.toISOString() ?? null,
       },
     };
   }

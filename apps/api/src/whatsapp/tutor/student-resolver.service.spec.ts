@@ -84,7 +84,7 @@ describe("StudentResolverService", () => {
       ...PROFILE_OK,
       student: { ...PROFILE_OK.student, family: { id: "fam_1", subscription: null } },
     };
-    const prisma = buildPrismaMock({ profile: profileSinSub });
+    const prisma = buildPrismaMock({ profile: profileSinSub as unknown as typeof PROFILE_OK });
     const service = new StudentResolverService(prisma);
 
     await expect(service.resolveByWhatsapp("+5493815550202")).rejects.toBeInstanceOf(
