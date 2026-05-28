@@ -102,7 +102,7 @@ export class PlanGeneratorAgent {
       return await this.llm.generate({
         model: getEducAIModelForPlan("pro"),
         responseFormat: "json",
-        maxTokens: 7600,
+        maxTokens: 5200,
         system: [{ type: "text", text: systemPrompt, cacheable: true }],
         tools: [
           {

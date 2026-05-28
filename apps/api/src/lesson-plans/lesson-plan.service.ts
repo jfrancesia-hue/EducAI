@@ -22,7 +22,9 @@ export class LessonPlanService {
 
   constructor(private readonly prisma: PrismaService) {
     this.generator = process.env.ANTHROPIC_API_KEY?.trim()
-      ? new PlanGeneratorAgent(new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY }))
+      ? new PlanGeneratorAgent(
+          new AnthropicLlmClient({ apiKey: process.env.ANTHROPIC_API_KEY, timeoutMs: 55_000 }),
+        )
       : new PlanGeneratorAgent();
   }
 
