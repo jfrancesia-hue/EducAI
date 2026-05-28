@@ -23,29 +23,29 @@ const scenarios = [
     id: "lesson-design",
     title: "Plan de clase en 35 minutos",
     context:
-      "Curso 7A. El docente necesita trabajar proporcionalidad con inicio claro, practica guiada y cierre evaluable.",
+      "Curso 7A. El docente necesita trabajar proporcionalidad con inicio claro, práctica guiada y cierre evaluable.",
     objective:
-      "Crear una secuencia didáctica concreta con tiempos, consignas y criterios de exito.",
+      "Crear una secuencia didáctica concreta con tiempos, consignas y criterios de éxito.",
     guardrail:
       "Mantener control docente sobre contenido, tono y nivel de dificultad antes de usarlo.",
     outputs: [
       "Plan de clase con tiempos y objetivos",
       "Consigna lista para proyectar",
-      "Practica con solucionario docente",
-      "Ticket de salida para evaluar comprension",
+      "Práctica con solucionario docente",
+      "Ticket de salida para evaluar comprensión",
     ],
   },
   {
     id: "assessment-feedback",
-    title: "Feedback y rubrica rapida",
+    title: "Feedback y rúbrica rápida",
     context:
-      "Grupo 6B. Hay producciónes escritas heterogeneas y el docente necesita corregir con criterios consistentes.",
+      "Grupo 6B. Hay producciones escritas heterogéneas y el docente necesita corregir con criterios consistentes.",
     objective:
-      "Generar una rubrica breve, comentarios modelo y sugerencias de mejora por nivel de desempeno.",
+      "Generar una rúbrica breve, comentarios modelo y sugerencias de mejora por nivel de desempeño.",
     guardrail:
-      "Evitar juicios personales; evaluar evidencias de aprendizaje y dejar espacio para revision docente.",
+      "Evitar juicios personales; evaluar evidencias de aprendizaje y dejar espacio para revisión docente.",
     outputs: [
-      "Rubrica de 4 criterios",
+      "Rúbrica de 4 criterios",
       "Comentarios de feedback editables",
       "Ejemplos de mejora por nivel",
       "Resumen para seguimiento semanal",
@@ -59,11 +59,11 @@ const scenarios = [
     objective:
       "Producir materiales editables para una semana de clases sin perder coherencia curricular.",
     guardrail:
-      "No prometer resultados automaticos; cada salida queda como borrador profesional revisable.",
+      "No prometer resultados automáticos; cada salida queda como borrador profesional revisable.",
     outputs: [
-      "Guia de clase por dia",
+      "Guía de clase por día",
       "Preguntas para debate",
-      "Actividad practica",
+      "Actividad práctica",
       "Evaluación corta con criterios",
     ],
   },
@@ -74,7 +74,7 @@ const steps = [
   { label: "Producir", icon: FileText, detail: "Plan, consignas, recursos y rúbricas" },
   { label: "Ordenar", icon: Route, detail: "Secuencia aplicable para aula real" },
   { label: "Comunicar", icon: MessageCircle, detail: "Resumen docente o institucional" },
-  { label: "Evaluar", icon: ClipboardList, detail: "Criterios, feedback y proximo paso" },
+  { label: "Evaluar", icon: ClipboardList, detail: "Criterios, feedback y próximo paso" },
 ];
 
 export function AgentWorkspace() {
@@ -215,8 +215,8 @@ export function AgentWorkspace() {
               <h3 className="font-display text-2xl font-bold tracking-tight">Control docente</h3>
             </div>
             <p className="mt-4 text-[15px] leading-6 text-[#4f5f58]">
-              Cada material sale como borrador editable. El docente decide que usar, que cambiar,
-              que descartar y cuando compartirlo con estudiantes o equipo escolar.
+              Cada material sale como borrador editable. El docente decide qué usar, qué cambiar,
+              qué descartar y cuándo compartirlo con estudiantes o equipo escolar.
             </p>
             <div className="mt-5 rounded-lg bg-white/75 p-4">
               <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">

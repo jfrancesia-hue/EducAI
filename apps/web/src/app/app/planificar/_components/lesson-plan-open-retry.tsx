@@ -44,11 +44,11 @@ export function LessonPlanOpenRetry({ planId }: { planId: string }) {
         </span>
         <div>
           <h2 className="font-display text-2xl font-bold tracking-tight">
-            {exhausted ? "No pudimos abrirla automaticamente" : "Estamos abriendo la guia"}
+            {exhausted ? "No pudimos abrirla automáticamente" : "Estamos abriendo la guía"}
           </h2>
           <p className="mt-2 text-[15px] leading-6 text-[#4f5f58]">
             {exhausted
-              ? "La clase esta guardada, pero la vista final no respondio despues de varios intentos. Reintenta ahora o volve mas tarde desde Ultimas clases."
+              ? "La clase está guardada, pero la vista final no respondió después de varios intentos. Reintentá ahora o volvé más tarde desde Últimas clases."
               : "La clase ya fue guardada. Estamos sincronizando la vista final para mostrarla en formato A4."}
           </p>
           <p className="mt-2 text-sm font-semibold text-[#5b6962]">ID: {planId}</p>

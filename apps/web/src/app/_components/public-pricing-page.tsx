@@ -289,13 +289,13 @@ export async function PublicPricingPage() {
               Colegio se calcula por docentes activos
             </h2>
             <p className="mt-3 max-w-2xl text-[15px] font-medium leading-6 text-slate-600">
-              La base incluye 10 docentes activos. Si un mes usan EducAI mas docentes, el valor se
+              La base incluye 10 docentes activos. Si un mes usan EducAI más docentes, el valor se
               ajusta por docente activo adicional.
             </p>
             <div className="mt-6 grid gap-3 rounded-lg border border-[#b9e6dd] bg-[#fbfffd] p-5">
               <p className="font-semibold text-[#075f53]">Ejemplo visible</p>
               <p className="text-sm font-medium leading-6 text-slate-600">
-                15 docentes activos = $270.000/mes. Se toma como activo el docente que genero al
+                15 docentes activos = $270.000/mes. Se toma como activo el docente que generó al
                 menos una planificación durante el mes.
               </p>
             </div>

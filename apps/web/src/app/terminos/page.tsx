@@ -22,11 +22,11 @@ const sections = [
   },
   {
     title: "Pagos y planes",
-    body: "Los planes pagos, promociones, renovaciones y cancelaciones se informan durante la contratacion. Cuando intervengan procesadores de pago, tambien aplican sus condiciones.",
+    body: "Los planes pagos, promociones, renovaciones y cancelaciones se informan durante la contratación. Cuando intervengan procesadores de pago, también aplican sus condiciones.",
   },
   {
     title: "Cambios",
-    body: "Podemos actualizar estos terminos para reflejar mejoras del servicio, cambios operativos o exigencias normativas. La version vigente estara disponible en esta pagina.",
+    body: "Podemos actualizar estos términos para reflejar mejoras del servicio, cambios operativos o exigencias normativas. La versión vigente estará disponible en esta página.",
   },
 ];
 

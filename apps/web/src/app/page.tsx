@@ -92,13 +92,13 @@ const journeys = [
   },
   {
     label: "Equipos",
-    title: "Coordinacion pedagógica con evidencias, reportes y seguimiento semanal.",
+    title: "Coordinación pedagógica con evidencias, reportes y seguimiento semanal.",
     image: teacherImage,
     color: "bg-[#fff6c9] text-[#876100]",
   },
   {
     label: "Estudiantes",
-    title: "Actividades claras, feedback util y practicas mejor orientadas.",
+    title: "Actividades claras, feedback útil y prácticas mejor orientadas.",
     image: studentImage,
     color: "bg-[#fdeaf4] text-[#b82170]",
   },
@@ -329,7 +329,7 @@ export default function HomePage() {
                 <Badge className="bg-emerald-400/20 text-emerald-100">En progreso</Badge>
               </div>
               <div className="mt-6 grid grid-cols-3 gap-3">
-                {["Comprension", "Confianza", "Ritmo"].map((item, index) => (
+                {["Comprensión", "Confianza", "Ritmo"].map((item, index) => (
                   <div key={item} className="rounded-lg bg-white/10 p-3">
                     <p className="text-sm text-white/82">{item}</p>
                     <p className="mt-2 font-display text-2xl font-semibold">
@@ -346,8 +346,8 @@ export default function HomePage() {
                   Tutor IA
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  Converti este objetivo en una actividad de 35 minutos con inicio, practica,
-                  cierre, criterios de exito y una pregunta de salida.
+                  Convertí este objetivo en una actividad de 35 minutos con inicio, práctica,
+                  cierre, criterios de éxito y una pregunta de salida.
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#4f3ee2]">
                   <Brain className="h-4 w-4" aria-hidden="true" />
@@ -356,13 +356,13 @@ export default function HomePage() {
               </div>
               <div className="rounded-lg border border-white/15 bg-[#f8d95c] p-4 text-slate-950 shadow-float">
                 <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-700">
-                  Alerta util
+                  Alerta útil
                 </p>
                 <h3 className="mt-3 font-display text-2xl font-bold tracking-tight">
                   5 recursos listos para revisar antes de la clase.
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  La plataforma sugiere consigna, ejemplo, rubrica breve y ticket de salida.
+                  La plataforma sugiere consigna, ejemplo, rúbrica breve y ticket de salida.
                 </p>
               </div>
             </div>
@@ -416,10 +416,10 @@ export default function HomePage() {
             Confianza primero
           </Badge>
           <h2 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            La belleza importa. La seguridad importa mas.
+            La belleza importa. La seguridad importa más.
           </h2>
           <p className="mt-5 text-lg leading-8 text-slate-600">
-            El diseño no tapa lo esencial: privacidad, trazabilidad, límites pedagógicos y revision
+            El diseño no tapa lo esencial: privacidad, trazabilidad, límites pedagógicos y revisión
             docente antes de publicar o compartir materiales.
           </p>
         </div>
@@ -444,11 +444,11 @@ export default function HomePage() {
             </Badge>
             <h2 className="mt-5 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
               Listo para convertirse en un producto que docentes y escuelas quieran abrir todos los
-              dias.
+              días.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
               Una experiencia pensada para que el trabajo docente sea más claro, más liviano y más
-              facil de sostener todos los dias.
+              fácil de sostener todos los días.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" pill className="bg-slate-950 text-white hover:bg-slate-800">

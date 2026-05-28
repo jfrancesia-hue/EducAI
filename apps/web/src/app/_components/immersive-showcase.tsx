@@ -13,12 +13,12 @@ const learningImage =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=85";
 
 const signals = [
-  { label: "Atencion", value: "88%", icon: Brain },
+  { label: "Atención", value: "88%", icon: Brain },
   { label: "Progreso", value: "+14%", icon: LineChart },
   { label: "Privacidad", value: "Activa", icon: ShieldCheck },
 ];
 
-const signalRows = ["Objetivo claro", "Practica generada", "Rubrica lista"];
+const signalRows = ["Objetivo claro", "Práctica generada", "Rúbrica lista"];
 
 export function ImmersiveShowcase() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export function ImmersiveShowcase() {
             Que la plataforma se sienta como una ventana al aprendizaje real.
           </h2>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-700">
-            Fotos reales, senales pedagógicas y una capa visual que muestra como EducAI ayuda a
+            Fotos reales, señales pedagógicas y una capa visual que muestra cómo EducAI ayuda a
             planificar, producir recursos y seguir el aprendizaje sin invadir la experiencia de
             aula.
           </p>
@@ -121,7 +121,7 @@ export function ImmersiveShowcase() {
                       Ciencias
                     </p>
                     <p className="mt-2 text-sm font-medium leading-5">
-                      Recurso visual listo para la proxima clase.
+                      Recurso visual listo para la próxima clase.
                     </p>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export function ImmersiveShowcase() {
                           EducAI
                         </p>
                         <p className="mt-2 font-display text-xl font-bold leading-tight">
-                          El agente preparo una consigna y una rubrica breve.
+                          El agente preparó una consigna y una rúbrica breve.
                         </p>
                       </div>
                     </div>
@@ -153,7 +153,7 @@ export function ImmersiveShowcase() {
                   <div className="rounded-lg border border-cyan-200/20 bg-slate-950/90 p-4 text-cyan-50 shadow-float">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-sm uppercase tracking-[0.08em] text-cyan-100/82">
-                        Senales útiles
+                        Señales útiles
                       </span>
                       <span className="h-2 w-2 rounded-full bg-cyan-200" />
                     </div>
