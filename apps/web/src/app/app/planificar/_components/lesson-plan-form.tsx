@@ -227,6 +227,29 @@ async function readGenerateApiError(response: Response): Promise<GenerateApiErro
 }
 
 type GeneratePayload = ReturnType<typeof buildGeneratePayload>;
+type SupabaseAuth = ReturnType<typeof createBrowserClient>["auth"];
+
+const POLL_INTERVAL_MS = 5000;
+const POLL_TIMEOUT_MS = 8 * 60 * 1000; // 8 minutos
+const MAX_CONSECUTIVE_POLL_FAILURES = 3;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function readAccessTokenFrom(auth: SupabaseAuth): Promise<string | null> {
+  const result = await auth.getSession();
+  return result.data.session?.access_token ?? null;
+}
+
+async function refreshAccessTokenFrom(auth: SupabaseAuth): Promise<string | null> {
+  try {
+    await auth.refreshSession();
+  } catch (error) {
+    console.warn("lesson_plan_generate_refresh_failed", describeNetworkError(error));
+  }
+  return readAccessTokenFrom(auth);
+}
 
 async function submitGenerateDirectly(
   payload: GeneratePayload,
@@ -235,31 +258,25 @@ async function submitGenerateDirectly(
   supabaseAnonKey: string,
 ) {
   const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+  const auth = supabase.auth;
 
-  // La generación puede tardar ~290s; refrescamos la sesión antes para evitar que el access_token
-  // expire en el medio y la API responda 401 al final.
-  try {
-    await supabase.auth.refreshSession();
-  } catch (error) {
-    console.warn("lesson_plan_generate_refresh_failed", describeNetworkError(error));
-  }
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.access_token) {
+  // El POST inicial es rápido (<1s). El refresh garantiza un token fresco para el polling
+  // largo que viene después.
+  const accessToken = await refreshAccessTokenFrom(auth);
+  if (!accessToken) {
     redirectToPlanning({ error: "auth" });
     return;
   }
 
+  const apiBase = apiUrl.replace(/\/$/u, "");
   const startedAt = Date.now();
+
   let response: Response;
   try {
-    response = await fetch(`${apiUrl.replace(/\/$/u, "")}/lesson-plans/generate`, {
+    response = await fetch(`${apiBase}/lesson-plans/generate`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -268,19 +285,19 @@ async function submitGenerateDirectly(
     });
   } catch (error) {
     const elapsedMs = Date.now() - startedAt;
-    const detail = describeNetworkError(error);
-    console.error("lesson_plan_generate_network_failed", { elapsedMs, ...detail });
+    console.error("lesson_plan_generate_network_failed", {
+      elapsedMs,
+      ...describeNetworkError(error),
+    });
     redirectToPlanning({ error: "network" });
     return;
   }
-
-  const elapsedMs = Date.now() - startedAt;
 
   if (!response.ok) {
     const apiError = await readGenerateApiError(response);
     console.error("lesson_plan_generate_api_failed", {
       status: response.status,
-      elapsedMs,
+      elapsedMs: Date.now() - startedAt,
       code: apiError.code,
     });
     const errorQuery =
@@ -292,10 +309,151 @@ async function submitGenerateDirectly(
   }
 
   const body = await safeJson(response);
-  const planId =
+  const lessonPlanId =
     body && typeof body === "object" ? (body as { data?: { id?: string } }).data?.id : undefined;
-  console.warn("lesson_plan_generate_api_completed", { elapsedMs, planId: planId ?? null });
-  redirectToPlanning({ created: planId ?? "ok" });
+
+  if (!lessonPlanId) {
+    console.error("lesson_plan_generate_api_failed", {
+      status: response.status,
+      elapsedMs: Date.now() - startedAt,
+      code: "MISSING_LESSON_PLAN_ID",
+    });
+    redirectToPlanning({ error: "api" });
+    return;
+  }
+
+  console.warn("lesson_plan_generate_enqueued", {
+    elapsedMs: Date.now() - startedAt,
+    lessonPlanId,
+  });
+
+  await pollUntilTerminal(lessonPlanId, auth, apiBase, startedAt);
+}
+
+type LessonPlanStatusResponse = {
+  data?: {
+    id?: string;
+    status?: string;
+    adaptations?: Record<string, unknown>;
+  };
+};
+
+function extractErrorCode(body: unknown): string | undefined {
+  if (!body || typeof body !== "object") return undefined;
+  const data = (body as LessonPlanStatusResponse).data;
+  const adaptations = data?.adaptations;
+  if (adaptations && typeof adaptations === "object" && "error" in adaptations) {
+    const error = (adaptations as { error?: { code?: string } }).error;
+    return error?.code;
+  }
+  return undefined;
+}
+
+async function pollUntilTerminal(
+  lessonPlanId: string,
+  auth: SupabaseAuth,
+  apiBase: string,
+  startedAt: number,
+) {
+  const endpoint = `${apiBase}/lesson-plans/${encodeURIComponent(lessonPlanId)}`;
+  let consecutiveFailures = 0;
+
+  while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+    await sleep(POLL_INTERVAL_MS);
+
+    let accessToken = await readAccessTokenFrom(auth);
+    if (!accessToken) {
+      accessToken = await refreshAccessTokenFrom(auth);
+    }
+    if (!accessToken) {
+      console.error("lesson_plan_poll_failed", {
+        lessonPlanId,
+        reason: "missing_session",
+      });
+      redirectToPlanning({ error: "auth" });
+      return;
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+        cache: "no-store",
+      });
+    } catch (error) {
+      consecutiveFailures += 1;
+      console.warn("lesson_plan_poll_network_error", {
+        lessonPlanId,
+        consecutiveFailures,
+        ...describeNetworkError(error),
+      });
+      if (consecutiveFailures >= MAX_CONSECUTIVE_POLL_FAILURES) {
+        redirectToPlanning({ error: "network" });
+        return;
+      }
+      continue;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      const refreshed = await refreshAccessTokenFrom(auth);
+      if (!refreshed) {
+        redirectToPlanning({ error: "auth" });
+        return;
+      }
+      continue;
+    }
+
+    if (!response.ok) {
+      consecutiveFailures += 1;
+      console.warn("lesson_plan_poll_api_error", {
+        lessonPlanId,
+        status: response.status,
+        consecutiveFailures,
+      });
+      if (consecutiveFailures >= MAX_CONSECUTIVE_POLL_FAILURES) {
+        redirectToPlanning({ error: "api" });
+        return;
+      }
+      continue;
+    }
+
+    consecutiveFailures = 0;
+    const body = await safeJson(response);
+    const status =
+      body && typeof body === "object"
+        ? (body as LessonPlanStatusResponse).data?.status
+        : undefined;
+
+    if (status === "ready" || status === "draft") {
+      console.warn("lesson_plan_generate_api_completed", {
+        elapsedMs: Date.now() - startedAt,
+        lessonPlanId,
+      });
+      redirectToPlanning({ created: lessonPlanId });
+      return;
+    }
+
+    if (status === "failed") {
+      const code = extractErrorCode(body);
+      console.error("lesson_plan_generate_api_failed", {
+        elapsedMs: Date.now() - startedAt,
+        lessonPlanId,
+        code,
+      });
+      redirectToPlanning({ error: mapApiErrorToQuery(code) });
+      return;
+    }
+
+    // status pending / running → seguir poleando
+  }
+
+  // Llegamos al timeout absoluto. La generación puede seguir corriendo en background;
+  // el listado de planificaciones la mostrará cuando termine.
+  console.warn("lesson_plan_generate_timeout", {
+    elapsedMs: Date.now() - startedAt,
+    lessonPlanId,
+  });
+  redirectToPlanning({ error: "timeout" });
 }
 
 function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {

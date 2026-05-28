@@ -4,13 +4,13 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-  ServiceUnavailableException,
 } from "@nestjs/common";
 import {
   AnthropicLlmClient,
   EDUCAI_LIMITS,
   PlanGeneratorAgent,
   normalizeEducAIPlan,
+  type LessonPlanGenerationResult,
 } from "@educai/ai";
 import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
@@ -19,6 +19,34 @@ import type { LessonPlanFeedbackDto } from "./dto/lesson-plan-feedback.dto.js";
 
 type PrismaTx = Prisma.TransactionClient;
 const DEFAULT_LESSON_PLAN_ANTHROPIC_TIMEOUT_MS = 390_000;
+
+export type LessonPlanStatus = "pending" | "running" | "ready" | "failed" | "draft";
+
+type GenerateInput = {
+  tenantId: string;
+  teacherId: string;
+  plan?: string;
+  educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
+  grade: number;
+  subject: string;
+  courseLabel?: string;
+  institutionName?: string;
+  lessonIntent?: string;
+  levelContext?: string;
+  plannedDate?: string;
+  careerName?: string;
+  topic: string;
+  sessionCount: number;
+  totalDurationMinutes: number;
+  learningGoal?: string;
+  groupProfile?: string;
+  priorKnowledge?: string;
+  curriculumContext?: string;
+  availableResources?: string;
+  assessmentFocus?: string;
+  inclusionNeeds?: string;
+  outputFormat?: string;
+};
 
 @Injectable()
 export class LessonPlanService {
@@ -99,63 +127,46 @@ export class LessonPlanService {
     }
   }
 
-  async generate(input: {
-    tenantId: string;
-    teacherId: string;
-    plan?: string;
-    educationLevel: "primaria" | "secundaria" | "terciario" | "universitario";
-    grade: number;
-    subject: string;
-    courseLabel?: string;
-    institutionName?: string;
-    lessonIntent?: string;
-    levelContext?: string;
-    plannedDate?: string;
-    careerName?: string;
-    topic: string;
-    sessionCount: number;
-    totalDurationMinutes: number;
-    learningGoal?: string;
-    groupProfile?: string;
-    priorKnowledge?: string;
-    curriculumContext?: string;
-    availableResources?: string;
-    assessmentFocus?: string;
-    inclusionNeeds?: string;
-    outputFormat?: string;
-  }) {
+  async generate(input: GenerateInput) {
     await this.assertCanGenerateLessonPlan({
       tenantId: input.tenantId,
       teacherId: input.teacherId,
       plan: input.plan,
     });
 
-    const generationStartedAt = Date.now();
-    const generation = await this.generator.generateWithMetadata(input);
-    const generationElapsedMs = Date.now() - generationStartedAt;
-    if (generation.source === "fallback") {
-      this.logger.warn({
-        event: "lesson_plan_generation_fallback",
-        reason: generation.fallbackReason,
-        attempts: generation.fallbackDetails,
-        elapsedMs: generationElapsedMs,
-        aiProviderConfigured: this.aiProviderConfigured,
-      });
+    const created = await this.createPending(input);
 
-      if (!this.shouldPersistFallbackPlans()) {
-        throw new ServiceUnavailableException({
-          code: "LESSON_PLAN_AI_UNAVAILABLE",
-          message: "No se pudo generar una guia con IA en este momento",
-          reason: generation.fallbackReason,
-          aiProviderConfigured: this.aiProviderConfigured,
-        });
-      }
-    }
+    // La generación corre en background: el cliente recibe `{id, status: "pending"}`
+    // de inmediato y polea `GET /lesson-plans/:id` hasta que el status sea "ready" o
+    // "failed". `runGeneration` captura todos los errores y nunca propaga.
+    void this.runGeneration(created.id, input);
 
-    const plan = generation.plan;
-    let created: { id: string };
+    return { data: { id: created.id, status: "pending" as const } };
+  }
+
+  private buildPlanningContext(input: GenerateInput): Record<string, string | undefined> {
+    return {
+      educationLevel: input.educationLevel,
+      courseLabel: input.courseLabel,
+      institutionName: input.institutionName,
+      lessonIntent: input.lessonIntent,
+      levelContext: input.levelContext,
+      plannedDate: input.plannedDate,
+      careerName: input.careerName,
+      learningGoal: input.learningGoal,
+      groupProfile: input.groupProfile,
+      priorKnowledge: input.priorKnowledge,
+      curriculumContext: input.curriculumContext,
+      availableResources: input.availableResources,
+      assessmentFocus: input.assessmentFocus,
+      inclusionNeeds: input.inclusionNeeds,
+      outputFormat: input.outputFormat,
+    };
+  }
+
+  private async createPending(input: GenerateInput): Promise<{ id: string }> {
     try {
-      created = await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx) => {
         await this.enableRlsBypass(tx);
 
         return tx.lessonPlan.create({
@@ -166,61 +177,159 @@ export class LessonPlanService {
             subject: input.subject,
             topic: input.topic,
             durationMinutes: input.totalDurationMinutes,
-            competences: plan.competences,
-            objectives: plan.objectives,
-            activities: plan.sessions,
-            resources: plan.sessions.flatMap((session) => session.resources),
-            assessment: plan.assessment,
+            competences: [],
+            objectives: [],
+            activities: [],
+            resources: [],
+            assessment: {},
             adaptations: {
-              planningContext: {
-                educationLevel: input.educationLevel,
-                courseLabel: input.courseLabel,
-                institutionName: input.institutionName,
-                lessonIntent: input.lessonIntent,
-                levelContext: input.levelContext,
-                plannedDate: input.plannedDate,
-                careerName: input.careerName,
-                learningGoal: input.learningGoal,
-                groupProfile: input.groupProfile,
-                priorKnowledge: input.priorKnowledge,
-                curriculumContext: input.curriculumContext,
-                availableResources: input.availableResources,
-                assessmentFocus: input.assessmentFocus,
-                inclusionNeeds: input.inclusionNeeds,
-                outputFormat: input.outputFormat,
-              },
-              differentiation: plan.sessions.map((session) => ({
-                session: session.number,
-                differentiation: session.differentiation,
-              })),
-              overview: plan.overview,
-              printables: plan.printables,
-              guide: plan.guide,
+              planningContext: this.buildPlanningContext(input),
             },
-            generatedByAI: generation.source === "llm",
+            status: "pending",
+            generatedByAI: false,
           },
+          select: { id: true },
         });
       });
     } catch (error) {
       throw new InternalServerErrorException({
-        code: "LESSON_PLAN_SAVE_FAILED",
-        message: "No se pudo guardar la planificacion generada",
+        code: "LESSON_PLAN_QUEUE_FAILED",
+        message: "No se pudo encolar la generacion de la guia",
         detail: error instanceof Error ? error.message : "Error desconocido",
       });
     }
+  }
 
-    this.logger.log({
-      event: "lesson_plan_generation_completed",
-      source: generation.source,
-      elapsedMs: generationElapsedMs,
-      generatedByAI: generation.source === "llm",
-      subject: input.subject,
-      topic: input.topic,
-      educationLevel: input.educationLevel,
-      grade: input.grade,
+  async runGeneration(lessonPlanId: string, input: GenerateInput): Promise<void> {
+    const startedAt = Date.now();
+    try {
+      await this.updateStatus(lessonPlanId, "running");
+
+      const generation = await this.generator.generateWithMetadata(input);
+      const elapsedMs = Date.now() - startedAt;
+
+      if (generation.source === "fallback") {
+        this.logger.warn({
+          event: "lesson_plan_generation_fallback",
+          lessonPlanId,
+          reason: generation.fallbackReason,
+          attempts: generation.fallbackDetails,
+          elapsedMs,
+          aiProviderConfigured: this.aiProviderConfigured,
+        });
+
+        if (!this.shouldPersistFallbackPlans()) {
+          await this.markFailed(
+            lessonPlanId,
+            "LESSON_PLAN_AI_UNAVAILABLE",
+            generation.fallbackReason ?? "llm_unavailable",
+          );
+          return;
+        }
+      }
+
+      await this.completeWithPlan(lessonPlanId, generation);
+
+      this.logger.log({
+        event: "lesson_plan_generation_completed",
+        lessonPlanId,
+        source: generation.source,
+        elapsedMs,
+        generatedByAI: generation.source === "llm",
+        subject: input.subject,
+        topic: input.topic,
+        educationLevel: input.educationLevel,
+        grade: input.grade,
+      });
+    } catch (error) {
+      const elapsedMs = Date.now() - startedAt;
+      const errorName = error instanceof Error ? error.name : "Unknown";
+      const errorMessage = error instanceof Error ? error.message : "unknown";
+      this.logger.error({
+        event: "lesson_plan_generation_failed",
+        lessonPlanId,
+        elapsedMs,
+        errorName,
+        errorMessage,
+      });
+      await this.markFailed(lessonPlanId, "LESSON_PLAN_GENERATION_FAILED", errorMessage);
+    }
+  }
+
+  private async updateStatus(lessonPlanId: string, status: LessonPlanStatus): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      await tx.lessonPlan.update({
+        where: { id: lessonPlanId },
+        data: { status },
+      });
     });
+  }
 
-    return { data: { id: created.id, plan } };
+  private async markFailed(lessonPlanId: string, code: string, reason: string): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.enableRlsBypass(tx);
+        const existing = await tx.lessonPlan.findUnique({
+          where: { id: lessonPlanId },
+          select: { adaptations: true },
+        });
+        const adaptations = this.asJsonObject(existing?.adaptations ?? null);
+        await tx.lessonPlan.update({
+          where: { id: lessonPlanId },
+          data: {
+            status: "failed",
+            adaptations: {
+              ...adaptations,
+              error: { code, reason, failedAt: new Date().toISOString() },
+            },
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.error({
+        event: "lesson_plan_mark_failed_failed",
+        lessonPlanId,
+        errorMessage: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  }
+
+  private async completeWithPlan(
+    lessonPlanId: string,
+    generation: LessonPlanGenerationResult,
+  ): Promise<void> {
+    const plan = generation.plan;
+    await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      const existing = await tx.lessonPlan.findUnique({
+        where: { id: lessonPlanId },
+        select: { adaptations: true },
+      });
+      const adaptations = this.asJsonObject(existing?.adaptations ?? null);
+      await tx.lessonPlan.update({
+        where: { id: lessonPlanId },
+        data: {
+          competences: plan.competences,
+          objectives: plan.objectives,
+          activities: plan.sessions,
+          resources: plan.sessions.flatMap((session) => session.resources),
+          assessment: plan.assessment,
+          adaptations: {
+            ...adaptations,
+            differentiation: plan.sessions.map((session) => ({
+              session: session.number,
+              differentiation: session.differentiation,
+            })),
+            overview: plan.overview,
+            printables: plan.printables,
+            guide: plan.guide,
+          },
+          status: "ready",
+          generatedByAI: generation.source === "llm",
+        },
+      });
+    });
   }
 
   private async assertCanGenerateLessonPlan(input: {
@@ -242,6 +351,10 @@ export class LessonPlanService {
             tenantId: input.tenantId,
             teacherId: input.teacherId,
             deletedAt: null,
+            // Una generación que terminó en `failed` no le consume crédito al docente.
+            // Pending/running/ready/draft sí cuentan: el crédito queda reservado mientras
+            // el sistema está trabajando para devolverle la guía.
+            status: { not: "failed" },
             ...(quota.periodStart ? { createdAt: { gte: quota.periodStart } } : {}),
           },
         }),

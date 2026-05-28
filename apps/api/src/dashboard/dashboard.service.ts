@@ -88,9 +88,13 @@ export class DashboardService {
         lessonPlanQuota: null,
       },
       async (prisma) => {
-        const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
+        const visibleWhere = {
+          ...lessonPlanWhere,
+          status: { notIn: ["pending", "running", "failed"] },
+        };
+        const count = await prisma.lessonPlan.count({ where: visibleWhere });
         const recent = await prisma.lessonPlan.findMany({
-          where: lessonPlanWhere,
+          where: visibleWhere,
           orderBy: { createdAt: "desc" },
           take: 12,
           select: {
@@ -408,9 +412,13 @@ export class DashboardService {
       "lessonPlanSummary",
       { count: 0, recent: [] },
       async (prisma) => {
-        const count = await prisma.lessonPlan.count({ where: lessonPlanWhere });
+        const visibleWhere = {
+          ...lessonPlanWhere,
+          status: { notIn: ["pending", "running", "failed"] },
+        };
+        const count = await prisma.lessonPlan.count({ where: visibleWhere });
         const recent = await prisma.lessonPlan.findMany({
-          where: lessonPlanWhere,
+          where: visibleWhere,
           orderBy: { createdAt: "desc" },
           take: 12,
           select: {
