@@ -20,6 +20,11 @@ function safeNextPath(value: string | null) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (process.env.NODE_ENV === "development" && pathname.startsWith("/app")) {
+    return NextResponse.next();
+  }
+
   const { response, user } = await updateSession(request);
   const hasSession = Boolean(user);
   const role =

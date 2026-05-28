@@ -1,4 +1,5 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   CheckCircle2,
   GraduationCap,
@@ -10,8 +11,9 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { PasswordField } from "../../_components/password-field";
-import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
+import { createSupabaseServerClient } from "../../../lib/supabase/server";
 import { AppShell } from "../_components/app-shell";
+import { previewProfile } from "../_components/preview-data";
 
 type ProfilePageProps = {
   searchParams?: Promise<{
@@ -59,7 +61,7 @@ function passwordMessage(code?: string) {
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar la contraseña. Reintentá en unos minutos.",
+        text: "No pudimos actualizar la contraseña. Reintenta en unos minutos.",
       };
     default:
       return null;
@@ -81,7 +83,7 @@ function profileMessage(code?: string) {
     case "error":
       return {
         tone: "border-[#f0c9c9] bg-[#fff4f4] text-[#a33b3b]",
-        text: "No pudimos actualizar tus datos. Reintentá en unos minutos.",
+        text: "No pudimos actualizar tus datos. Reintenta en unos minutos.",
       };
     default:
       return null;
@@ -90,33 +92,52 @@ function profileMessage(code?: string) {
 
 export default async function EducAiProfilePage({ searchParams }: ProfilePageProps) {
   const params = (await searchParams) ?? {};
-  const { user } = await getEducaiAppAuth();
+  let plan = previewProfile.plan;
+  let role = previewProfile.role;
+  let schoolLinked = previewProfile.schoolLinked;
+  let teacherLinked = previewProfile.teacherLinked;
+  let visibleName = previewProfile.visibleName;
+  let email = previewProfile.email;
 
-  const appMetadata = (user?.app_metadata ?? {}) as Record<string, unknown>;
-  const plan = metadataValue(appMetadata, "plan") || "free";
-  const role = metadataValue(appMetadata, "role") || "TEACHER";
-  const schoolLinked = Boolean(metadataValue(appMetadata, "schoolId"));
-  const teacherLinked = Boolean(metadataValue(appMetadata, "teacherId"));
+  if (process.env.NODE_ENV !== "development") {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      redirect("/login");
+    }
+
+    const appMetadata = session.user.app_metadata as Record<string, unknown>;
+    plan = metadataValue(appMetadata, "plan") || "free";
+    role = metadataValue(appMetadata, "role") || "TEACHER";
+    schoolLinked = Boolean(metadataValue(appMetadata, "schoolId"));
+    teacherLinked = Boolean(metadataValue(appMetadata, "teacherId"));
+    visibleName = displayName(session.user.user_metadata, session.user.email);
+    email = session.user.email ?? previewProfile.email;
+  }
+
   const message = passwordMessage(params.password);
-  const visibleName = displayName(user?.user_metadata, user?.email);
   const profileStatus = profileMessage(params.profile);
 
   return (
     <AppShell title="Mi perfil" eyebrow="Cuenta EducAI">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.78fr]">
         <section className="grid content-start gap-5">
-          <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+          <article className="relative overflow-hidden rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#5bb7e5]/12 blur-2xl" />
             <Badge className="bg-[#d8f7ee] text-[#075c50]">Datos de cuenta</Badge>
             <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex gap-4">
-                <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#075f53] text-white">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#075f53,#18b6a4)] text-white shadow-whisper">
                   <UserRound className="h-7 w-7" aria-hidden="true" />
                 </span>
                 <div>
                   <h2 className="font-display text-3xl font-bold tracking-tight">{visibleName}</h2>
                   <p className="mt-2 flex items-center gap-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
                     <Mail className="h-4 w-4 text-[#087968]" aria-hidden="true" />
-                    {user?.email ?? "Email no disponible"}
+                    {email}
                   </p>
                 </div>
               </div>
@@ -129,7 +150,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                 ["Plan actual", plan],
                 ["Perfil docente", teacherLinked ? "Vinculado" : "Pendiente"],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4">
+                <div key={label} className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4">
                   <p className="text-sm font-bold uppercase tracking-[0.12em] text-[#5b6962]">
                     {label}
                   </p>
@@ -139,7 +160,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             </div>
           </article>
 
-          <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+          <article className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <Badge className="bg-[#d8f7ee] text-[#075c50]">Perfil visible</Badge>
             <h2 className="mt-4 font-display text-2xl font-bold">Editar datos de cuenta</h2>
             <p className="mt-2 max-w-2xl text-[15px] font-medium leading-6 text-[#4f5f58]">
@@ -168,16 +189,16 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                   defaultValue={visibleName}
                   required
                   minLength={2}
-                  className="h-12 rounded-lg border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none focus:border-[#18b6a4] focus:ring-2 focus:ring-[#18b6a4]/20"
+                  className="h-12 rounded-2xl border border-[#d5e1dc] bg-[#fbfffd] px-3 font-medium outline-none focus:border-[#18b6a4] focus:ring-2 focus:ring-[#18b6a4]/20"
                 />
               </label>
-              <Button className="self-end bg-[#18b6a4] text-white hover:bg-[#119b8c]">
+              <Button className="self-end rounded-full bg-[#18b6a4] text-white hover:bg-[#119b8c]">
                 Guardar cambios
               </Button>
             </form>
           </article>
 
-          <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+          <article className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Badge className="bg-[#d8f7ee] text-[#075c50]">Seguridad</Badge>
@@ -187,7 +208,9 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                   institución ni plan.
                 </p>
               </div>
-              <LockKeyhole className="h-6 w-6 text-[#087968]" aria-hidden="true" />
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
+                <LockKeyhole className="h-5 w-5" aria-hidden="true" />
+              </span>
             </div>
 
             {message ? (
@@ -216,7 +239,7 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
                 placeholder="Repetí la contraseña"
                 autoComplete="new-password"
               />
-              <Button className="bg-[#18b6a4] text-white hover:bg-[#119b8c] md:col-span-2">
+              <Button className="rounded-full bg-[#18b6a4] text-white hover:bg-[#119b8c] md:col-span-2">
                 Actualizar contraseña
               </Button>
             </form>
@@ -224,8 +247,10 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
         </section>
 
         <aside className="grid content-start gap-5">
-          <article className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-            <ShieldCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
+          <article className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
             <h2 className="mt-4 font-display text-2xl font-bold">Editable ahora</h2>
             <div className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-[#33423c]">
               {["Nombre visible", "Contraseña de acceso"].map((item) => (
@@ -237,19 +262,21 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             </div>
           </article>
 
-          <article className="rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-5 shadow-whisper">
-            <GraduationCap className="h-6 w-6 text-[#087968]" aria-hidden="true" />
+          <article className="rounded-[24px] border border-[#d5e1dc] bg-[#fbfffd] p-5 shadow-whisper">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff8d7] text-[#876100]">
+              <GraduationCap className="h-5 w-5" aria-hidden="true" />
+            </span>
             <h2 className="mt-4 font-display text-2xl font-bold">No editable desde perfil</h2>
             <p className="mt-2 text-[15px] font-medium leading-6 text-[#4f5f58]">
               Rol, permisos, producto, institución vinculada y plan activo se cambian con flujos
               controlados para proteger el acceso y el aislamiento de datos.
             </p>
-            <div className="mt-4 rounded-lg bg-[#eef5f3] p-4 text-sm font-semibold leading-6 text-[#33423c]">
+            <div className="mt-4 rounded-2xl bg-[#eef5f3] p-4 text-sm font-semibold leading-6 text-[#33423c]">
               {schoolLinked ? "Institución vinculada correctamente." : "Institución pendiente."}
             </div>
           </article>
 
-          <Button asChild variant="outline" className="border-[#d5e1dc] bg-white">
+          <Button asChild variant="outline" className="rounded-full border-[#d5e1dc] bg-white shadow-whisper hover:bg-[#e7fbf7]">
             <Link href="/precios">Ver planes disponibles</Link>
           </Button>
         </aside>

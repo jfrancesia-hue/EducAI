@@ -1,14 +1,27 @@
+﻿import { redirect } from "next/navigation";
 import { BarChart3, Brain, CheckCircle2, TrendingUp } from "lucide-react";
 
 import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
-import { fetchReportsDashboard } from "../../../lib/api/institutional-dashboard";
-import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
+import { previewDashboard } from "../_components/preview-data";
+import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
+import { createSupabaseServerClient } from "../../../lib/supabase/server";
 
 export default async function ReportsModulePage() {
-  const { accessToken } = await getEducaiAppAuth();
+  let dashboard = previewDashboard;
 
-  const dashboard = accessToken ? await fetchReportsDashboard(accessToken) : null;
+  if (process.env.NODE_ENV !== "development") {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      redirect("/login");
+    }
+
+    dashboard = (await fetchInstitutionalDashboard(session.access_token)) ?? previewDashboard;
+  }
 
   const cards = [
     {
@@ -28,7 +41,7 @@ export default async function ReportsModulePage() {
     {
       label: "Planes generados",
       value: dashboard?.metrics.lessonPlanCount ?? 0,
-      note: "producción total del alcance",
+      note: "produccion total del alcance",
       icon: CheckCircle2,
       color: "bg-[#fff8d7] text-[#876100]",
     },
@@ -38,8 +51,9 @@ export default async function ReportsModulePage() {
     <AppShell title="Reportes" eyebrow="Indicadores">
       <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1fr_0.82fr]">
         <section className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-            <Badge className="bg-[#e7fbf7] text-[#087968]">Analitica educativa</Badge>
+          <div className="relative overflow-hidden rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#7c6cff]/10 blur-2xl" />
+            <Badge className="bg-[#e7fbf7] text-[#087968]">Analítica educativa</Badge>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
               Indicadores del trabajo pedagógico
             </h2>
@@ -53,11 +67,11 @@ export default async function ReportsModulePage() {
             {cards.map((card) => (
               <article
                 key={card.label}
-                className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper"
+                className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper transition hover:border-[#18b6a4]/35 hover:-translate-y-0.5"
               >
                 <span
                   className={[
-                    "flex h-11 w-11 items-center justify-center rounded-lg",
+                    "flex h-11 w-11 items-center justify-center rounded-full",
                     card.color,
                   ].join(" ")}
                 >
@@ -70,7 +84,7 @@ export default async function ReportsModulePage() {
             ))}
           </div>
 
-          <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+          <div className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <div className="flex items-center gap-3">
               <TrendingUp className="h-6 w-6 text-[#087968]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Uso por materia</h2>
@@ -88,7 +102,7 @@ export default async function ReportsModulePage() {
                 ))
               ) : (
                 <div className="p-4 text-[15px] leading-6 text-[#4f5f58]">
-                  Aún no hay planificaciones suficientes para mostrar desglose por materia.
+                  Cuando empiecen a generarse clases, este desglose va a mostrar qué áreas están más activas y dónde conviene reforzar planificación.
                 </div>
               )}
             </div>
@@ -96,10 +110,11 @@ export default async function ReportsModulePage() {
         </section>
 
         <aside className="grid content-start gap-5">
-          <div className="rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-whisper">
+          <div className="relative overflow-hidden rounded-[24px] border border-[#18b6a4]/25 bg-[linear-gradient(135deg,#075f53_0%,#11231f_100%)] p-5 text-white shadow-whisper">
+            <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#7c6cff]/20 blur-2xl" />
             <div className="flex items-center gap-3">
               <Brain className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
-              <h2 className="font-display text-2xl font-bold tracking-tight">Lectura rapida</h2>
+              <h2 className="font-display text-2xl font-bold tracking-tight">Lectura rápida</h2>
             </div>
             <div className="mt-5 grid gap-3">
               {[
@@ -107,18 +122,18 @@ export default async function ReportsModulePage() {
                 `Currículas cargadas: ${dashboard?.metrics.curriculumCount ?? 0}`,
                 `Handoffs humanos abiertos: ${dashboard?.metrics.openHandoffCount ?? 0}`,
               ].map((item) => (
-                <div key={item} className="rounded-lg bg-white/10 p-4">
+                <div key={item} className="rounded-2xl border border-white/12 bg-white/10 p-4">
                   <p className="text-[15px] leading-6 text-white/80">{item}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Ultimos estudiantes</h2>
+          <div className="rounded-[24px] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+            <h2 className="font-display text-2xl font-bold tracking-tight">Últimos estudiantes</h2>
             <div className="mt-5 grid gap-3">
               {dashboard?.recentStudents.slice(0, 5).map((student) => (
-                <div key={student.id} className="rounded-lg border border-[#e3ebe7] p-4">
+                <div key={student.id} className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4">
                   <p className="font-semibold">{student.name}</p>
                   <p className="mt-1 text-sm text-[#4f5f58]">Grado {student.grade}</p>
                 </div>
