@@ -35,6 +35,10 @@ Estas keys se cargan una sola vez por servicio que las use; no hacen falta nombr
 - `TWILIO_SKIP_SIGNATURE_VALIDATION`
 - `TWILIO_DRY_RUN`
 
+### Seguridad del tutor (crisis)
+
+- `CRISIS_ALERT_WHATSAPP_TO`: WhatsApp del equipo de crisis al que se alerta cuando el tutor detecta una senal de crisis (autolesion, suicidio, abuso, violencia). Nunca es la familia. Obligatorio en produccion (bloqueante de release). Override por colegio en `tenant.metadata.crisisAlertWhatsappTo`.
+
 ### Mercado Pago
 
 - `MERCADOPAGO_ACCESS_TOKEN`
@@ -113,6 +117,7 @@ Minimo para produccion en despliegue unico (API + WhatsApp en el mismo servicio)
 - `TWILIO_FORCE_PROTOCOL=https`
 - `TWILIO_SKIP_SIGNATURE_VALIDATION=false`
 - `TWILIO_DRY_RUN=false`
+- `CRISIS_ALERT_WHATSAPP_TO`
 - `EDUCAI_AGENT_PROVIDER=anthropic`
 - `MERCADOPAGO_ACCESS_TOKEN`
 - `MERCADOPAGO_WEBHOOK_SECRET`

@@ -13,7 +13,7 @@ import { HandoffService } from "./handoff.service.js";
 @ApiBearerAuth()
 @Controller("handoffs")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
-@Roles("MINISTRY", "SUPER_ADMIN")
+@Roles("MINISTRY", "SUPER_ADMIN", "SCHOOL_ADMIN")
 export class HandoffController {
   constructor(private readonly handoffs: HandoffService) {}
 

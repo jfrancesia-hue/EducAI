@@ -10,6 +10,7 @@ import {
 import type { Logger } from "pino";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
 import { HumanHandoffService } from "../agent/human-handoff.service.js";
+import { CrisisAlertService, type CrisisAlertResult } from "../agent/crisis-alert.service.js";
 import { InstitutionalAgentAuditService } from "../agent/institutional-agent-audit.service.js";
 import { InstitutionalAgentService } from "../agent/institutional-agent.service.js";
 import { InstitutionalIntentService } from "../agent/institutional-intent.service.js";
@@ -98,6 +99,7 @@ export class TutorOrchestratorService {
     private readonly humanHandoff: HumanHandoffService,
     private readonly idempotency: InboundIdempotencyService,
     private readonly tenantContext: TenantContextService,
+    private readonly crisisAlert: CrisisAlertService,
     logger: AppLogger,
   ) {
     this.log = logger.child({ component: "TutorOrchestrator" });
@@ -469,6 +471,30 @@ export class TutorOrchestratorService {
     });
 
     if (tutorResponse.safety.status === "escalate") {
+      const crisis = tutorResponse.safety.crisisAlert;
+
+      // Alerta en tiempo real al equipo humano de crisis (NUNCA a la familia de
+      // forma automática). Best-effort: si falla, no rompe el flujo del alumno
+      // —que ya recibió su mensaje con líneas de ayuda— y queda registrado.
+      let alertResult: CrisisAlertResult | undefined;
+      if (crisis) {
+        try {
+          alertResult = await this.crisisAlert.notifyCrisis({
+            student,
+            conversationId: stored.conversationId,
+            severity: crisis.severity,
+            signals: tutorResponse.safety.signals,
+            inboundMessage: inboundBody,
+            helplines: crisis.helplines,
+          });
+        } catch (error) {
+          this.log.error(
+            { err: error instanceof Error ? error.message : String(error) },
+            "orchestrator.crisis_alert_failed",
+          );
+        }
+      }
+
       await this.humanHandoff.create({
         student,
         conversationId: stored.conversationId,
@@ -479,7 +505,10 @@ export class TutorOrchestratorService {
         metadata: {
           safetyStatus: tutorResponse.safety.status,
           safetySignals: tutorResponse.safety.signals,
-          crisisSeverity: tutorResponse.safety.crisisAlert?.severity,
+          crisisSeverity: crisis?.severity,
+          crisisAlertDelivered: alertResult?.delivered ?? false,
+          crisisAlertRecipient: alertResult?.recipientMasked,
+          crisisAlertReason: alertResult?.reason,
         },
       });
     }
