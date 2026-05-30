@@ -10,6 +10,7 @@ import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { TenantContextService } from "../prisma/tenant-context.service.js";
+import { APOYOAI_PRICES_ARS } from "../payments/plan-catalog.js";
 import type {
   RegisterApoyoAiFamilyDto,
   RegisterApoyoAiFamilyWithGoogleDto,
@@ -25,13 +26,6 @@ const PLAN_TO_LEGACY_ENUM: Record<ApoyoAiPlanCode, "FREE" | "BASIC" | "PREMIUM" 
   plus: "PREMIUM",
   familiar: "FAMILY",
   intensivo: "FAMILY",
-};
-
-const MERCADOPAGO_PLAN_PRICES: Record<Exclude<ApoyoAiPlanCode, "free">, number> = {
-  basico: 14900,
-  plus: 34900,
-  familiar: 69900,
-  intensivo: 119900,
 };
 
 interface MercadoPagoPreferenceResponse {
@@ -363,7 +357,7 @@ export class ApoyoAiOnboardingService {
           title: `ApoyoAI ${input.plan}`,
           quantity: 1,
           currency_id: "ARS",
-          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+          unit_price: APOYOAI_PRICES_ARS[input.plan],
         },
       ],
       payer: {

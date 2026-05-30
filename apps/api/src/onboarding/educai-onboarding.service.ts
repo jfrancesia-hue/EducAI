@@ -10,6 +10,7 @@ import { Prisma } from "@educai/database";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { TenantContextService } from "../prisma/tenant-context.service.js";
+import { EDUCAI_PRICES_ARS } from "../payments/plan-catalog.js";
 import type {
   RegisterEducAiTeacherDto,
   RegisterEducAiTeacherWithGoogleDto,
@@ -18,11 +19,6 @@ import type {
 type EducAiTeacherSignupInput = Omit<RegisterEducAiTeacherDto, "email" | "password">;
 type EducAiPlanCode = RegisterEducAiTeacherDto["plan"];
 type PrismaTx = Prisma.TransactionClient;
-
-const MERCADOPAGO_PLAN_PRICES: Record<Exclude<EducAiPlanCode, "free">, number> = {
-  "docente-individual": 9900,
-  "docente-pro": 24900,
-};
 
 interface MercadoPagoPreferenceResponse {
   id?: string;
@@ -308,7 +304,7 @@ export class EducAiOnboardingService {
           title: `EducAI ${input.plan}`,
           quantity: 1,
           currency_id: "ARS",
-          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+          unit_price: EDUCAI_PRICES_ARS[input.plan],
         },
       ],
       payer: {
