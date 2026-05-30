@@ -22,7 +22,12 @@ export class TenantContextInterceptor implements NestInterceptor {
         {
           tenantId: tenantId || undefined,
           role: user?.role,
-          bypass: user?.role === "SUPER_ADMIN" || !tenantId,
+          // Solo SUPER_ADMIN tiene bypass por rol. Un usuario autenticado SIN tenantId
+          // YA NO hace bypass (antes fallaba abierto y veía todos los tenants): ahora el
+          // middleware de Prisma bloquea cualquier acceso a modelos tenant-scoped hasta
+          // que la sesión traiga un tenantId válido. Los flujos de sistema legítimos
+          // (webhooks, onboarding, jobs) declaran su bypass con runAsSystem().
+          bypass: user?.role === "SUPER_ADMIN",
         },
         () => next.handle(),
       ),

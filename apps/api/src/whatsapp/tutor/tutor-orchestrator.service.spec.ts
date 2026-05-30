@@ -158,6 +158,11 @@ const loggerStub = {
     warn: vi.fn(),
     error: vi.fn(),
   }),
+} as unknown as ConstructorParameters<typeof TutorOrchestratorService>[16];
+
+// El orquestador corre como operación de sistema; el stub simplemente ejecuta el callback.
+const tenantContextStub = {
+  runAsSystem: <T>(cb: () => T): T => cb(),
 } as unknown as ConstructorParameters<typeof TutorOrchestratorService>[15];
 
 function buildOrchestrator(m: Mocks): TutorOrchestratorService {
@@ -213,6 +218,7 @@ function buildOrchestrator(m: Mocks): TutorOrchestratorService {
     institutionalAudit,
     humanHandoff,
     idempotency,
+    tenantContextStub,
     loggerStub,
   );
 }

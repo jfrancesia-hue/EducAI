@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
 import { isValidMercadoPagoSignature } from "./mercadopago-signature.js";
 
 type QueryParams = Record<string, string | string[] | undefined>;
@@ -43,9 +44,17 @@ export class MercadoPagoWebhookService {
     private readonly config: ConfigService,
     private readonly logger: AppLogger,
     private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async handleWebhook(input: MercadoPagoWebhookInput) {
+    // El webhook no tiene sesión: localiza la suscripción/tenant del pago de forma
+    // cross-tenant a propósito (gated por firma HMAC de MercadoPago). Corre como
+    // operación de sistema para no quedar bloqueado por el tenant-scoping fail-closed.
+    return this.tenantContext.runAsSystem(() => this.processWebhook(input));
+  }
+
+  private async processWebhook(input: MercadoPagoWebhookInput) {
     const dataIdFromQuery = this.firstQueryValue(input.query["data.id"]);
     this.assertValidSignature({
       dataId: dataIdFromQuery,

@@ -9,6 +9,7 @@ import { Prisma } from "@educai/database";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
 import type {
   RegisterEducAiTeacherDto,
   RegisterEducAiTeacherWithGoogleDto,
@@ -33,12 +34,19 @@ interface MercadoPagoPreferenceResponse {
 export class EducAiOnboardingService {
   private supabase?: SupabaseClient;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
+  ) {}
 
   async registerTeacher(dto: RegisterEducAiTeacherDto) {
-    const email = dto.email.trim().toLowerCase();
-    const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.fullName);
-    return this.createTeacherWorkspace(dto, email, authUserId);
+    // Onboarding: el docente todavía no tiene tenant; la creación de
+    // Tenant/School/User/Teacher corre como operación de sistema con tenantId explícito.
+    return this.tenantContext.runAsSystem(async () => {
+      const email = dto.email.trim().toLowerCase();
+      const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.fullName);
+      return this.createTeacherWorkspace(dto, email, authUserId);
+    });
   }
 
   async registerTeacherWithGoogle(
@@ -49,7 +57,9 @@ export class EducAiOnboardingService {
       throw new ForbiddenException("La cuenta Google no tiene email confirmado");
     }
 
-    return this.createTeacherWorkspace(dto, authUser.email.trim().toLowerCase(), authUser.id);
+    return this.tenantContext.runAsSystem(() =>
+      this.createTeacherWorkspace(dto, authUser.email!.trim().toLowerCase(), authUser.id),
+    );
   }
 
   private async createTeacherWorkspace(

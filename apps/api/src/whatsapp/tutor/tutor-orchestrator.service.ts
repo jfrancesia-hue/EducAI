@@ -18,6 +18,7 @@ import { CommandHandlerService, type SlashCommand } from "./command-handler.serv
 import { ConversationStoreService } from "./conversation-store.service.js";
 import { DiagnosticHandlerService } from "./diagnostic-handler.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../../prisma/tenant-context.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService, type ResolvedStudent } from "./student-resolver.service.js";
 import { TwilioSenderService } from "./twilio-sender.service.js";
@@ -96,12 +97,20 @@ export class TutorOrchestratorService {
     private readonly institutionalAudit: InstitutionalAgentAuditService,
     private readonly humanHandoff: HumanHandoffService,
     private readonly idempotency: InboundIdempotencyService,
+    private readonly tenantContext: TenantContextService,
     logger: AppLogger,
   ) {
     this.log = logger.child({ component: "TutorOrchestrator" });
   }
 
   async enqueueInboundMessage(message: InboundMessage): Promise<OrchestratorOutcome> {
+    // El webhook de Twilio no tiene sesión: resuelve al alumno por teléfono de forma
+    // cross-tenant (gated por firma de Twilio) y opera sobre sus datos. Corre como
+    // operación de sistema para no quedar bloqueado por el tenant-scoping fail-closed.
+    return this.tenantContext.runAsSystem(() => this.processInboundMessage(message));
+  }
+
+  private async processInboundMessage(message: InboundMessage): Promise<OrchestratorOutcome> {
     // Guardia de idempotencia: Twilio reintenta el webhook si tarda >15s.
     // Sin esta verificación, el mismo MessageSid se procesa varias veces y
     // el alumno recibe respuestas duplicadas (con doble costo de LLM).
