@@ -84,6 +84,24 @@ export type ReportsDashboardResponse = {
   };
 };
 
+const DASHBOARD_FETCH_TIMEOUT_MS = 1200;
+
+function dashboardFetchOptions(accessToken: string): RequestInit {
+  return {
+    headers: { authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(DASHBOARD_FETCH_TIMEOUT_MS),
+  };
+}
+
+async function safeDashboardFetch(url: string, accessToken: string) {
+  try {
+    return await fetch(url, dashboardFetchOptions(accessToken));
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchInstitutionalDashboard(
   accessToken: string,
 ): Promise<InstitutionalDashboardResponse["data"] | null> {
@@ -92,12 +110,12 @@ export async function fetchInstitutionalDashboard(
     return null;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/institutional`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const response = await safeDashboardFetch(
+    `${apiUrl.replace(/\/$/u, "")}/dashboard/institutional`,
+    accessToken,
+  );
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return null;
   }
 
@@ -113,12 +131,12 @@ export async function fetchPlanningDashboard(
     return null;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/planning`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const response = await safeDashboardFetch(
+    `${apiUrl.replace(/\/$/u, "")}/dashboard/planning`,
+    accessToken,
+  );
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return null;
   }
 
@@ -134,12 +152,12 @@ export async function fetchStudentsDashboard(
     return null;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/students`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const response = await safeDashboardFetch(
+    `${apiUrl.replace(/\/$/u, "")}/dashboard/students`,
+    accessToken,
+  );
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return null;
   }
 
@@ -155,12 +173,12 @@ export async function fetchReportsDashboard(
     return null;
   }
 
-  const response = await fetch(`${apiUrl.replace(/\/$/u, "")}/dashboard/reports`, {
-    headers: { authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const response = await safeDashboardFetch(
+    `${apiUrl.replace(/\/$/u, "")}/dashboard/reports`,
+    accessToken,
+  );
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return null;
   }
 

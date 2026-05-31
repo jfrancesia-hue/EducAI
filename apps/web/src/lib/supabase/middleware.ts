@@ -3,7 +3,13 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "./cookies";
+import {
+  EDUCAI_ACCESS_TOKEN_COOKIE,
+  expireSharedSupabaseCookiesFromHeader,
+  parseCookieHeader,
+  readCookieValue,
+  setSupabaseAuthResponseCookie,
+} from "./cookies";
 import { hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -23,6 +29,8 @@ export async function updateSession(request: NextRequest): Promise<{
       headers: requestHeaders,
     },
   });
+  const cookieHeader = request.headers.get("cookie");
+  expireSharedSupabaseCookiesFromHeader(response, cookieHeader);
 
   if (!hasSupabaseEnv()) {
     return { response, user: null };
@@ -34,7 +42,7 @@ export async function updateSession(request: NextRequest): Promise<{
     {
       cookies: {
         getAll() {
-          return parseCookieHeader(request.headers.get("cookie"));
+          return parseCookieHeader(cookieHeader);
         },
         setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
@@ -46,9 +54,22 @@ export async function updateSession(request: NextRequest): Promise<{
     },
   );
 
-  const {
+  let {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    const fallbackAccessToken = readCookieValue(cookieHeader, EDUCAI_ACCESS_TOKEN_COOKIE);
+
+    if (fallbackAccessToken) {
+      const { data, error } = await supabase.auth.getUser(fallbackAccessToken);
+      user = error ? null : data.user;
+    }
+  }
+
+  if (user) {
+    requestHeaders.set("x-educai-authenticated", "1");
+  }
 
   return { response, user };
 }
