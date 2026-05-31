@@ -5,9 +5,9 @@ import "@educai/ui/styles/globals.css";
 import { PwaProvider } from "./_components/pwa-provider";
 
 export const metadata: Metadata = {
-  title: "EducAI - IA educativa para docentes y escuelas",
+  title: "EducAI - Asistente docente para planificar mejor",
   description:
-    "Plataforma educativa con agente IA docente, planificación, producción de recursos, evaluación y analítica institucional. Hecha en Argentina para LATAM.",
+    "Herramienta educativa para docentes y escuelas: planificación más simple, materiales editables, seguimiento pedagógico y datos cuidados. Hecha en Argentina para LATAM.",
   applicationName: "EducAI",
   manifest: "/manifest.webmanifest",
   icons: {

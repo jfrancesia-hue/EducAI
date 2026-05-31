@@ -51,17 +51,17 @@ const proofPoints = [
 const features = [
   {
     icon: MessageCircle,
-    title: "Agente docente multicanal",
+    title: "Asistente docente multicanal",
     description:
-      "Ayuda a preparar clases, responder dudas frecuentes, organizar consignas y convertir ideas en materiales concretos.",
+      "Ayuda a ordenar clases, responder dudas frecuentes, organizar consignas y convertir ideas en materiales concretos.",
     accent: "bg-[#18b6a4]",
     iconTone: "bg-[#e7fbf7] text-[#087968]",
   },
   {
     icon: BookOpenCheck,
-    title: "Planificación docente asistida",
+    title: "Planificación más simple",
     description:
-      "Convierte grado, tema, objetivos y tiempo disponible en secuencias didácticas listas para revisar y usar.",
+      "Transformá grado, tema, objetivos y tiempo disponible en una base editable para revisar, adaptar y usar.",
     accent: "bg-[#f8d95c]",
     iconTone: "bg-[#fff6c9] text-[#876100]",
   },
@@ -86,7 +86,7 @@ const features = [
 const journeys = [
   {
     label: "Docentes",
-    title: "Un copiloto para preparar clases, recursos y consignas en menos tiempo.",
+    title: "Una ayuda concreta para preparar clases, recursos y consignas en menos tiempo.",
     image: familyImage,
     color: "bg-[#e7fbf7] text-[#087968]",
   },
@@ -106,12 +106,33 @@ const journeys = [
 
 const safeguards = [
   "Espacios separados para escuelas, equipos docentes e instituciones.",
-  "Prompts pedagógicos orientados a planificación, evaluación y producción de recursos.",
+  "Guías pedagógicas orientadas a planificación, evaluación y producción de recursos.",
   "Control docente sobre consignas, rúbricas, feedback y mensajes antes de compartir.",
   "Información organizada para acompañar decisiones pedagógicas con responsabilidad.",
 ];
 
-const heroTags = ["Agente docente", "Docentes", "Planificación", "Datos cuidados"];
+const teacherPains = [
+  {
+    label: "Antes",
+    title: "Horas preparando planificaciones",
+    description:
+      "Objetivos, actividades, recursos, rúbricas y adaptaciones terminan ocupando noches y fines de semana.",
+  },
+  {
+    label: "Con EducAI",
+    title: "Una base clara para revisar y adaptar",
+    description:
+      "Partís de una propuesta ordenada, editable y alineada a tu clase. Vos ajustás con tu criterio.",
+  },
+  {
+    label: "Resultado",
+    title: "Más tiempo para enseñar",
+    description:
+      "Menos carga repetitiva, más foco en el aula y mejor seguimiento de lo que cada estudiante necesita.",
+  },
+];
+
+const heroTags = ["Asistente docente", "Menos carga", "Planificación", "Datos cuidados"];
 
 const heroTagStyles = [
   "border-[#18b6a4]/45 bg-[#18b6a4]/22",
@@ -148,7 +169,7 @@ export default function HomePage() {
               <span className="block font-display text-lg font-semibold leading-none tracking-tight">
                 EducAI
               </span>
-              <span className="block text-sm leading-5 text-white/82">Agente IA para docentes</span>
+              <span className="block text-sm leading-5 text-white/82">Asistente docente</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-white/80 md:flex">
@@ -192,14 +213,14 @@ export default function HomePage() {
               className="border-white/30 bg-[#18b6a4]/22 text-white backdrop-blur-md"
               variant="outline"
             >
-              IA educativa para docentes, equipos y escuelas
+              Herramientas para docentes, equipos y escuelas
             </Badge>
             <h1 className="mt-6 max-w-3xl font-display text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
-              La plataforma que hace que aprender vuelva a sentirse posible.
+              Planificar no debería llevarte horas.
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.75)] sm:text-xl">
-              Planificación, producción de materiales, feedback y analítica pedagógica en un solo
-              sistema. Hermoso para usar, serio con los datos y pensado para docentes reales.
+              EducAI te ayuda a preparar clases, actividades y recursos en menos tiempo, con tu
+              criterio docente siempre al centro.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {heroTags.map((item, index) => (
@@ -222,7 +243,7 @@ export default function HomePage() {
                 className="bg-[#f8d95c] text-slate-950 shadow-float hover:bg-[#f3ce36]"
               >
                 <Link href={educatorRegisterUrl}>
-                  Registrarse gratis <Sparkles className="h-5 w-5" aria-hidden="true" />
+                  Sumarme al piloto docente <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button
@@ -232,9 +253,9 @@ export default function HomePage() {
                 variant="outline"
                 className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
               >
-                <Link href="/precios">
+                <Link href="#plataforma">
                   <Play className="h-5 w-5" aria-hidden="true" />
-                  Ver planes
+                  Ver cómo funciona
                 </Link>
               </Button>
             </div>
@@ -262,6 +283,49 @@ export default function HomePage() {
         ))}
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid gap-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-float md:grid-cols-[0.92fr_1.08fr] md:p-8 lg:p-10">
+          <div className="flex flex-col justify-center">
+            <Badge
+              variant="outline"
+              className="w-fit border-[#ff7a1a]/30 bg-[#fff3e9] text-[#9a4300]"
+            >
+              Para docentes reales
+            </Badge>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+              Ser docente no debería significar llevarte la escuela a casa todos los días.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              EducAI está pensado para aliviar la preparación diaria sin quitarte control: te da una
+              base de trabajo, vos la revisás, la adaptás y decidís qué llega al aula.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {teacherPains.map((item, index) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-slate-200 bg-[#f7f8f3] p-5"
+              >
+                <div className="flex items-start gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 font-display text-lg font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.1em] text-[#087968]">
+                      {item.label}
+                    </p>
+                    <h3 className="mt-1 font-display text-xl font-bold tracking-tight text-slate-950">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <ImmersiveShowcase />
 
       <section
@@ -273,14 +337,14 @@ export default function HomePage() {
             variant="outline"
             className="w-fit border-[#18b6a4]/35 bg-[#e7fbf7] text-[#087968]"
           >
-            Plataforma viva
+            Trabajo docente más claro
           </Badge>
           <h2 className="mt-5 max-w-xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            No es una landing bonita: es una experiencia de trabajo diario.
+            Menos tiempo empezando de cero. Más tiempo para enseñar.
           </h2>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-            EducAI conecta planificación, aula y seguimiento. Cada interacción deja contexto útil
-            para preparar mejor, evaluar con claridad y reducir carga operativa docente.
+            EducAI conecta planificación, aula y seguimiento para que cada docente pueda preparar
+            mejor, revisar con claridad y sostener la semana con menos carga operativa.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {features.map((feature) => (
@@ -343,7 +407,7 @@ export default function HomePage() {
             <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-lg border border-white/15 bg-white p-4 shadow-float">
                 <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-600">
-                  Tutor IA
+                  Asistente docente
                 </p>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
                   Convertí este objetivo en una actividad de 35 minutos con inicio, práctica,
@@ -351,7 +415,7 @@ export default function HomePage() {
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#4f3ee2]">
                   <Brain className="h-4 w-4" aria-hidden="true" />
-                  Planificación activa
+                  Base editable lista
                 </div>
               </div>
               <div className="rounded-lg border border-white/15 bg-[#f8d95c] p-4 text-slate-950 shadow-float">
@@ -362,7 +426,7 @@ export default function HomePage() {
                   5 recursos listos para revisar antes de la clase.
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-700">
-                  La plataforma sugiere consigna, ejemplo, rúbrica breve y ticket de salida.
+                  La plataforma prepara una base; la docente revisa, adapta y decide.
                 </p>
               </div>
             </div>
@@ -416,7 +480,7 @@ export default function HomePage() {
             Confianza primero
           </Badge>
           <h2 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-            La belleza importa. La seguridad importa más.
+            La tecnología acompaña. El docente conduce.
           </h2>
           <p className="mt-5 text-lg leading-8 text-slate-600">
             El diseño no tapa lo esencial: privacidad, trazabilidad, límites pedagógicos y revisión
@@ -453,7 +517,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" pill className="bg-slate-950 text-white hover:bg-slate-800">
                 <Link href={educatorRegisterUrl}>
-                  Crear cuenta <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  Sumarme al piloto <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
               <Button

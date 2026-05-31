@@ -6,10 +6,10 @@ export default function SchoolsPage() {
   return (
     <SimplePage
       badge="Para escuelas"
-      title="EducAI organiza planificación, recursos y visibilidad institucional."
-      description="El foco B2B queda planteado para directivos y equipos pedagógicos: planificación docente, producción de materiales, evaluación, reportes y seguimiento de aula."
+      title="Una forma más clara de acompañar el trabajo docente en toda la escuela."
+      description="Para directivos y equipos pedagógicos: planificación docente más ordenada, materiales editables, seguimiento de aula, reportes y decisiones con información cuidada."
       icon={GraduationCap}
-      primaryLabel="Explorar la plataforma"
+      primaryLabel="Solicitar demo institucional"
     />
   );
 }

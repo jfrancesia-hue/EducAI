@@ -149,14 +149,14 @@ export function AgentWorkspace() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                Agente IA docente
+                Asistente docente
               </p>
               <h2 className="mt-1 font-display text-3xl font-bold tracking-tight">
                 Producción pedagógica revisable
               </h2>
               <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#4f5f58]">
-                El agente no solo responde: organiza el pedido, produce borradores docentes,
-                estructura la clase y deja cada salida lista para editar antes de usar.
+                La plataforma organiza el pedido, produce borradores docentes, estructura la clase y
+                deja cada salida lista para editar antes de usar.
               </p>
             </div>
             <Button

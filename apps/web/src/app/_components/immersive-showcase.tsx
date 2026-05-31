@@ -51,8 +51,8 @@ export function ImmersiveShowcase() {
           </h2>
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-700">
             Fotos reales, señales pedagógicas y una capa visual que muestra cómo EducAI ayuda a
-            planificar, producir recursos y seguir el aprendizaje sin invadir la experiencia de
-            aula.
+            ordenar el trabajo docente, preparar recursos y seguir el aprendizaje sin invadir la
+            experiencia de aula.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             {signals.map((signal) => (
@@ -144,7 +144,7 @@ export function ImmersiveShowcase() {
                           EducAI
                         </p>
                         <p className="mt-2 font-display text-xl font-bold leading-tight">
-                          El agente preparó una consigna y una rúbrica breve.
+                          La plataforma preparó una base editable y una rúbrica breve.
                         </p>
                       </div>
                     </div>
