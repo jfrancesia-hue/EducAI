@@ -100,23 +100,26 @@ export class TeacherCourseService {
   async list(context: { tenantId: string; teacherId: string }): Promise<{
     data: TeacherCourseSummary[];
   }> {
-    const rows = await this.prisma.classroom.findMany({
-      where: {
-        tenantId: context.tenantId,
-        teacherId: context.teacherId,
-        deletedAt: null,
-      },
-      orderBy: [{ grade: "asc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        grade: true,
-        subject: true,
-        shift: true,
-        metadata: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const rows = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.classroom.findMany({
+        where: {
+          tenantId: context.tenantId,
+          teacherId: context.teacherId,
+          deletedAt: null,
+        },
+        orderBy: [{ grade: "asc" }, { name: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subject: true,
+          shift: true,
+          metadata: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     return {
@@ -128,20 +131,23 @@ export class TeacherCourseService {
     id: string,
     context: { tenantId: string; teacherId: string },
   ): Promise<{ data: TeacherCourseDetail }> {
-    const row = await this.prisma.classroom.findFirst({
-      where: { id, tenantId: context.tenantId, deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        grade: true,
-        subject: true,
-        shift: true,
-        metadata: true,
-        teacherId: true,
-        schoolId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const row = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.classroom.findFirst({
+        where: { id, tenantId: context.tenantId, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subject: true,
+          shift: true,
+          metadata: true,
+          teacherId: true,
+          schoolId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     if (!row) {
@@ -178,28 +184,33 @@ export class TeacherCourseService {
     context: { tenantId: string; teacherId: string; schoolId: string },
   ): Promise<{ data: TeacherCourseSummary }> {
     const metadata = this.buildMetadataPatch({}, dto);
-    const created = await this.prisma.classroom.create({
-      data: {
-        tenantId: context.tenantId,
-        teacherId: context.teacherId,
-        schoolId: context.schoolId,
-        name: dto.name.trim(),
-        grade: dto.grade,
-        subject: dto.subject.trim(),
-        shift: this.normalizeShift(dto.shift),
-        metadata:
-          Object.keys(metadata).length > 0 ? (metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
-      },
-      select: {
-        id: true,
-        name: true,
-        grade: true,
-        subject: true,
-        shift: true,
-        metadata: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const created = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.classroom.create({
+        data: {
+          tenantId: context.tenantId,
+          teacherId: context.teacherId,
+          schoolId: context.schoolId,
+          name: dto.name.trim(),
+          grade: dto.grade,
+          subject: dto.subject.trim(),
+          shift: this.normalizeShift(dto.shift),
+          metadata:
+            Object.keys(metadata).length > 0
+              ? (metadata as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
+        },
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subject: true,
+          shift: true,
+          metadata: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     this.log.info(
@@ -232,28 +243,31 @@ export class TeacherCourseService {
     };
 
     const nextMetadata = this.buildMetadataPatch(existingMetadata, dto);
-    const updated = await this.prisma.classroom.update({
-      where: { id },
-      data: {
-        name: dto.name !== undefined ? dto.name.trim() : undefined,
-        grade: dto.grade !== undefined ? dto.grade : undefined,
-        subject: dto.subject !== undefined ? dto.subject.trim() : undefined,
-        shift: dto.shift !== undefined ? this.normalizeShift(dto.shift) : undefined,
-        metadata:
-          Object.keys(nextMetadata).length > 0
-            ? (nextMetadata as Prisma.InputJsonValue)
-            : Prisma.JsonNull,
-      },
-      select: {
-        id: true,
-        name: true,
-        grade: true,
-        subject: true,
-        shift: true,
-        metadata: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      return tx.classroom.update({
+        where: { id },
+        data: {
+          name: dto.name !== undefined ? dto.name.trim() : undefined,
+          grade: dto.grade !== undefined ? dto.grade : undefined,
+          subject: dto.subject !== undefined ? dto.subject.trim() : undefined,
+          shift: dto.shift !== undefined ? this.normalizeShift(dto.shift) : undefined,
+          metadata:
+            Object.keys(nextMetadata).length > 0
+              ? (nextMetadata as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
+        },
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subject: true,
+          shift: true,
+          metadata: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
     });
 
     this.log.info(
@@ -274,9 +288,12 @@ export class TeacherCourseService {
     await this.findOne(id, context);
 
     const deletedAt = new Date();
-    await this.prisma.classroom.update({
-      where: { id },
-      data: { deletedAt },
+    await this.prisma.$transaction(async (tx) => {
+      await this.enableRlsBypass(tx);
+      await tx.classroom.update({
+        where: { id },
+        data: { deletedAt },
+      });
     });
 
     this.log.info({ teacherCourseId: id, teacherId: context.teacherId }, "teacher_course.deleted");
@@ -322,14 +339,17 @@ export class TeacherCourseService {
     }
 
     try {
-      const teacher = await this.prisma.teacher.findFirst({
-        where: {
-          tenantId: user.tenantId,
-          schoolId: user.schoolId,
-          deletedAt: null,
-        },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, schoolId: true },
+      const teacher = await this.prisma.$transaction(async (tx) => {
+        await this.enableRlsBypass(tx);
+        return tx.teacher.findFirst({
+          where: {
+            tenantId: user.tenantId,
+            schoolId: user.schoolId,
+            deletedAt: null,
+          },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, schoolId: true },
+        });
       });
 
       if (!teacher) {
@@ -389,6 +409,17 @@ export class TeacherCourseService {
       }
       throw error;
     }
+  }
+
+  /**
+   * El rol `educai_app` no es service_role ni setea `app.tenant_id`, así que las
+   * policies RLS del schema `educai` rechazan sus escrituras y filtran sus lecturas.
+   * Igual que el resto de los servicios (lesson-plans, onboarding, dashboard),
+   * habilitamos el bypass transaccional: la aislación por tenant ya la garantiza
+   * el middleware de Prisma + el `tenantId` explícito en cada query.
+   */
+  private async enableRlsBypass(tx: Prisma.TransactionClient): Promise<void> {
+    await tx.$executeRawUnsafe("SELECT set_config('app.bypass_rls', 'true', true)");
   }
 
   private toSummary(row: ClassroomRow): TeacherCourseSummary {
