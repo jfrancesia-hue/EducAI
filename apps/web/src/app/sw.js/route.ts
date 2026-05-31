@@ -1,6 +1,6 @@
 const serviceWorker = `
-const CACHE_NAME = "educai-shell-v4";
-const ASSET_CACHE = "educai-assets-v4";
+const CACHE_NAME = "educai-shell-v2";
+const ASSET_CACHE = "educai-assets-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/pwa-icon.svg", "/icons/pwa-maskable.svg"];
 
 function isProtectedOrAuthPath(pathname) {

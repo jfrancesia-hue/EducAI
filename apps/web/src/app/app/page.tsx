@@ -1,7 +1,6 @@
 ﻿import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   AlertTriangle,
@@ -17,13 +16,15 @@ import {
 import { Badge, Button } from "@educai/ui";
 import { AppShell } from "./_components/app-shell";
 import { previewDashboard } from "./_components/preview-data";
+import { fetchInstitutionalDashboard } from "../../lib/api/institutional-dashboard";
+import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 const classroomHeroImage =
   "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=85";
 const teacherFocusImage =
   "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=85";
 
-function metricCards(data: typeof previewDashboard) {
+function metricCards(data: NonNullable<Awaited<ReturnType<typeof fetchInstitutionalDashboard>>>) {
   return [
     {
       label: "Estudiantes",
@@ -56,16 +57,25 @@ function metricCards(data: typeof previewDashboard) {
   ];
 }
 
-export default function EducAiAppPage() {
-  const dashboard = previewDashboard;
+export default async function EducAiAppPage() {
+  let dashboard = previewDashboard;
 
-  if (process.env.NODE_ENV !== "development" && headers().get("x-educai-authenticated") !== "1") {
-    redirect("/login");
+  if (process.env.NODE_ENV !== "development") {
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      redirect("/login");
+    }
+
+    dashboard = (await fetchInstitutionalDashboard(session.access_token)) ?? previewDashboard;
   }
 
   return (
     <AppShell title="Inicio">
-      <div className="grid gap-5 bg-[radial-gradient(circle_at_12%_0%,rgba(24,182,164,0.08),transparent_34%),radial-gradient(circle_at_90%_12%,rgba(248,217,92,0.10),transparent_30%)] p-4 sm:p-6 xl:grid-cols-[1.08fr_0.92fr]">
+      <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[1.08fr_0.92fr]">
         <section className="grid content-start gap-5">
           <div className="relative grid overflow-hidden rounded-[28px] border border-[#18b6a4]/25 bg-[#075f53] text-white shadow-float lg:grid-cols-[1.05fr_0.95fr]">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(98,220,202,0.34)_0%,rgba(7,95,83,0)_42%),linear-gradient(22deg,rgba(248,217,92,0.16)_0%,rgba(255,122,26,0.12)_100%)]" />
@@ -133,14 +143,7 @@ export default function EducAiAppPage() {
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#4f5f58]">
                       {label}
                     </p>
-                    <p
-                      className={[
-                        "mt-1 inline-flex rounded-full px-2.5 py-1 text-sm font-black",
-                        tone,
-                      ].join(" ")}
-                    >
-                      {value}
-                    </p>
+                    <p className={["mt-1 inline-flex rounded-full px-2.5 py-1 text-sm font-black", tone].join(" ")}>{value}</p>
                   </div>
                 ))}
               </div>
@@ -153,12 +156,11 @@ export default function EducAiAppPage() {
                 {metricCards(dashboard).map((card) => (
                   <article
                     key={card.label}
-                    className="group relative overflow-hidden rounded-[1.35rem] border border-[#d5e1dc] bg-white p-5 shadow-whisper transition duration-300 hover:-translate-y-1 hover:border-[#18b6a4]/35 hover:shadow-float"
+                    className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper"
                   >
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_20%_0%,rgba(24,182,164,0.14),transparent_46%)] opacity-80" />
                     <span
                       className={[
-                        "relative flex h-12 w-12 items-center justify-center rounded-2xl transition duration-300 group-hover:scale-105",
+                        "flex h-11 w-11 items-center justify-center rounded-lg",
                         card.tone,
                       ].join(" ")}
                     >
@@ -174,7 +176,7 @@ export default function EducAiAppPage() {
               </div>
 
               <div className="grid gap-5 xl:grid-cols-[1fr_0.92fr]">
-                <section className="rounded-[1.5rem] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+                <section className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
@@ -216,7 +218,7 @@ export default function EducAiAppPage() {
                   </div>
                 </section>
 
-                <section className="rounded-[1.5rem] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+                <section className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
@@ -276,59 +278,56 @@ export default function EducAiAppPage() {
               </span>
             </div>
             <div className="p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                    Seguimiento
-                  </p>
-                  <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-                    Estudiantes recientes
-                  </h2>
-                </div>
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
-                  <UsersRound className="h-5 w-5" aria-hidden="true" />
-                </span>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
+                  Seguimiento
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
+                  Estudiantes recientes
+                </h2>
               </div>
-              <div className="mt-5 grid gap-3">
-                {dashboard?.recentStudents.slice(0, 6).map((student) => (
-                  <article
-                    key={student.id}
-                    className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/35 hover:shadow-whisper"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{student.name}</p>
-                        <p className="mt-1 text-[15px] leading-6 text-[#4f5f58]">
-                          Grado {student.grade}
-                          {student.schoolName ? ` Â· ${student.schoolName}` : ""}
-                        </p>
-                      </div>
-                      <Badge
-                        className={
-                          student.diagnosticCompleted
-                            ? "bg-[#e7fbf7] text-[#087968]"
-                            : "bg-[#fff8d7] text-[#876100]"
-                        }
-                      >
-                        {student.diagnosticCompleted ? "Diagnóstico listo" : "Pendiente"}
-                      </Badge>
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
+                <UsersRound className="h-5 w-5" aria-hidden="true" />
+              </span>
+            </div>
+            <div className="mt-5 grid gap-3">
+              {dashboard?.recentStudents.slice(0, 6).map((student) => (
+                <article key={student.id} className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/35 hover:shadow-whisper">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">{student.name}</p>
+                      <p className="mt-1 text-[15px] leading-6 text-[#4f5f58]">
+                        Grado {student.grade}
+                        {student.schoolName ? ` Â· ${student.schoolName}` : ""}
+                      </p>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
-                      {student.opportunities.length
-                        ? `A trabajar: ${student.opportunities.slice(0, 2).join(", ")}`
-                        : "Sin alertas cargadas por ahora."}
-                    </p>
-                  </article>
-                ))}
-              </div>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="mt-4 rounded-full px-3 text-[#11231f] hover:bg-[#e7fbf7]"
-              >
-                <Link href="/app/estudiantes">Abrir modulo de estudiantes</Link>
-              </Button>
+                    <Badge
+                      className={
+                        student.diagnosticCompleted
+                          ? "bg-[#e7fbf7] text-[#087968]"
+                          : "bg-[#fff8d7] text-[#876100]"
+                      }
+                    >
+                      {student.diagnosticCompleted ? "Diagnóstico listo" : "Pendiente"}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
+                    {student.opportunities.length
+                      ? `A trabajar: ${student.opportunities.slice(0, 2).join(", ")}`
+                      : "Sin alertas cargadas por ahora."}
+                  </p>
+                </article>
+              ))}
+            </div>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="mt-4 rounded-full px-3 text-[#11231f] hover:bg-[#e7fbf7]"
+            >
+              <Link href="/app/estudiantes">Abrir modulo de estudiantes</Link>
+            </Button>
             </div>
           </section>
 
@@ -336,24 +335,9 @@ export default function EducAiAppPage() {
             <h2 className="font-display text-2xl font-bold tracking-tight">Acciones útiles</h2>
             <div className="mt-5 grid gap-3">
               {[
-                {
-                  label: "Crear una clase editable",
-                  href: "/app/planificar" as Route,
-                  icon: Sparkles,
-                  tone: "text-[#f8d95c]",
-                },
-                {
-                  label: "Revisar estudiantes",
-                  href: "/app/estudiantes" as Route,
-                  icon: UsersRound,
-                  tone: "text-[#72e4d2]",
-                },
-                {
-                  label: "Revisar indicadores",
-                  href: "/app/reportes" as Route,
-                  icon: LineChart,
-                  tone: "text-[#ef5da8]",
-                },
+                { label: "Crear una clase editable", href: "/app/planificar" as Route, icon: Sparkles, tone: "text-[#f8d95c]" },
+                { label: "Revisar estudiantes", href: "/app/estudiantes" as Route, icon: UsersRound, tone: "text-[#72e4d2]" },
+                { label: "Revisar indicadores", href: "/app/reportes" as Route, icon: LineChart, tone: "text-[#ef5da8]" },
               ].map(({ label, href, icon: Icon, tone }) => (
                 <Button
                   key={href}

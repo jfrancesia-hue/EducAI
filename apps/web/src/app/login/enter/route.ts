@@ -30,6 +30,12 @@ function redirectToLogin(request: Request, params: Record<string, string>) {
   return NextResponse.redirect(loginUrl, { status: 303 });
 }
 
+function redirectToTransition(request: Request, nextPath: string) {
+  const url = new URL("/login/entrando", request.url);
+  url.searchParams.set("next", nextPath);
+  return url;
+}
+
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) {
     return redirectToLogin(request, { error: "config" });
@@ -59,5 +65,10 @@ export async function POST(request: Request) {
     redirectUrl.pathname = "/familia";
     redirectUrl.search = "";
   }
+  auth.response.headers.set(
+    "location",
+    redirectToTransition(request, `${redirectUrl.pathname}${redirectUrl.search}`).toString(),
+  );
+
   return auth.response;
 }
