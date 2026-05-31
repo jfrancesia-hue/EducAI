@@ -81,8 +81,8 @@ describe("TeacherCourseService RLS bypass", () => {
     expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(BYPASS_SQL);
     expect(tx.classroom.create).toHaveBeenCalledTimes(1);
     // El bypass debe correr antes del write, no después.
-    const bypassOrder = tx.$executeRawUnsafe.mock.invocationCallOrder[0];
-    const writeOrder = tx.classroom.create.mock.invocationCallOrder[0];
+    const bypassOrder = tx.$executeRawUnsafe.mock.invocationCallOrder[0] ?? Number.NaN;
+    const writeOrder = tx.classroom.create.mock.invocationCallOrder[0] ?? Number.NaN;
     expect(bypassOrder).toBeLessThan(writeOrder);
   });
 
@@ -93,8 +93,8 @@ describe("TeacherCourseService RLS bypass", () => {
 
     expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(BYPASS_SQL);
     expect(result.data).toHaveLength(1);
-    const bypassOrder = tx.$executeRawUnsafe.mock.invocationCallOrder[0];
-    const readOrder = tx.classroom.findMany.mock.invocationCallOrder[0];
+    const bypassOrder = tx.$executeRawUnsafe.mock.invocationCallOrder[0] ?? Number.NaN;
+    const readOrder = tx.classroom.findMany.mock.invocationCallOrder[0] ?? Number.NaN;
     expect(bypassOrder).toBeLessThan(readOrder);
   });
 });
