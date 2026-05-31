@@ -135,21 +135,6 @@
     animation: educai-scan 4.8s ease-in-out infinite;
   }
 
-  .hero-orbit {
-    animation: hero-orbit 7.5s ease-in-out infinite;
-  }
-
-  @keyframes hero-orbit {
-    0%,
-    100% {
-      transform: translate3d(0, 0, 0) rotate(-0.4deg);
-    }
-
-    50% {
-      transform: translate3d(0, -10px, 0) rotate(0.6deg);
-    }
-  }
-
   @keyframes educai-scan {
     0%,
     100% {
@@ -173,10 +158,6 @@
     }
 
     .educai-scanline {
-      animation: none;
-    }
-
-    .hero-orbit {
       animation: none;
     }
   }

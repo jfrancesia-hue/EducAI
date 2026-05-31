@@ -82,10 +82,8 @@ export default function LoginPage({
   const passwordMessage = password ? (passwordMessages[password] ?? null) : null;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#102b26] p-4 text-slate-950 sm:p-6">
-      <div className="pointer-events-none absolute left-[-8rem] top-[-8rem] h-96 w-96 rounded-full bg-[#62dcca]/25 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[-10rem] right-[-8rem] h-96 w-96 rounded-full bg-[#f8d95c]/20 blur-3xl" />
-      <div className="relative grid min-h-[calc(100vh-32px)] overflow-hidden rounded-[2rem] border border-white/18 bg-[#faf8f0] text-[#14120f] shadow-[0_32px_100px_rgba(0,0,0,0.28)] lg:grid-cols-[0.9fr_1.1fr]">
+    <main className="min-h-screen bg-[#62dcca] p-4 text-slate-950 sm:p-6">
+      <div className="grid min-h-[calc(100vh-32px)] overflow-hidden rounded-lg border border-white/45 bg-[#faf8f0] text-[#14120f] shadow-float lg:grid-cols-[0.9fr_1.1fr]">
         <section className="relative flex flex-col justify-between overflow-hidden bg-[#62dcca] p-6 text-slate-950 sm:p-10">
           <Image
             src={loginHeroImage}
@@ -101,7 +99,7 @@ export default function LoginPage({
             href="/"
             className="relative z-10 flex items-center gap-3 font-display text-xl font-bold tracking-tight"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#075f53] shadow-whisper">
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-[#075f53]">
               <GraduationCap className="h-6 w-6" aria-hidden="true" />
             </span>
             EducAI
@@ -121,13 +119,13 @@ export default function LoginPage({
           </div>
 
           <div className="relative z-10 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/55 bg-white/62 p-4 shadow-whisper backdrop-blur-xl">
+            <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <ShieldCheck className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
                 Acceso protegido para docentes, familias e instituciones.
               </p>
             </div>
-            <div className="rounded-2xl border border-white/55 bg-white/62 p-4 shadow-whisper backdrop-blur-xl">
+            <div className="rounded-lg border border-white/55 bg-white/62 p-4 backdrop-blur-xl">
               <LockKeyhole className="h-5 w-5 text-[#075f53]" aria-hidden="true" />
               <p className="mt-3 text-sm leading-6 text-slate-700">
                 Cada usuario entra al panel que le corresponde.
@@ -138,7 +136,7 @@ export default function LoginPage({
 
         <section className="flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md">
-            <div className="rounded-[1.75rem] border border-[#ded6c7] bg-white p-6 shadow-float">
+            <div className="rounded-lg border border-[#ded6c7] bg-white p-6 shadow-whisper">
               <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#4f5f58]">
                 Cuenta EducAI o ApoyoAI
               </p>
@@ -154,7 +152,7 @@ export default function LoginPage({
                 ) : null}
                 <label className="block">
                   <span className="text-sm font-medium text-[#5f5647]">Email</span>
-                  <span className="mt-2 flex h-12 items-center gap-3 rounded-2xl border border-[#ded6c7] bg-[#fbfaf5] px-3 text-[#7b725f] transition focus-within:border-[#18b6a4] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#18b6a4]/15">
+                  <span className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-[#ded6c7] bg-[#fbfaf5] px-3 text-[#7b725f]">
                     <Mail className="h-4 w-4" aria-hidden="true" />
                     <input
                       type="email"
@@ -191,7 +189,7 @@ export default function LoginPage({
                   type="submit"
                   size="lg"
                   disabled={!authReady}
-                  className="mt-2 w-full rounded-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] hover:bg-[#ea6508] disabled:cursor-not-allowed disabled:bg-[#d6b7a0]"
+                  className="mt-2 w-full bg-[#ff7a1a] text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] hover:bg-[#ea6508] disabled:cursor-not-allowed disabled:bg-[#d6b7a0]"
                 >
                   Entrar
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
@@ -203,7 +201,7 @@ export default function LoginPage({
                   formNoValidate
                   disabled={!authReady}
                   variant="outline"
-                  className="w-full rounded-full border-[#d5e1dc] bg-white text-[#14120f] hover:bg-[#f7f8f3] disabled:cursor-not-allowed disabled:bg-[#ebe4d8]"
+                  className="w-full border-[#d5e1dc] bg-white text-[#14120f] hover:bg-[#f7f8f3] disabled:cursor-not-allowed disabled:bg-[#ebe4d8]"
                 >
                   <span className="font-display text-lg font-bold" aria-hidden="true">
                     G

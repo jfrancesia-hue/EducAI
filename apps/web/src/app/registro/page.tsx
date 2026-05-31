@@ -2,19 +2,13 @@ import Link from "next/link";
 import {
   BookOpenCheck,
   Building2,
-  Crown,
   GraduationCap,
-  Landmark,
   MapPin,
   Phone,
-  Rocket,
-  School,
   Sparkles,
   UserRound,
   UsersRound,
-  Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 import { Badge, Button } from "@educai/ui";
 import { apoyoAiPublicPlans, educaiPublicPlans, type PublicPricingPlan } from "../../lib/pricing";
@@ -58,30 +52,6 @@ function planHighlights(plan: PublicPricingPlan) {
   return plan.includes.slice(0, 3);
 }
 
-const registerPlanIcons: Record<string, LucideIcon> = {
-  free: Sparkles,
-  "docente-individual": GraduationCap,
-  "docente-pro": Crown,
-  colegio: School,
-  institucional: Landmark,
-  basico: Rocket,
-  plus: Zap,
-  familiar: UsersRound,
-  intensivo: Building2,
-};
-
-const registerPlanTones: Record<string, string> = {
-  free: "border-[#18b6a4]/20 bg-[#e7fbf7] text-[#087968]",
-  "docente-individual": "border-[#7c6cff]/22 bg-[#efedff] text-[#4f3ee2]",
-  "docente-pro": "border-[#ff7a1a]/25 bg-[#fff3e9] text-[#c24f00]",
-  colegio: "border-[#f8d95c]/40 bg-[#fff6c9] text-[#876100]",
-  institucional: "border-[#ef5da8]/24 bg-[#fdeaf4] text-[#b82170]",
-  basico: "border-[#18b6a4]/20 bg-[#e7fbf7] text-[#087968]",
-  plus: "border-[#ff7a1a]/25 bg-[#fff3e9] text-[#c24f00]",
-  familiar: "border-[#7c6cff]/22 bg-[#efedff] text-[#4f3ee2]",
-  intensivo: "border-[#ef5da8]/24 bg-[#fdeaf4] text-[#b82170]",
-};
-
 function PlanChooser({
   plans,
   selectedPlanId,
@@ -95,8 +65,6 @@ function PlanChooser({
       <div className="grid gap-3 md:grid-cols-3">
         {plans.map((plan) => {
           const isFree = plan.id === "free";
-          const PlanIcon = registerPlanIcons[plan.id] ?? Sparkles;
-          const iconTone = registerPlanTones[plan.id] ?? registerPlanTones.free;
           return (
             <label key={plan.id} className="cursor-pointer">
               <input
@@ -106,30 +74,19 @@ function PlanChooser({
                 defaultChecked={plan.id === selectedPlanId}
                 className="peer sr-only"
               />
-              <span className="group block h-full overflow-hidden rounded-[1.25rem] border border-[#d5e1dc] bg-[#fbfffd] p-4 shadow-whisper transition duration-300 hover:-translate-y-1 hover:border-[#18b6a4]/35 hover:bg-white peer-checked:border-[#18b6a4] peer-checked:bg-[#d8f7ee] peer-checked:ring-2 peer-checked:ring-[#18b6a4]/25">
-                <span className="flex items-start gap-3">
-                  <span
-                    className={[
-                      "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-whisper",
-                      iconTone,
-                    ].join(" ")}
-                  >
-                    <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full border-2 border-white bg-current opacity-35" />
-                    <PlanIcon className="relative h-6 w-6 stroke-[2.4]" aria-hidden="true" />
-                  </span>
+              <span className="block h-full rounded-lg border border-[#d5e1dc] bg-[#fbfffd] p-4 transition peer-checked:border-[#18b6a4] peer-checked:bg-[#d8f7ee] peer-checked:ring-2 peer-checked:ring-[#18b6a4]/25">
+                <span className="flex items-start justify-between gap-3">
                   <span>
                     <span className="block font-display text-lg font-bold">{plan.name}</span>
                     <span className="mt-1 block text-sm font-semibold text-slate-700">
                       {plan.price}
                     </span>
                   </span>
-                  <span className="ml-auto">
-                    {plan.featured ? (
-                      <Badge className="bg-[#ff7a1a] text-white">Recomendado</Badge>
-                    ) : isFree ? (
-                      <Badge className="bg-white text-[#075f53]">Sin tarjeta</Badge>
-                    ) : null}
-                  </span>
+                  {plan.featured ? (
+                    <Badge className="bg-[#ff7a1a] text-white">Recomendado</Badge>
+                  ) : isFree ? (
+                    <Badge className="bg-white text-[#075f53]">Sin tarjeta</Badge>
+                  ) : null}
                 </span>
                 <span className="mt-3 block text-sm leading-6 text-slate-600">
                   {plan.description}
@@ -147,7 +104,7 @@ function PlanChooser({
           );
         })}
       </div>
-      <p className="rounded-2xl border border-[#b9e6dd] bg-[#e7fbf7] px-4 py-3 text-sm font-semibold leading-6 text-[#075f53]">
+      <p className="text-sm font-semibold leading-6 text-[#075f53]">
         Free crea la cuenta sin tarjeta. Si elegís un plan pago, guardamos tus datos y después te
         llevamos a Mercado Pago para completar la contratación.
       </p>

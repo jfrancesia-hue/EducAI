@@ -1012,39 +1012,8 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
       eyebrow="Planificación docente"
       statusNote="EducAI prepara un borrador editable para que lo revises, ajustes y uses en clase."
     >
-      <div className="grid gap-5 bg-[radial-gradient(circle_at_12%_0%,rgba(24,182,164,0.08),transparent_34%),radial-gradient(circle_at_90%_12%,rgba(248,217,92,0.10),transparent_30%)] p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-5 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid content-start gap-5">
-          {!createdPlan ? (
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-[#18b6a4]/25 bg-[#075f53] p-6 text-white shadow-float">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(98,220,202,0.28),transparent_42%),radial-gradient(circle_at_88%_70%,rgba(248,217,92,0.18),transparent_34%)]" />
-              <div className="relative grid gap-5 lg:grid-cols-[1fr_0.82fr] lg:items-center">
-                <div>
-                  <Badge className="bg-[#f8d95c] text-[#075f53]">Studio docente</Badge>
-                  <h2 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight">
-                    Convertí una idea de clase en una guía editable.
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/84">
-                    Definí curso, tema, objetivos y duración. EducAI prepara una base para revisar,
-                    ajustar y usar con criterio docente.
-                  </p>
-                </div>
-                <div className="grid gap-3 rounded-2xl border border-white/12 bg-white/10 p-4 backdrop-blur-xl">
-                  {["Consigna clara", "Secuencia con tiempos", "Evaluación editable"].map(
-                    (item) => (
-                      <div
-                        key={item}
-                        className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white/88"
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-[#62dcca]" aria-hidden="true" />
-                        {item}
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           {createdId ? (
             <div className="rounded-lg border border-[#18b6a4]/35 bg-[#e7fbf7] p-4 text-[#075c50]">
               <div className="flex gap-3">
@@ -1106,17 +1075,14 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
         </section>
 
         <aside className="grid content-start gap-5">
-          <div className="overflow-hidden rounded-[1.5rem] border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-float">
+          <div className="rounded-lg border border-[#18b6a4]/25 bg-[#075f53] p-5 text-white shadow-whisper">
             <div className="flex items-center gap-3">
               <FileText className="h-6 w-6 text-[#f8d95c]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Salida esperada</h2>
             </div>
             <div className="mt-5 grid gap-3">
               {outputItems.map((item) => (
-                <div
-                  key={item}
-                  className="flex gap-3 rounded-2xl bg-white/10 p-3 transition hover:bg-white/14"
-                >
+                <div key={item} className="flex gap-3 rounded-lg bg-white/10 p-3">
                   <CheckCircle2
                     className="mt-0.5 h-5 w-5 shrink-0 text-[#62dcca]"
                     aria-hidden="true"
@@ -1127,7 +1093,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-[#d5e1dc] bg-white p-5 shadow-whisper">
+          <div className="rounded-lg border border-[#d5e1dc] bg-white p-5 shadow-whisper">
             <div className="flex items-center gap-3">
               <BookOpenCheck className="h-6 w-6 text-[#087968]" aria-hidden="true" />
               <h2 className="font-display text-2xl font-bold tracking-tight">Últimas clases</h2>
@@ -1138,7 +1104,7 @@ export default async function PlanningModulePage({ searchParams }: PlanningModul
                   <a
                     key={plan.id}
                     href={`/app/planificar?created=${encodeURIComponent(plan.id)}`}
-                    className="block rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:-translate-y-0.5 hover:border-[#18b6a4]/70 hover:bg-[#f3fffc] hover:shadow-whisper"
+                    className="block rounded-lg border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/70 hover:bg-[#f3fffc]"
                   >
                     <p className="font-semibold">
                       {plan.subject} - {plan.topic}
