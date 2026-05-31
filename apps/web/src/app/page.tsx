@@ -134,6 +134,12 @@ const teacherPains = [
 
 const heroTags = ["Asistente docente", "Menos carga", "Planificación", "Datos cuidados"];
 
+const heroMetrics = [
+  { label: "Planificación semanal", value: "12 min", helper: "base lista para revisar" },
+  { label: "Recursos generados", value: "5", helper: "actividades + rúbrica" },
+  { label: "Control docente", value: "100%", helper: "nada se comparte sin revisión" },
+];
+
 const heroTagStyles = [
   "border-[#18b6a4]/45 bg-[#18b6a4]/22",
   "border-[#f8d95c]/45 bg-[#f8d95c]/18",
@@ -207,7 +213,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(92vh-96px)] max-w-7xl items-center py-16">
+        <div className="relative z-10 mx-auto grid min-h-[calc(92vh-96px)] max-w-7xl items-center gap-12 py-20 lg:grid-cols-[0.92fr_0.78fr] lg:py-16">
           <div className="max-w-3xl">
             <Badge
               className="border-white/30 bg-[#18b6a4]/22 text-white backdrop-blur-md"
@@ -260,6 +266,71 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
+
+          <div className="relative hidden lg:block" aria-hidden="true">
+            <div className="absolute -left-10 top-10 h-44 w-44 rounded-full bg-[#18b6a4]/30 blur-3xl" />
+            <div className="absolute -right-8 bottom-12 h-52 w-52 rounded-full bg-[#ef5da8]/24 blur-3xl" />
+            <div className="hero-orbit relative ml-auto max-w-[520px] rounded-[2rem] border border-white/15 bg-white/12 p-4 text-white shadow-[0_34px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
+              <div className="overflow-hidden rounded-[1.5rem] border border-white/12 bg-slate-950/82">
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] text-white/66">
+                      EducAI Workspace
+                    </p>
+                    <p className="mt-1 font-display text-xl font-semibold">
+                      Clase lista para mañana
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[#18b6a4]/18 px-3 py-1 text-sm font-semibold text-[#b8fff4]">
+                    Revisable
+                  </span>
+                </div>
+
+                <div className="grid gap-4 p-5">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f8d95c] text-slate-950">
+                        <BookOpenCheck className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="text-sm text-white/70">Objetivo de la clase</p>
+                        <p className="font-semibold">
+                          Fracciones equivalentes con ejemplos cotidianos
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {["Inicio", "Práctica", "Cierre"].map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full bg-white/10 px-3 py-2 text-center text-sm text-white/82"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {heroMetrics.map((metric) => (
+                      <div
+                        key={metric.label}
+                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-white">{metric.label}</p>
+                          <p className="text-xs text-white/62">{metric.helper}</p>
+                        </div>
+                        <p className="font-display text-2xl font-bold text-[#f8d95c]">
+                          {metric.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -304,10 +375,10 @@ export default function HomePage() {
             {teacherPains.map((item, index) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-slate-200 bg-[#f7f8f3] p-5"
+                className="group rounded-2xl border border-slate-200 bg-[#f7f8f3] p-5 transition duration-300 hover:-translate-y-1 hover:border-[#18b6a4]/35 hover:bg-white hover:shadow-whisper"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 font-display text-lg font-bold text-white">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 font-display text-lg font-bold text-white transition duration-300 group-hover:bg-[#18b6a4]">
                     {index + 1}
                   </span>
                   <div>
@@ -350,13 +421,18 @@ export default function HomePage() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-whisper"
+                className="group overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-whisper transition duration-300 hover:-translate-y-1 hover:border-[#18b6a4]/35 hover:shadow-float"
               >
-                <span className={["block h-1 w-full", feature.accent].join(" ")} />
+                <span
+                  className={[
+                    "block h-1 w-full transition duration-300 group-hover:h-1.5",
+                    feature.accent,
+                  ].join(" ")}
+                />
                 <div className="p-5">
                   <span
                     className={[
-                      "flex h-10 w-10 items-center justify-center rounded-lg",
+                      "flex h-10 w-10 items-center justify-center rounded-xl transition duration-300 group-hover:scale-105",
                       feature.iconTone,
                     ].join(" ")}
                   >

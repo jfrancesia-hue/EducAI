@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpenCheck,
+  CheckCircle2,
   ClipboardList,
   GraduationCap,
   Landmark,
@@ -40,6 +41,7 @@ const modules = [
       "Recursos editables para aula",
       "Planes individuales e institucionales",
     ],
+    preview: ["Plan anual", "Rúbrica", "Materiales"],
   },
   {
     id: "apoyoai",
@@ -57,6 +59,7 @@ const modules = [
       "WhatsApp en planes pagos",
       "Reportes y diagnósticos según plan",
     ],
+    preview: ["WhatsApp", "Fotos", "Reporte"],
   },
 ] satisfies Array<{
   id: string;
@@ -69,7 +72,26 @@ const modules = [
   accent: string;
   description: string;
   highlights: string[];
+  preview: string[];
 }>;
+
+const planComparison = [
+  {
+    name: "Free",
+    label: "Para probar",
+    items: ["Créditos únicos", "Sin tarjeta", "Flujo docente básico"],
+  },
+  {
+    name: "Docente Pro",
+    label: "Uso intensivo",
+    items: ["Más planificaciones", "Rúbricas y secuencias", "Reporte semanal"],
+  },
+  {
+    name: "Colegio",
+    label: "Equipo completo",
+    items: ["Docentes activos", "Implementación", "Visibilidad institucional"],
+  },
+];
 
 async function getSessionTarget(): Promise<{ href: Route; label: string } | null> {
   if (!hasSupabaseEnv()) {
@@ -195,21 +217,40 @@ export async function PublicPricingPage() {
               return (
                 <article
                   key={module.id}
-                  className="rounded-lg border border-white/28 bg-white/90 p-5 shadow-float backdrop-blur-xl"
+                  className="group relative overflow-hidden rounded-[1.5rem] border border-white/28 bg-white/90 p-5 shadow-float backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white"
                 >
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_25%_0%,rgba(24,182,164,0.18),transparent_48%),radial-gradient(circle_at_85%_0%,rgba(248,217,92,0.18),transparent_44%)] opacity-80 transition duration-300 group-hover:opacity-100" />
                   <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-lg ${module.accent}`}
+                    className={`relative flex h-12 w-12 items-center justify-center rounded-2xl shadow-whisper transition duration-300 group-hover:scale-105 ${module.accent}`}
                   >
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
-                  <p className="mt-4 text-sm font-bold uppercase tracking-[0.12em] text-[#087968]">
+                  <p className="relative mt-4 text-sm font-bold uppercase tracking-[0.12em] text-[#087968]">
                     {module.label}
                   </p>
-                  <h2 className="mt-2 font-display text-3xl font-bold">{module.name}</h2>
-                  <p className="mt-3 text-sm font-medium leading-6 text-slate-700">
+                  <h2 className="relative mt-2 font-display text-3xl font-bold">{module.name}</h2>
+                  <p className="relative mt-3 text-sm font-medium leading-6 text-slate-700">
                     {module.description}
                   </p>
-                  <ul className="mt-4 grid gap-2 text-sm font-semibold text-slate-700">
+
+                  <div className="relative mt-4 rounded-2xl border border-[#d5e1dc] bg-[#fbfffd] p-3">
+                    <div className="mb-3 flex items-center justify-between text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+                      <span>Vista rápida</span>
+                      <span className="h-2 w-2 rounded-full bg-[#18b6a4]" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {module.preview.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-xl bg-[#e7fbf7] px-2 py-2 text-center text-xs font-bold text-[#075f53]"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <ul className="relative mt-4 grid gap-2 text-sm font-semibold text-slate-700">
                     {module.highlights.map((item) => (
                       <li key={item} className="flex gap-2">
                         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#18b6a4]" />
@@ -217,7 +258,7 @@ export async function PublicPricingPage() {
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-5 grid gap-2">
+                  <div className="relative mt-5 grid gap-2">
                     <Button asChild pill className="bg-[#18b6a4] text-white hover:bg-[#119b8c]">
                       <a href={module.href}>
                         {module.cta} <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -278,6 +319,48 @@ export async function PublicPricingPage() {
               ctaOverrideLabel={accountLabel}
             />
           ))}
+        </div>
+
+        <div className="mt-10 overflow-hidden rounded-[1.75rem] border border-[#b9e6dd] bg-white shadow-float">
+          <div className="grid gap-0 lg:grid-cols-[0.74fr_1.26fr]">
+            <div className="bg-[#102b26] p-6 text-white sm:p-8">
+              <Badge className="bg-[#18b6a4] text-white">Comparador rápido</Badge>
+              <h3 className="mt-4 font-display text-3xl font-bold leading-tight">
+                Elegí por nivel de uso, no por lista interminable.
+              </h3>
+              <p className="mt-3 text-sm font-semibold leading-6 text-white/82">
+                Free valida el flujo. Pro sostiene el trabajo semanal. Colegio ordena equipos y uso
+                institucional.
+              </p>
+            </div>
+            <div className="grid gap-3 p-4 sm:p-6 lg:grid-cols-3">
+              {planComparison.map((plan) => (
+                <article
+                  key={plan.name}
+                  className="group rounded-2xl border border-[#d5e1dc] bg-[#fbfffd] p-5 transition duration-300 hover:-translate-y-1 hover:border-[#18b6a4]/40 hover:bg-white hover:shadow-whisper"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.1em] text-[#087968]">
+                    {plan.label}
+                  </p>
+                  <h4 className="mt-2 font-display text-2xl font-bold">{plan.name}</h4>
+                  <div className="mt-4 grid gap-2">
+                    {plan.items.map((item) => (
+                      <div
+                        key={item}
+                        className="flex gap-2 text-sm font-semibold leading-5 text-slate-700"
+                      >
+                        <CheckCircle2
+                          className="mt-0.5 h-4 w-4 shrink-0 text-[#18b6a4]"
+                          aria-hidden="true"
+                        />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -363,6 +446,41 @@ export async function PublicPricingPage() {
                 <p className="mt-2 text-sm font-medium leading-6 text-white/76">{faq.answer}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden bg-[#f7f8f3] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="absolute left-1/2 top-0 h-56 w-56 -translate-x-1/2 rounded-full bg-[#18b6a4]/16 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl gap-8 overflow-hidden rounded-[2rem] border border-[#b9e6dd] bg-white p-6 shadow-float sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div>
+            <Badge className="bg-[#d8f7ee] text-[#075c50]">Siguiente paso</Badge>
+            <h2 className="mt-4 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+              Empezá gratis o llevá EducAI a tu institución.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
+              La experiencia está pensada para probar rápido, validar valor docente y escalar a
+              equipos cuando haya uso real.
+            </p>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-[#d5e1dc] bg-[#fbfffd] p-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Button asChild size="lg" pill className="bg-[#18b6a4] text-white hover:bg-[#119b8c]">
+              <Link href={accountHref ?? "/registro?producto=educai&plan=free"}>
+                {accountLabel ?? "Empezar gratis"}{" "}
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              pill
+              variant="outline"
+              className="border-[#c7dfd8] bg-white text-[#075f53] hover:bg-[#e7fbf7]"
+            >
+              <Link href="/contacto?producto=educai&plan=colegio">
+                Consultar colegio <Landmark className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
