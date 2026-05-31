@@ -11,7 +11,7 @@ import {
 
 import { Badge, Button } from "@educai/ui";
 import { PasswordField } from "../../_components/password-field";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 import { AppShell } from "../_components/app-shell";
 import { previewProfile } from "../_components/preview-data";
 
@@ -100,22 +100,19 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
   let email = previewProfile.email;
 
   if (process.env.NODE_ENV !== "development") {
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { user } = await getEducaiAppAuth();
 
-    if (!session) {
+    if (!user) {
       redirect("/login");
     }
 
-    const appMetadata = session.user.app_metadata as Record<string, unknown>;
+    const appMetadata = user.app_metadata as Record<string, unknown>;
     plan = metadataValue(appMetadata, "plan") || "free";
     role = metadataValue(appMetadata, "role") || "TEACHER";
     schoolLinked = Boolean(metadataValue(appMetadata, "schoolId"));
     teacherLinked = Boolean(metadataValue(appMetadata, "teacherId"));
-    visibleName = displayName(session.user.user_metadata, session.user.email);
-    email = session.user.email ?? previewProfile.email;
+    visibleName = displayName(user.user_metadata, user.email);
+    email = user.email ?? previewProfile.email;
   }
 
   const message = passwordMessage(params.password);
@@ -276,7 +273,11 @@ export default async function EducAiProfilePage({ searchParams }: ProfilePagePro
             </div>
           </article>
 
-          <Button asChild variant="outline" className="rounded-full border-[#d5e1dc] bg-white shadow-whisper hover:bg-[#e7fbf7]">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full border-[#d5e1dc] bg-white shadow-whisper hover:bg-[#e7fbf7]"
+          >
             <Link href="/precios">Ver planes disponibles</Link>
           </Button>
         </aside>

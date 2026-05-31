@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import { getEducaiAppAuth } from "../../lib/supabase/app-auth";
 import { extractRoleFromMetadata } from "../../lib/supabase/roles";
-import { createSupabaseServerClient } from "../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,18 +13,14 @@ export default async function ProtectedAppLayout({ children }: { children: React
     return children;
   }
 
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { user } = await getEducaiAppAuth();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
   const role =
-    extractRoleFromMetadata(session.user.app_metadata) ??
-    extractRoleFromMetadata(session.user.user_metadata);
+    extractRoleFromMetadata(user.app_metadata) ?? extractRoleFromMetadata(user.user_metadata);
 
   if (!role || !WEB_ALLOWED_ROLES.has(role)) {
     redirect("/acceso-denegado");

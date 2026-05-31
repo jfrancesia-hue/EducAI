@@ -5,22 +5,19 @@ import { Badge } from "@educai/ui";
 import { AppShell } from "../_components/app-shell";
 import { previewDashboard } from "../_components/preview-data";
 import { fetchInstitutionalDashboard } from "../../../lib/api/institutional-dashboard";
-import { createSupabaseServerClient } from "../../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../../lib/supabase/app-auth";
 
 export default async function ReportsModulePage() {
   let dashboard = previewDashboard;
 
   if (process.env.NODE_ENV !== "development") {
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { accessToken } = await getEducaiAppAuth();
 
-    if (!session?.access_token) {
+    if (!accessToken) {
       redirect("/login");
     }
 
-    dashboard = (await fetchInstitutionalDashboard(session.access_token)) ?? previewDashboard;
+    dashboard = (await fetchInstitutionalDashboard(accessToken)) ?? previewDashboard;
   }
 
   const cards = [
@@ -102,7 +99,8 @@ export default async function ReportsModulePage() {
                 ))
               ) : (
                 <div className="p-4 text-[15px] leading-6 text-[#4f5f58]">
-                  Cuando empiecen a generarse clases, este desglose va a mostrar qué áreas están más activas y dónde conviene reforzar planificación.
+                  Cuando empiecen a generarse clases, este desglose va a mostrar qué áreas están más
+                  activas y dónde conviene reforzar planificación.
                 </div>
               )}
             </div>
@@ -133,7 +131,10 @@ export default async function ReportsModulePage() {
             <h2 className="font-display text-2xl font-bold tracking-tight">Últimos estudiantes</h2>
             <div className="mt-5 grid gap-3">
               {dashboard?.recentStudents.slice(0, 5).map((student) => (
-                <div key={student.id} className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4">
+                <div
+                  key={student.id}
+                  className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4"
+                >
                   <p className="font-semibold">{student.name}</p>
                   <p className="mt-1 text-sm text-[#4f5f58]">Grado {student.grade}</p>
                 </div>

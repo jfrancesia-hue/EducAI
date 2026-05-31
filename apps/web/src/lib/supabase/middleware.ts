@@ -3,7 +3,14 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
-import { parseCookieHeader, setSupabaseAuthResponseCookie } from "./cookies";
+import {
+  EDUCAI_ACCESS_TOKEN_COOKIE,
+  expireSharedSupabaseCookiesFromHeader,
+  parseCookieHeader,
+  readCookieValue,
+  setEducaiAccessTokenCookie,
+  setSupabaseAuthResponseCookie,
+} from "./cookies";
 import { hasSupabaseEnv } from "./env";
 
 type CookieToSet = {
@@ -18,11 +25,13 @@ export async function updateSession(request: NextRequest): Promise<{
 }> {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-educai-pathname", request.nextUrl.pathname);
+  const cookieHeader = request.headers.get("cookie");
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+  expireSharedSupabaseCookiesFromHeader(response, cookieHeader);
 
   if (!hasSupabaseEnv()) {
     return { response, user: null };
@@ -34,7 +43,7 @@ export async function updateSession(request: NextRequest): Promise<{
     {
       cookies: {
         getAll() {
-          return parseCookieHeader(request.headers.get("cookie"));
+          return parseCookieHeader(cookieHeader);
         },
         setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
@@ -46,9 +55,25 @@ export async function updateSession(request: NextRequest): Promise<{
     },
   );
 
-  const {
+  let {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    setEducaiAccessTokenCookie(response, session.access_token, session.expires_in);
+  }
+
+  if (!user) {
+    const fallbackAccessToken = readCookieValue(cookieHeader, EDUCAI_ACCESS_TOKEN_COOKIE);
+    if (fallbackAccessToken) {
+      const { data, error } = await supabase.auth.getUser(fallbackAccessToken);
+      user = error ? null : data.user;
+    }
+  }
 
   return { response, user };
 }

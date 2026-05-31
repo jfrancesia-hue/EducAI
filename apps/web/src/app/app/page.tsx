@@ -17,7 +17,7 @@ import { Badge, Button } from "@educai/ui";
 import { AppShell } from "./_components/app-shell";
 import { previewDashboard } from "./_components/preview-data";
 import { fetchInstitutionalDashboard } from "../../lib/api/institutional-dashboard";
-import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { getEducaiAppAuth } from "../../lib/supabase/app-auth";
 
 const classroomHeroImage =
   "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=85";
@@ -61,16 +61,13 @@ export default async function EducAiAppPage() {
   let dashboard = previewDashboard;
 
   if (process.env.NODE_ENV !== "development") {
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { accessToken } = await getEducaiAppAuth();
 
-    if (!session?.access_token) {
+    if (!accessToken) {
       redirect("/login");
     }
 
-    dashboard = (await fetchInstitutionalDashboard(session.access_token)) ?? previewDashboard;
+    dashboard = (await fetchInstitutionalDashboard(accessToken)) ?? previewDashboard;
   }
 
   return (
@@ -143,7 +140,14 @@ export default async function EducAiAppPage() {
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#4f5f58]">
                       {label}
                     </p>
-                    <p className={["mt-1 inline-flex rounded-full px-2.5 py-1 text-sm font-black", tone].join(" ")}>{value}</p>
+                    <p
+                      className={[
+                        "mt-1 inline-flex rounded-full px-2.5 py-1 text-sm font-black",
+                        tone,
+                      ].join(" ")}
+                    >
+                      {value}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -278,56 +282,59 @@ export default async function EducAiAppPage() {
               </span>
             </div>
             <div className="p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
-                  Seguimiento
-                </p>
-                <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-                  Estudiantes recientes
-                </h2>
-              </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
-                <UsersRound className="h-5 w-5" aria-hidden="true" />
-              </span>
-            </div>
-            <div className="mt-5 grid gap-3">
-              {dashboard?.recentStudents.slice(0, 6).map((student) => (
-                <article key={student.id} className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/35 hover:shadow-whisper">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">{student.name}</p>
-                      <p className="mt-1 text-[15px] leading-6 text-[#4f5f58]">
-                        Grado {student.grade}
-                        {student.schoolName ? ` Â· ${student.schoolName}` : ""}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        student.diagnosticCompleted
-                          ? "bg-[#e7fbf7] text-[#087968]"
-                          : "bg-[#fff8d7] text-[#876100]"
-                      }
-                    >
-                      {student.diagnosticCompleted ? "Diagnóstico listo" : "Pendiente"}
-                    </Badge>
-                  </div>
-                  <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
-                    {student.opportunities.length
-                      ? `A trabajar: ${student.opportunities.slice(0, 2).join(", ")}`
-                      : "Sin alertas cargadas por ahora."}
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#5b6962]">
+                    Seguimiento
                   </p>
-                </article>
-              ))}
-            </div>
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="mt-4 rounded-full px-3 text-[#11231f] hover:bg-[#e7fbf7]"
-            >
-              <Link href="/app/estudiantes">Abrir modulo de estudiantes</Link>
-            </Button>
+                  <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
+                    Estudiantes recientes
+                  </h2>
+                </div>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7fbf7] text-[#087968]">
+                  <UsersRound className="h-5 w-5" aria-hidden="true" />
+                </span>
+              </div>
+              <div className="mt-5 grid gap-3">
+                {dashboard?.recentStudents.slice(0, 6).map((student) => (
+                  <article
+                    key={student.id}
+                    className="rounded-2xl border border-[#e3ebe7] bg-[#fbfffd] p-4 transition hover:border-[#18b6a4]/35 hover:shadow-whisper"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{student.name}</p>
+                        <p className="mt-1 text-[15px] leading-6 text-[#4f5f58]">
+                          Grado {student.grade}
+                          {student.schoolName ? ` Â· ${student.schoolName}` : ""}
+                        </p>
+                      </div>
+                      <Badge
+                        className={
+                          student.diagnosticCompleted
+                            ? "bg-[#e7fbf7] text-[#087968]"
+                            : "bg-[#fff8d7] text-[#876100]"
+                        }
+                      >
+                        {student.diagnosticCompleted ? "Diagnóstico listo" : "Pendiente"}
+                      </Badge>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-[#4f5f58]">
+                      {student.opportunities.length
+                        ? `A trabajar: ${student.opportunities.slice(0, 2).join(", ")}`
+                        : "Sin alertas cargadas por ahora."}
+                    </p>
+                  </article>
+                ))}
+              </div>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="mt-4 rounded-full px-3 text-[#11231f] hover:bg-[#e7fbf7]"
+              >
+                <Link href="/app/estudiantes">Abrir modulo de estudiantes</Link>
+              </Button>
             </div>
           </section>
 
@@ -335,9 +342,24 @@ export default async function EducAiAppPage() {
             <h2 className="font-display text-2xl font-bold tracking-tight">Acciones útiles</h2>
             <div className="mt-5 grid gap-3">
               {[
-                { label: "Crear una clase editable", href: "/app/planificar" as Route, icon: Sparkles, tone: "text-[#f8d95c]" },
-                { label: "Revisar estudiantes", href: "/app/estudiantes" as Route, icon: UsersRound, tone: "text-[#72e4d2]" },
-                { label: "Revisar indicadores", href: "/app/reportes" as Route, icon: LineChart, tone: "text-[#ef5da8]" },
+                {
+                  label: "Crear una clase editable",
+                  href: "/app/planificar" as Route,
+                  icon: Sparkles,
+                  tone: "text-[#f8d95c]",
+                },
+                {
+                  label: "Revisar estudiantes",
+                  href: "/app/estudiantes" as Route,
+                  icon: UsersRound,
+                  tone: "text-[#72e4d2]",
+                },
+                {
+                  label: "Revisar indicadores",
+                  href: "/app/reportes" as Route,
+                  icon: LineChart,
+                  tone: "text-[#ef5da8]",
+                },
               ].map(({ label, href, icon: Icon, tone }) => (
                 <Button
                   key={href}
