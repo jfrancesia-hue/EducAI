@@ -18,8 +18,14 @@ type HandoffMetadata = {
   resolvedAt?: string;
   resolvedBy?: string;
   resolutionNote?: string;
+  crisisSeverity?: string;
+  safetySignals?: string[];
+  crisisAlertDelivered?: boolean;
+  crisisAlertRecipient?: string;
   [key: string]: unknown;
 };
+
+const SEVERITY_RANK: Record<string, number> = { critical: 2, high: 1 };
 
 @Injectable()
 export class HandoffService {
@@ -35,11 +41,19 @@ export class HandoffService {
       take: 100,
     });
 
-    return {
-      data: handoffs
-        .map((handoff) => this.toRecord(handoff))
-        .filter((handoff) => handoff.status !== "closed"),
-    };
+    const open = handoffs
+      .map((handoff) => this.toRecord(handoff))
+      .filter((handoff) => handoff.status !== "closed");
+
+    // Las crisis primero (critical > high > resto); dentro de cada grupo, más reciente
+    // primero (la query ya viene ordenada por createdAt desc, así que el sort estable
+    // preserva ese orden secundario).
+    open.sort(
+      (a, b) =>
+        (SEVERITY_RANK[b.crisisSeverity ?? ""] ?? 0) - (SEVERITY_RANK[a.crisisSeverity ?? ""] ?? 0),
+    );
+
+    return { data: open };
   }
 
   async close(input: {
@@ -104,6 +118,9 @@ export class HandoffService {
       resolvedAt: metadata.resolvedAt ?? null,
       resolvedBy: metadata.resolvedBy ?? null,
       resolutionNote: metadata.resolutionNote ?? null,
+      crisisSeverity: metadata.crisisSeverity ?? null,
+      safetySignals: metadata.safetySignals ?? null,
+      crisisAlertDelivered: metadata.crisisAlertDelivered ?? null,
     };
   }
 

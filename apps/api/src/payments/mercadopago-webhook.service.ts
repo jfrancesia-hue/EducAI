@@ -1,10 +1,14 @@
 import { Injectable, ServiceUnavailableException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Prisma } from "@educai/database";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
 import { isValidMercadoPagoSignature } from "./mercadopago-signature.js";
+import { validatePaidAmount } from "./plan-catalog.js";
 
 type QueryParams = Record<string, string | string[] | undefined>;
 
@@ -20,6 +24,7 @@ interface MercadoPagoWebhookBody {
 interface MercadoPagoPayment {
   id: string | number;
   external_reference?: string | null;
+  transaction_amount?: number;
   payer?: {
     id?: string | number;
     email?: string;
@@ -35,6 +40,17 @@ interface MercadoPagoWebhookInput {
   signature?: string;
 }
 
+interface WebhookResult {
+  received: boolean;
+  processed: boolean;
+  reason?: string;
+  paymentId?: string;
+  subscriptionId?: string;
+  tenantId?: string | null;
+  status?: string;
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class MercadoPagoWebhookService {
   private supabase?: SupabaseClient;
@@ -43,9 +59,17 @@ export class MercadoPagoWebhookService {
     private readonly config: ConfigService,
     private readonly logger: AppLogger,
     private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async handleWebhook(input: MercadoPagoWebhookInput) {
+    // El webhook no tiene sesión: localiza la suscripción/tenant del pago de forma
+    // cross-tenant a propósito (gated por firma HMAC de MercadoPago). Corre como
+    // operación de sistema para no quedar bloqueado por el tenant-scoping fail-closed.
+    return this.tenantContext.runAsSystem(() => this.processWebhook(input));
+  }
+
+  private async processWebhook(input: MercadoPagoWebhookInput): Promise<WebhookResult> {
     const dataIdFromQuery = this.firstQueryValue(input.query["data.id"]);
     this.assertValidSignature({
       dataId: dataIdFromQuery,
@@ -63,6 +87,29 @@ export class MercadoPagoWebhookService {
     }
 
     const payment = await this.fetchPayment(paymentId);
+
+    // Idempotencia: reservamos el evento en BillingEvent (unique provider+providerEventId).
+    // Si ya fue procesado en una entrega previa, no lo reprocesamos.
+    const reservation = await this.reserveBillingEvent({
+      providerEventId: this.providerEventId(input, paymentId, payment),
+      eventType: eventType ?? "payment",
+      status: payment.status ?? "received",
+      payload: input.body,
+    });
+    if (reservation.alreadyDone) {
+      return { received: true, processed: false, reason: "duplicate_event", paymentId };
+    }
+
+    const result = await this.applyPayment({ payment, paymentId });
+    await this.completeBillingEvent(reservation.id, result);
+    return result;
+  }
+
+  private async applyPayment(args: {
+    payment: MercadoPagoPayment;
+    paymentId: string;
+  }): Promise<WebhookResult> {
+    const { payment, paymentId } = args;
     const externalReference = payment.external_reference?.trim();
     if (!externalReference) {
       return { received: true, processed: false, reason: "missing_external_reference", paymentId };
@@ -116,7 +163,39 @@ export class MercadoPagoWebhookService {
         reason: "unsupported_payment_status",
         paymentId,
         status: payment.status,
+        subscriptionId: subscription.id,
+        tenantId: subscription.tenantId,
       };
+    }
+
+    // Validación de monto: NO confiamos en el planCode del external_reference para
+    // activar; verificamos que lo cobrado cubra el precio real del plan. Evita pagar
+    // barato por un plan caro. Solo al activar (los estados no-ACTIVE no otorgan acceso).
+    if (mappedStatus === "ACTIVE") {
+      const amount = validatePaidAmount("apoyoai", reference.planCode, payment.transaction_amount);
+      if (!amount.ok) {
+        this.logger.warn(
+          {
+            externalReference,
+            paymentId,
+            planCode: reference.planCode,
+            expected: amount.expected,
+            paid: amount.paid,
+            reason: amount.reason,
+          },
+          "mercadopago.webhook.amount_mismatch",
+        );
+        return {
+          received: true,
+          processed: false,
+          reason: "amount_mismatch",
+          expected: amount.expected,
+          paid: amount.paid,
+          paymentId,
+          subscriptionId: subscription.id,
+          tenantId: subscription.tenantId,
+        };
+      }
     }
 
     const now = new Date();
@@ -165,7 +244,74 @@ export class MercadoPagoWebhookService {
       paymentId: String(payment.id),
       subscriptionId: updated.id,
       status: updated.status,
+      tenantId: updated.tenantId,
     };
+  }
+
+  private providerEventId(
+    input: MercadoPagoWebhookInput,
+    paymentId: string,
+    payment: MercadoPagoPayment,
+  ): string {
+    const fromBody = input.body.id != null ? String(input.body.id) : undefined;
+    const fromQuery = this.firstQueryValue(input.query.id);
+    // Fallback: paymentId + status, así un cambio de estado (pending -> approved) se
+    // procesa como evento distinto, pero una re-entrega del mismo evento se deduplica.
+    return fromBody ?? fromQuery ?? `${paymentId}:${payment.status ?? "unknown"}`;
+  }
+
+  private async reserveBillingEvent(args: {
+    providerEventId: string;
+    eventType: string;
+    status: string;
+    payload: unknown;
+  }): Promise<{ id: string; alreadyDone: boolean }> {
+    try {
+      const created = await this.prisma.billingEvent.create({
+        data: {
+          id: randomUUID(),
+          provider: "mercadopago",
+          providerEventId: args.providerEventId,
+          eventType: args.eventType,
+          status: args.status,
+          payload: args.payload ?? {},
+        },
+      });
+      return { id: created.id, alreadyDone: false };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const existing = await this.prisma.billingEvent.findUnique({
+          where: {
+            provider_providerEventId: {
+              provider: "mercadopago",
+              providerEventId: args.providerEventId,
+            },
+          },
+        });
+        if (existing) {
+          // Si el evento previo ya quedó procesado, se deduplica; si no (fallo transitorio),
+          // se permite reprocesar reusando la misma fila.
+          return { id: existing.id, alreadyDone: existing.processedAt != null };
+        }
+      }
+      throw error;
+    }
+  }
+
+  private async completeBillingEvent(id: string, result: WebhookResult): Promise<void> {
+    // subscription_not_found es transitorio (la suscripción puede aparecer en un retry):
+    // no lo marcamos como procesado, para permitir reprocesar.
+    const retryable = result.reason === "subscription_not_found";
+    await this.prisma.billingEvent.update({
+      where: { id },
+      data: {
+        processedAt: retryable ? null : new Date(),
+        outcome: result.processed ? "processed" : (result.reason ?? "ignored"),
+        tenantId: typeof result.tenantId === "string" ? result.tenantId : undefined,
+        subscriptionId:
+          typeof result.subscriptionId === "string" ? result.subscriptionId : undefined,
+      },
+    });
   }
 
   private async handleEducAiPayment(input: {
@@ -177,7 +323,7 @@ export class MercadoPagoWebhookService {
       resourceId: string;
       planCode: string;
     };
-  }) {
+  }): Promise<WebhookResult> {
     const mappedStatus = this.mapPaymentStatus(input.payment.status);
     if (!mappedStatus) {
       return {
@@ -226,6 +372,37 @@ export class MercadoPagoWebhookService {
         "mercadopago.webhook.educai_tenant_not_found",
       );
       return { received: true, processed: false, reason: "educai_tenant_not_found" };
+    }
+
+    // Validación de monto al activar: lo cobrado debe cubrir el precio del plan.
+    if (mappedStatus === "ACTIVE") {
+      const amount = validatePaidAmount(
+        "educai",
+        input.reference.planCode,
+        input.payment.transaction_amount,
+      );
+      if (!amount.ok) {
+        this.logger.warn(
+          {
+            externalReference: input.externalReference,
+            paymentId: input.paymentId,
+            planCode: input.reference.planCode,
+            expected: amount.expected,
+            paid: amount.paid,
+            reason: amount.reason,
+          },
+          "mercadopago.webhook.amount_mismatch",
+        );
+        return {
+          received: true,
+          processed: false,
+          reason: "amount_mismatch",
+          expected: amount.expected,
+          paid: amount.paid,
+          paymentId: input.paymentId,
+          tenantId: tenant.id,
+        };
+      }
     }
 
     const now = new Date();

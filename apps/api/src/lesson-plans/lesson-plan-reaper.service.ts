@@ -1,6 +1,7 @@
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
 
 const DEFAULT_SWEEP_INTERVAL_MS = 5 * 60 * 1000; // cada 5 minutos
 const DEFAULT_MAX_AGE_MS = 30 * 60 * 1000; // un job no puede estar "pending/running" más de 30 minutos
@@ -19,7 +20,10 @@ export class LessonPlanReaperService implements OnModuleInit, OnModuleDestroy {
   );
   private readonly enabled = process.env.LESSON_PLAN_REAPER_DISABLED !== "true";
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
+  ) {}
 
   onModuleInit(): void {
     if (!this.enabled) {
@@ -48,13 +52,17 @@ export class LessonPlanReaperService implements OnModuleInit, OnModuleDestroy {
   async sweep(): Promise<void> {
     const cutoff = new Date(Date.now() - this.maxAgeMs);
     try {
-      const result = await this.prisma.lessonPlan.updateMany({
-        where: {
-          status: { in: ["pending", "running"] },
-          updatedAt: { lt: cutoff },
-        },
-        data: { status: "failed" },
-      });
+      // Job de mantenimiento global (sin request ni tenant): barre planes colgados
+      // de TODOS los tenants. Corre como operación de sistema con bypass explícito.
+      const result = await this.tenantContext.runAsSystem(() =>
+        this.prisma.lessonPlan.updateMany({
+          where: {
+            status: { in: ["pending", "running"] },
+            updatedAt: { lt: cutoff },
+          },
+          data: { status: "failed" },
+        }),
+      );
 
       if (result.count > 0) {
         this.logger.warn({

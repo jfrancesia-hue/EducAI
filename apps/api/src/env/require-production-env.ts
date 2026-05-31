@@ -12,6 +12,9 @@ const REQUIRED_PRODUCTION_ENV = [
   "TWILIO_FORCE_PROTOCOL",
   "MERCADOPAGO_ACCESS_TOKEN",
   "MERCADOPAGO_WEBHOOK_SECRET",
+  // Destino de las alertas de crisis del tutor. El manejo de crisis es bloqueante
+  // de release (RELEASE_CHECKLIST), así que sin destinatario no se arranca en prod.
+  "CRISIS_ALERT_WHATSAPP_TO",
 ] as const;
 
 export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
