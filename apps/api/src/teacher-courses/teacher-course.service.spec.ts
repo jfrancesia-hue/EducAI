@@ -36,8 +36,9 @@ function buildTx(): TxMock {
 
 function buildPrismaMock(tx: TxMock) {
   return {
-    // Reproduce la semántica de Prisma: ejecuta el callback con el tx.
-    $transaction: vi.fn(async (cb: (client: TxMock) => unknown) => cb(tx)),
+    // Reproduce la semántica de Prisma: ejecuta el callback con el tx y devuelve
+    // su promesa (el service hace `await`, así que no hace falta `async` acá).
+    $transaction: vi.fn((cb: (client: TxMock) => unknown) => cb(tx)),
   };
 }
 
