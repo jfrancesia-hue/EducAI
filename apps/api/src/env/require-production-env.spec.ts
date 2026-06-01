@@ -118,4 +118,10 @@ describe("requireApiProductionEnv", () => {
       /CRISIS_ALERT_WHATSAPP_TO/,
     );
   });
+
+  it("rechaza auto-activacion de pagos en produccion (acceso pago sin pagar)", () => {
+    expect(() =>
+      requireApiProductionEnv(productionEnv({ APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS: "true" })),
+    ).toThrow(/APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS/);
+  });
 });

@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nest
 
 import { CurrentUser } from "../auth/current-user.decorator.js";
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
+import { UserRateLimitGuard } from "../common/guards/user-rate-limit.guard.js";
 import { RolesGuard } from "../auth/roles.guard.js";
 import { Roles } from "../auth/roles.decorator.js";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard.js";
@@ -97,6 +98,13 @@ export class StudentController {
   }
 
   @Post(":id/tutor")
+  @UseGuards(
+    new UserRateLimitGuard({
+      name: "web-tutor",
+      windowMs: 60_000,
+      max: Number(process.env.WEB_TUTOR_RATE_LIMIT_PER_MIN ?? 20),
+    }),
+  )
   @ApiCreatedResponse({ description: "Respuesta del tutor ApoyoAI por web" })
   askTutor(
     @Param("id") id: string,

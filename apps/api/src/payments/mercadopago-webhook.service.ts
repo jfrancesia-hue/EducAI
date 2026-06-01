@@ -8,7 +8,7 @@ import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { TenantContextService } from "../prisma/tenant-context.service.js";
 import { isValidMercadoPagoSignature } from "./mercadopago-signature.js";
-import { validatePaidAmount } from "./plan-catalog.js";
+import { resolveNextPlan, validatePaidAmount } from "./plan-catalog.js";
 
 type QueryParams = Record<string, string | string[] | undefined>;
 
@@ -406,7 +406,15 @@ export class MercadoPagoWebhookService {
     }
 
     const now = new Date();
-    const nextPlan = mappedStatus === "ACTIVE" ? input.reference.planCode : "free";
+    // Estado terminal vs transitorio:
+    // - ACTIVE  -> activa el plan pagado.
+    // - CANCELED (refund/chargeback/cancelación) -> degrada a free.
+    // - PAST_DUE (pending/authorized/rejected) -> NO degradar: conserva el plan vigente.
+    //   Esto evita que una notificación tardía (MP no garantiza orden) deje sin acceso a
+    //   un cliente que ya pagó.
+    const currentMetadata = this.asRecord(tenant.metadata) ?? {};
+    const currentPlan = typeof currentMetadata.plan === "string" ? currentMetadata.plan : "free";
+    const nextPlan = resolveNextPlan(mappedStatus, currentPlan, input.reference.planCode);
     const paymentStatus = this.paymentStatusLabel(mappedStatus);
     const billingState = {
       provider: "mercadopago",
@@ -468,17 +476,43 @@ export class MercadoPagoWebhookService {
       });
     });
 
+    // Sincronización de claims en Supabase. La DB ya quedó commiteada como fuente de
+    // verdad del plan; acá propagamos a los JWT. Intentamos TODOS los usuarios (no
+    // abortamos en el primero que falla) y dejamos un AuditLog durable de los que
+    // fallaron para poder reconciliar aunque MercadoPago agote los reintentos.
+    const failedSyncEmails: string[] = [];
     for (const user of tenant.users) {
-      await this.updateSupabaseUserPlanByEmail(user.email, {
-        role: user.role,
-        tenantId: tenant.id,
-        schoolId: tenant.school.id,
-        teacherId: user.teacher?.id,
-        product: "educai",
-        plan: nextPlan,
-        requestedPlan: input.reference.planCode,
-        paymentStatus,
-      });
+      try {
+        await this.updateSupabaseUserPlanByEmail(user.email, {
+          role: user.role,
+          tenantId: tenant.id,
+          schoolId: tenant.school.id,
+          teacherId: user.teacher?.id,
+          product: "educai",
+          plan: nextPlan,
+          requestedPlan: input.reference.planCode,
+          paymentStatus,
+        });
+      } catch (error) {
+        failedSyncEmails.push(user.email);
+        this.logger.warn(
+          {
+            tenantId: tenant.id,
+            errorMessage: error instanceof Error ? error.message : "unknown",
+          },
+          "mercadopago.webhook.supabase_sync_failed",
+        );
+      }
+    }
+
+    if (failedSyncEmails.length > 0) {
+      // Registro durable para reconciliación (no incluye PII más allá del recuento).
+      await this.recordSupabaseSyncFailure(tenant.id, nextPlan, paymentStatus, failedSyncEmails);
+      // Relanzamos: MercadoPago reintenta y, como el BillingEvent no se marca procesado,
+      // el evento se reprocesa hasta que la sincronización quede consistente.
+      throw new ServiceUnavailableException(
+        `No se pudo sincronizar el plan en Supabase para ${failedSyncEmails.length} usuario(s) del tenant ${tenant.id}`,
+      );
     }
 
     return {
@@ -489,6 +523,37 @@ export class MercadoPagoWebhookService {
       plan: nextPlan,
       paymentStatus,
     };
+  }
+
+  private async recordSupabaseSyncFailure(
+    tenantId: string,
+    plan: string,
+    paymentStatus: string,
+    failedEmails: string[],
+  ): Promise<void> {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          tenantId,
+          action: "mercadopago.webhook.supabase_sync_failed",
+          entity: "Tenant",
+          entityId: tenantId,
+          metadata: {
+            plan,
+            paymentStatus,
+            failedUserCount: failedEmails.length,
+            // emails redactados por el logger; aquí los guardamos para reconciliación operativa.
+            failedEmails,
+          },
+        },
+      });
+    } catch (error) {
+      // El audit trail es best-effort: si falla, ya quedó el log estructurado.
+      this.logger.warn(
+        { tenantId, errorMessage: error instanceof Error ? error.message : "unknown" },
+        "mercadopago.webhook.supabase_sync_failure_audit_failed",
+      );
+    }
   }
 
   private assertValidSignature(input: {
@@ -503,17 +568,32 @@ export class MercadoPagoWebhookService {
     if (!input.signature || !input.requestId) {
       throw new UnauthorizedException("Falta firma de Mercado Pago");
     }
+    if (!input.dataId) {
+      // Sin data.id firmado no podemos atar la firma al pago: rechazamos.
+      this.logger.warn({ reason: "missing_signed_data_id" }, "mercadopago.signature.invalid");
+      throw new UnauthorizedException("Falta data.id firmado de Mercado Pago");
+    }
 
     const valid = isValidMercadoPagoSignature({
       dataId: input.dataId,
       requestId: input.requestId,
       secret,
       signature: input.signature,
+      toleranceMs: this.signatureToleranceMs(),
     });
     if (!valid) {
       this.logger.warn({ hasSignature: true }, "mercadopago.signature.invalid");
       throw new UnauthorizedException("Firma de Mercado Pago invalida");
     }
+  }
+
+  private signatureToleranceMs(): number | undefined {
+    const raw = this.config.get<string>("MERCADOPAGO_SIGNATURE_TOLERANCE_MS")?.trim();
+    if (!raw) {
+      return undefined;
+    }
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
   }
 
   private async fetchPayment(paymentId: string): Promise<MercadoPagoPayment> {

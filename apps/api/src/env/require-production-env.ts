@@ -31,6 +31,11 @@ export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
   assertDatabaseUrlUsesEducaiSchema(env.DATABASE_URL);
   assertProductionFlag("TWILIO_SKIP_SIGNATURE_VALIDATION", env.TWILIO_SKIP_SIGNATURE_VALIDATION);
   assertProductionFlag("TWILIO_DRY_RUN", env.TWILIO_DRY_RUN);
+  // Activar suscripciones pagas sin pago real no puede quedar habilitado en produccion.
+  assertProductionFlag(
+    "APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS",
+    env.APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS,
+  );
 
   if (env.SUPABASE_SECRET_KEY?.trim() || env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     return;

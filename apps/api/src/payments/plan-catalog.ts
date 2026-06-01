@@ -57,3 +57,27 @@ export function validatePaidAmount(
   }
   return { ok: true, expected, paid: paidAmount };
 }
+
+export type MappedPaymentStatus = "ACTIVE" | "PAST_DUE" | "CANCELED";
+
+/**
+ * Decide el plan resultante de un evento de pago, evitando degradar acceso ya pagado:
+ *  - ACTIVE   → activa el plan solicitado.
+ *  - CANCELED → degrada a "free" (refund/chargeback/cancelación: estado terminal).
+ *  - PAST_DUE → conserva el plan vigente (evento transitorio o notificación tardía;
+ *               MercadoPago no garantiza orden de entrega).
+ */
+export function resolveNextPlan(
+  mappedStatus: MappedPaymentStatus,
+  currentPlan: string,
+  requestedPlanCode: string,
+): string {
+  switch (mappedStatus) {
+    case "ACTIVE":
+      return requestedPlanCode;
+    case "CANCELED":
+      return "free";
+    case "PAST_DUE":
+      return currentPlan && currentPlan.trim() ? currentPlan.trim() : "free";
+  }
+}

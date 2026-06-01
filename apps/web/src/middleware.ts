@@ -21,7 +21,13 @@ function safeNextPath(value: string | null) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (process.env.NODE_ENV === "development" && pathname.startsWith("/app")) {
+  // Bypass de auth SOLO en desarrollo y con opt-in explícito. Nunca en producción,
+  // aunque NODE_ENV esté mal seteado en un entorno accesible.
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.NEXT_PUBLIC_DISABLE_APP_AUTH === "true" &&
+    pathname.startsWith("/app")
+  ) {
     return NextResponse.next();
   }
 
@@ -29,6 +35,13 @@ export async function middleware(request: NextRequest) {
   const hasSession = Boolean(user);
   const role =
     extractRoleFromMetadata(user?.app_metadata) ?? extractRoleFromMetadata(user?.user_metadata);
+
+  // Fail-closed: sin sesión, las rutas protegidas redirigen a /login (preservando el destino).
+  if (!hasSession && (pathname.startsWith("/app") || pathname.startsWith("/familia"))) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (pathname.startsWith("/app") && hasSession && role === "PARENT") {
     return NextResponse.redirect(new URL("/familia", request.url));
