@@ -73,9 +73,14 @@ export class CrisisAlertService {
     }
 
     const body = this.buildMessage(input);
+    const template = this.buildTemplate(input);
 
     try {
-      const send = await this.sender.send({ toWhatsappPhone: recipient, body });
+      const send = await this.sender.send({
+        toWhatsappPhone: recipient,
+        body,
+        ...(template ?? {}),
+      });
       this.logger.warn(
         {
           event: "crisis_alert.sent",
@@ -138,6 +143,53 @@ export class CrisisAlertService {
 
     const global = this.config.get<string>("CRISIS_ALERT_WHATSAPP_TO")?.trim();
     return global || null;
+  }
+
+  /**
+   * Plantilla de WhatsApp aprobada (Content API) para la alerta. Es lo que permite que
+   * el aviso salga aunque la ventana de 24 hs esté cerrada (mensaje iniciado por el
+   * negocio). Si no hay `CRISIS_ALERT_TEMPLATE_SID`, se cae al texto libre — que solo
+   * se entrega dentro de la ventana; por eso, en producción, avisamos por log.
+   *
+   * Variables: {{1}} alumno, {{2}} severidad, {{3}} link al panel.
+   */
+  private buildTemplate(input: CrisisAlertInput): {
+    contentSid: string;
+    contentVariables: Record<string, string>;
+  } | null {
+    const contentSid = this.config.get<string>("CRISIS_ALERT_TEMPLATE_SID")?.trim();
+    if (!contentSid) {
+      if (this.config.get<string>("NODE_ENV") === "production") {
+        this.logger.warn(
+          {
+            event: "crisis_alert.no_template",
+            tenantId: input.student.tenantId,
+            severity: input.severity,
+          },
+          "crisis_alert.no_template",
+        );
+      }
+      return null;
+    }
+
+    const sev = input.severity === "critical" ? "CRÍTICA" : "ALTA";
+    return {
+      contentSid,
+      contentVariables: {
+        "1": `${input.student.studentName} (${input.student.grade}° grado)`,
+        "2": sev,
+        "3": this.panelLink(),
+      },
+    };
+  }
+
+  /** Link al panel de EducAI para que el equipo entre y actúe. */
+  private panelLink(): string {
+    const base = this.config.get<string>("PUBLIC_APP_URL")?.trim();
+    if (!base) {
+      return "el panel de EducAI";
+    }
+    return `${base.replace(/\/+$/u, "")}/app`;
   }
 
   private buildMessage(input: CrisisAlertInput): string {
