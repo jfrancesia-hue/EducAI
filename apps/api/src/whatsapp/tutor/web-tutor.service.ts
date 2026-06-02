@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { getApoyoAIModelForPlan, TutorAgent, type LlmClient } from "@educai/ai";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
+import { CrisisAlertService } from "../agent/crisis-alert.service.js";
 import { HumanHandoffService } from "../agent/human-handoff.service.js";
 import { RateLimitExceededError } from "../webhooks/errors/webhook.errors.js";
 import { ConversationStoreService } from "./conversation-store.service.js";
@@ -28,6 +29,7 @@ export class WebTutorService {
     private readonly resolver: StudentResolverService,
     private readonly conversation: ConversationStoreService,
     private readonly humanHandoff: HumanHandoffService,
+    private readonly crisisAlert: CrisisAlertService,
     private readonly rateLimiter: RateLimiterService,
     @Inject(WHATSAPP_AGENT_LLM) private readonly llm: LlmClient,
   ) {}
@@ -112,6 +114,24 @@ export class WebTutorService {
     });
 
     if (response.safety.status === "escalate") {
+      const crisis = response.safety.crisisAlert;
+
+      // Alerta en tiempo real al EQUIPO de crisis (nunca a la familia). Best-effort:
+      // si falla, el alumno ya recibió contención y el handoff queda registrado.
+      let alertResult: Awaited<ReturnType<CrisisAlertService["notifyCrisis"]>> | undefined;
+      try {
+        alertResult = await this.crisisAlert.notifyCrisis({
+          student,
+          conversationId: stored.conversationId,
+          severity: crisis?.severity ?? "high",
+          signals: response.safety.signals,
+          inboundMessage: input.message,
+          helplines: crisis?.helplines ?? [],
+        });
+      } catch {
+        // Se registra igual en el handoff de abajo.
+      }
+
       await this.humanHandoff.create({
         student,
         conversationId: stored.conversationId,
@@ -122,7 +142,9 @@ export class WebTutorService {
         metadata: {
           safetyStatus: response.safety.status,
           safetySignals: response.safety.signals,
-          crisisSeverity: response.safety.crisisAlert?.severity,
+          crisisSeverity: crisis?.severity,
+          crisisAlertDelivered: alertResult?.delivered ?? false,
+          crisisAlertRecipient: alertResult?.recipientMasked,
           channel: "web",
         },
       });

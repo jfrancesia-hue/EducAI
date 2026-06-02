@@ -1,6 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
   AudioService,
+  type ContentSafetyResult,
+  filterStudentContent,
   getApoyoAIModelForPlan,
   type LlmClient,
   OcrService,
@@ -175,9 +177,20 @@ export class TutorOrchestratorService {
 
   private async handle(message: InboundMessage): Promise<OrchestratorOutcome> {
     const student = await this.resolver.resolveByWhatsapp(message.fromWhatsappPhone, message.body);
-    await this.rateLimiter.assertCanReceive(student);
 
     const inboundBody = await this.materializeBody(message);
+
+    // SEGURIDAD DEL MENOR PRIMERO: la detección de crisis (autolesión, suicidio,
+    // abuso, violencia) corre ANTES del gate de cuota/suscripción y ANTES de
+    // cualquier ruteo (comando/diagnóstico/institucional/conversación). Así una
+    // señal de crisis nunca queda sin alerta por estar sin cuota, con la
+    // suscripción inactiva o a mitad de un diagnóstico.
+    const safety = filterStudentContent(inboundBody);
+    if (safety.status === "escalate") {
+      return this.handleCrisis(student, message, inboundBody, safety);
+    }
+
+    await this.rateLimiter.assertCanReceive(student);
     const subject = this.inferSubject(inboundBody);
 
     // Comandos de control siempre tienen prioridad (incluso /pausar durante diagnóstico)
@@ -524,6 +537,133 @@ export class TutorOrchestratorService {
       reply: tutorResponse.content,
       channel: "academic",
     };
+  }
+
+  /**
+   * Camino de crisis UNIFICADO para todos los flujos (conversación, diagnóstico,
+   * institucional, incluso sin cuota/suscripción). Prioriza dos efectos: que el
+   * alumno reciba contención + líneas de ayuda, y que el EQUIPO de crisis sea
+   * alertado ya. Cada paso es best-effort e independiente: si uno falla, los demás
+   * igual ocurren. NUNCA se notifica a la familia de forma automática.
+   */
+  private async handleCrisis(
+    student: ResolvedStudent,
+    message: InboundMessage,
+    inboundBody: string,
+    safety: ContentSafetyResult,
+  ): Promise<OrchestratorOutcome> {
+    const severity = safety.crisisAlert?.severity ?? "high";
+    const helplines = safety.crisisAlert?.helplines ?? [];
+    const reply = this.buildCrisisReply(student.studentName, helplines);
+
+    // 1) El alumno recibe contención + líneas de ayuda SIEMPRE.
+    await this.safeSendFallback(this.replyPhone(student), reply);
+
+    // 2) Persistencia best-effort para obtener conversationId.
+    let conversationId = `crisis:${message.messageSid}`;
+    try {
+      const stored = await this.conversation.appendInboundMessage({
+        student,
+        subject: "crisis",
+        body: inboundBody,
+        mediaUrl: message.mediaUrl,
+        mediaType: message.mediaType,
+        twilioMessageSid: message.messageSid,
+        safetyStatus: "escalate",
+      });
+      conversationId = stored.conversationId;
+      await this.conversation.appendOutboundMessage({
+        conversationId,
+        tenantId: student.tenantId,
+        body: reply,
+        modelUsed: "safety-policy",
+        tokensUsed: 0,
+        safetyStatus: "escalate",
+      });
+    } catch (error) {
+      this.log.error(
+        { err: error instanceof Error ? error.message : String(error) },
+        "orchestrator.crisis_persist_failed",
+      );
+    }
+
+    // 3) Alerta al EQUIPO de crisis (best-effort, prioridad máxima).
+    let alertResult: CrisisAlertResult | undefined;
+    try {
+      alertResult = await this.crisisAlert.notifyCrisis({
+        student,
+        conversationId,
+        severity,
+        signals: safety.signals,
+        inboundMessage: inboundBody,
+        helplines,
+      });
+    } catch (error) {
+      this.log.error(
+        { err: error instanceof Error ? error.message : String(error) },
+        "orchestrator.crisis_alert_failed",
+      );
+    }
+
+    // 4) Handoff durable best-effort.
+    try {
+      await this.humanHandoff.create({
+        student,
+        conversationId,
+        source: "academic",
+        reason: "safety_escalation",
+        inboundMessage: inboundBody,
+        outboundMessage: reply,
+        metadata: {
+          safetyStatus: "escalate",
+          safetySignals: safety.signals,
+          crisisSeverity: severity,
+          crisisAlertDelivered: alertResult?.delivered ?? false,
+          crisisAlertRecipient: alertResult?.recipientMasked,
+          crisisAlertReason: alertResult?.reason,
+        },
+      });
+    } catch (error) {
+      this.log.error(
+        { err: error instanceof Error ? error.message : String(error) },
+        "orchestrator.crisis_handoff_failed",
+      );
+    }
+
+    this.log.warn(
+      {
+        studentId: student.studentId,
+        familyId: student.familyId,
+        severity,
+        signals: safety.signals,
+        crisisAlertDelivered: alertResult?.delivered ?? false,
+      },
+      "orchestrator.crisis_handled",
+    );
+
+    return {
+      status: "answered",
+      conversationId,
+      bypassedLlm: true,
+      reply,
+      safetyStatus: "escalate",
+      channel: "academic",
+    };
+  }
+
+  private buildCrisisReply(studentName: string, helplines: string[]): string {
+    const lines = [
+      `Gracias por confiar en mí y contarme esto, ${studentName}. Lo que sentís importa y no estás solo/a. 💙`,
+      "Voy a avisarle a una persona del equipo para que te acompañe.",
+      "Si estás en peligro ahora mismo o necesitás hablar ya, comunicate con:",
+    ];
+    lines.push(
+      ...(helplines.length
+        ? helplines.map((line) => `• ${line}`)
+        : ["• Línea 102 (chicos y adolescentes, gratis, 24hs)"]),
+    );
+    lines.push("Y buscá a un adulto de confianza para que te acompañe.");
+    return lines.join("\n");
   }
 
   private async handleInstitutionalConversation(
