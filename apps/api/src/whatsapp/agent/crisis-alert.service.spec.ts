@@ -20,14 +20,27 @@ const STUDENT: ResolvedStudent = {
 function build(opts: {
   envRecipient?: string;
   tenantMetadata?: unknown;
+  templateSid?: string;
+  publicAppUrl?: string;
   sendImpl?: () => Promise<{ messageSid: string; status: string }>;
 }) {
   const config = {
-    get: (key: string) => (key === "CRISIS_ALERT_WHATSAPP_TO" ? opts.envRecipient : undefined),
+    get: (key: string) => {
+      if (key === "CRISIS_ALERT_WHATSAPP_TO") return opts.envRecipient;
+      if (key === "CRISIS_ALERT_TEMPLATE_SID") return opts.templateSid;
+      if (key === "PUBLIC_APP_URL") return opts.publicAppUrl;
+      return undefined;
+    },
   };
   const sender = {
-    send: vi.fn((_input: { toWhatsappPhone: string; body: string }) =>
-      opts.sendImpl ? opts.sendImpl() : Promise.resolve({ messageSid: "SM1", status: "queued" }),
+    send: vi.fn(
+      (_input: {
+        toWhatsappPhone: string;
+        body: string;
+        contentSid?: string;
+        contentVariables?: Record<string, string>;
+      }) =>
+        opts.sendImpl ? opts.sendImpl() : Promise.resolve({ messageSid: "SM1", status: "queued" }),
     ),
   };
   const prisma = {
@@ -73,6 +86,36 @@ describe("CrisisAlertService", () => {
     expect(arg.body).toContain("Mateo");
     expect(arg.body).toContain("crisis_suicide");
     expect(arg.body).toContain("conv_1");
+  });
+
+  it("usa la plantilla de WhatsApp cuando hay CRISIS_ALERT_TEMPLATE_SID (sale fuera de la ventana de 24h)", async () => {
+    const { service, sender } = build({
+      envRecipient: "+5493810000000",
+      templateSid: "HX_crisis_1",
+      publicAppUrl: "https://educai.com.ar/",
+    });
+
+    await service.notifyCrisis(INPUT);
+
+    const arg = sender.send.mock.calls[0]![0];
+    expect(arg.contentSid).toBe("HX_crisis_1");
+    expect(arg.contentVariables).toEqual({
+      "1": "Mateo (5° grado)",
+      "2": "CRÍTICA",
+      "3": "https://educai.com.ar/app",
+    });
+    // El body sigue yendo como fallback (dentro de la ventana / dry-run).
+    expect(arg.body).toContain("ALERTA DE CRISIS");
+  });
+
+  it("sin CRISIS_ALERT_TEMPLATE_SID manda texto libre (sin contentSid)", async () => {
+    const { service, sender } = build({ envRecipient: "+5493810000000" });
+
+    await service.notifyCrisis(INPUT);
+
+    const arg = sender.send.mock.calls[0]![0];
+    expect(arg.contentSid).toBeUndefined();
+    expect(arg.body).toContain("ALERTA DE CRISIS");
   });
 
   it("prioriza el override por tenant sobre el env", async () => {
