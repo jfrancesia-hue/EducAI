@@ -11,12 +11,15 @@ import {
   Info,
   LineChart,
   LogOut,
+  ShieldAlert,
   Sparkles,
   UserRound,
   UsersRound,
 } from "lucide-react";
 
 import { Button } from "@educai/ui";
+
+import { isSecurityAdmin, useRole } from "./role-context";
 
 const navItems = [
   {
@@ -48,6 +51,14 @@ const navItems = [
     activeTone: "bg-[#7c6cff] text-white",
   },
   {
+    label: "Seguridad",
+    icon: ShieldAlert,
+    href: "/app/seguridad",
+    tone: "bg-[#fde8e8] text-[#b3261e]",
+    activeTone: "bg-[#d92d20] text-white",
+    adminOnly: true,
+  },
+  {
     label: "Mi perfil",
     icon: UserRound,
     href: "/app/perfil",
@@ -60,6 +71,7 @@ const navItems = [
   href: Route;
   tone: string;
   activeTone: string;
+  adminOnly?: boolean;
 }>;
 
 type AppShellProps = {
@@ -78,7 +90,10 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const role = useRole();
   const isPlanningPage = pathname === "/app/planificar";
+  // 'Seguridad' (crisis/handoffs) solo para admins; los docentes no lo ven.
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isSecurityAdmin(role));
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(98,220,202,0.72),transparent_34%),linear-gradient(135deg,#f7f8f3_0%,#e7fbf7_46%,#fff8d7_100%)] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
@@ -89,73 +104,73 @@ export function AppShell({
         ].join(" ")}
       >
         {!hideNavigation ? (
-        <aside className="hidden border-r border-[#0c6f62]/20 bg-[linear-gradient(180deg,#075f53_0%,#0a7668_54%,#11231f_100%)] p-4 text-white lg:flex lg:flex-col lg:justify-between">
-          <div>
-            <Link href="/app" className="flex items-center gap-3 rounded-lg bg-white/12 p-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8d95c] text-[#075f53]">
-                <GraduationCap className="h-6 w-6" aria-hidden="true" />
-              </span>
-              <span>
-                <span className="block font-display text-lg font-semibold leading-none">
-                  EducAI
+          <aside className="hidden border-r border-[#0c6f62]/20 bg-[linear-gradient(180deg,#075f53_0%,#0a7668_54%,#11231f_100%)] p-4 text-white lg:flex lg:flex-col lg:justify-between">
+            <div>
+              <Link href="/app" className="flex items-center gap-3 rounded-lg bg-white/12 p-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8d95c] text-[#075f53]">
+                  <GraduationCap className="h-6 w-6" aria-hidden="true" />
                 </span>
-                <span className="mt-1 block text-[13px] leading-5 text-white/78">Docentes</span>
-              </span>
-            </Link>
+                <span>
+                  <span className="block font-display text-lg font-semibold leading-none">
+                    EducAI
+                  </span>
+                  <span className="mt-1 block text-[13px] leading-5 text-white/78">Docentes</span>
+                </span>
+              </Link>
 
-            <nav className="mt-8 grid gap-2">
-              {navItems.map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={[
-                      "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
-                      active
-                        ? "bg-white text-[#075f53] shadow-whisper"
-                        : "text-white/78 hover:bg-white/12 hover:text-white",
-                    ].join(" ")}
-                  >
-                    <span
+              <nav className="mt-8 grid gap-2">
+                {visibleNavItems.map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
                       className={[
-                        "flex h-9 w-9 items-center justify-center rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
-                        active ? item.activeTone : item.tone,
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium leading-6 transition",
+                        active
+                          ? "bg-white text-[#075f53] shadow-whisper"
+                          : "text-white/78 hover:bg-white/12 hover:text-white",
                       ].join(" ")}
                     >
-                      <item.icon className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="rounded-lg border border-white/18 bg-white/12 p-4">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#f8d95c]" />
-              <p className="text-[15px] font-semibold leading-6">Flujo principal</p>
+                      <span
+                        className={[
+                          "flex h-9 w-9 items-center justify-center rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
+                          active ? item.activeTone : item.tone,
+                        ].join(" ")}
+                      >
+                        <item.icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
-            <p className="mt-2 text-[13px] leading-5 text-white/70">
-              Crear una clase ordenada con objetivos, actividades y evaluación.
-            </p>
-            <Link
-              href="/app/planificar"
-              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#ff7a1a] text-sm font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] transition hover:-translate-y-0.5 hover:bg-[#ea6508]"
-            >
-              Crear clase
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <Link
-              href="/login/salir"
-              className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/10 text-sm font-semibold text-white/72 transition hover:bg-white/15 hover:text-white"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Salir
-            </Link>
-          </div>
-        </aside>
+
+            <div className="rounded-lg border border-white/18 bg-white/12 p-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#f8d95c]" />
+                <p className="text-[15px] font-semibold leading-6">Flujo principal</p>
+              </div>
+              <p className="mt-2 text-[13px] leading-5 text-white/70">
+                Crear una clase ordenada con objetivos, actividades y evaluación.
+              </p>
+              <Link
+                href="/app/planificar"
+                className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#ff7a1a] text-sm font-bold text-white shadow-[0_14px_30px_rgba(255,122,26,0.28)] transition hover:-translate-y-0.5 hover:bg-[#ea6508]"
+              >
+                Crear clase
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/login/salir"
+                className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/10 text-sm font-semibold text-white/72 transition hover:bg-white/15 hover:text-white"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Salir
+              </Link>
+            </div>
+          </aside>
         ) : null}
 
         <section className="min-w-0">
@@ -194,33 +209,33 @@ export function AppShell({
           </header>
 
           {!hideNavigation ? (
-          <nav className="flex gap-2 overflow-x-auto border-b border-[#62dcca]/25 bg-white/74 px-4 py-3 sm:px-6 lg:hidden">
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={[
-                    "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
-                    active
-                      ? "bg-[#075f53] text-white shadow-whisper"
-                      : "border border-[#d5e1dc] bg-white text-[#33423c] shadow-whisper",
-                  ].join(" ")}
-                >
-                  <span
+            <nav className="flex gap-2 overflow-x-auto border-b border-[#62dcca]/25 bg-white/74 px-4 py-3 sm:px-6 lg:hidden">
+              {visibleNavItems.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
                     className={[
-                      "flex h-7 w-7 items-center justify-center rounded-full",
-                      active ? item.activeTone : item.tone,
+                      "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[15px] font-medium leading-6",
+                      active
+                        ? "bg-[#075f53] text-white shadow-whisper"
+                        : "border border-[#d5e1dc] bg-white text-[#33423c] shadow-whisper",
                     ].join(" ")}
                   >
-                    <item.icon className="h-3.5 w-3.5" aria-hidden="true" />
-                  </span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+                    <span
+                      className={[
+                        "flex h-7 w-7 items-center justify-center rounded-full",
+                        active ? item.activeTone : item.tone,
+                      ].join(" ")}
+                    >
+                      <item.icon className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
           ) : null}
 
           {statusNote ? (

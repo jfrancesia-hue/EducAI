@@ -32,28 +32,38 @@ export class HandoffService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listOpen(tenantId: string) {
+    return this.list(tenantId, false);
+  }
+
+  /**
+   * Lista handoffs/crisis del tenant. Por defecto solo los activos (no cerrados);
+   * con `includeResolved` también trae el historial de los ya resueltos, para el
+   * dashboard de Seguridad.
+   */
+  async list(tenantId: string, includeResolved: boolean) {
     const handoffs = await this.prisma.auditLog.findMany({
       where: {
         tenantId,
         action: HANDOFF_ACTION,
       },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: includeResolved ? 300 : 100,
     });
 
-    const open = handoffs
-      .map((handoff) => this.toRecord(handoff))
-      .filter((handoff) => handoff.status !== "closed");
+    const records = handoffs.map((handoff) => this.toRecord(handoff));
+    const visible = includeResolved
+      ? records
+      : records.filter((handoff) => handoff.status !== "closed");
 
     // Las crisis primero (critical > high > resto); dentro de cada grupo, más reciente
     // primero (la query ya viene ordenada por createdAt desc, así que el sort estable
     // preserva ese orden secundario).
-    open.sort(
+    visible.sort(
       (a, b) =>
         (SEVERITY_RANK[b.crisisSeverity ?? ""] ?? 0) - (SEVERITY_RANK[a.crisisSeverity ?? ""] ?? 0),
     );
 
-    return { data: open };
+    return { data: visible };
   }
 
   async close(input: {

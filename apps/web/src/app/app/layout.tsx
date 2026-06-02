@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getEducaiAppAuth } from "../../lib/supabase/app-auth";
 import { extractRoleFromMetadata } from "../../lib/supabase/roles";
+import { RoleProvider } from "./_components/role-context";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function ProtectedAppLayout({ children }: { children: React
     process.env.NODE_ENV === "development" &&
     process.env.NEXT_PUBLIC_DISABLE_APP_AUTH === "true"
   ) {
-    return children;
+    return <RoleProvider role="SUPER_ADMIN">{children}</RoleProvider>;
   }
 
   const { user } = await getEducaiAppAuth();
@@ -30,5 +31,5 @@ export default async function ProtectedAppLayout({ children }: { children: React
     redirect("/acceso-denegado");
   }
 
-  return children;
+  return <RoleProvider role={role}>{children}</RoleProvider>;
 }
