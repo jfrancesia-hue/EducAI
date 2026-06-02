@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { APOYOAI_LIMITS, normalizeApoyoAIPlan } from "@educai/ai";
+import { APOYOAI_LIMITS, type ApoyoAIPlan, normalizeApoyoAIPlan } from "@educai/ai";
 import { PrismaService } from "../prisma/prisma.service.js";
 import {
   RateLimitExceededError,
@@ -34,11 +34,9 @@ export class RateLimiterService {
   constructor(private readonly prisma: PrismaService) {}
 
   async assertCanReceive(student: ResolvedStudent): Promise<RateLimitDecision> {
-    if (!ACCEPTED_STATUSES.has(student.subscription.status)) {
-      throw new SubscriptionInactiveError(student.familyId, student.subscription.status);
-    }
-
     const plan = normalizeApoyoAIPlan(student.subscription.plan);
+    this.assertSubscriptionActive(student, plan);
+
     const planLimits = APOYOAI_LIMITS[plan];
     const limit = "whatsapp_texto" in planLimits ? planLimits.whatsapp_texto.diario_por_hijo : null;
 
@@ -71,11 +69,9 @@ export class RateLimiterService {
   }
 
   async assertCanUseApp(student: ResolvedStudent): Promise<RateLimitDecision> {
-    if (!ACCEPTED_STATUSES.has(student.subscription.status)) {
-      throw new SubscriptionInactiveError(student.familyId, student.subscription.status);
-    }
-
     const plan = normalizeApoyoAIPlan(student.subscription.plan);
+    this.assertSubscriptionActive(student, plan);
+
     const planLimits = APOYOAI_LIMITS[plan];
     const appLimit = planLimits.app_consultas;
     const lifetimeLimit = "total_vida" in appLimit ? appLimit.total_vida : null;
@@ -123,6 +119,26 @@ export class RateLimiterService {
       used,
       remaining: limit - used,
     };
+  }
+
+  /**
+   * Suscripción activa = status aceptado Y, para planes pagos, período vigente.
+   * MercadoPago cobra una sola vez (no manda renovación), así que sin este chequeo
+   * una suscripción quedaba ACTIVE para siempre = acceso pago vitalicio gratis.
+   * Los planes free no tienen vencimiento (se rigen por sus cuotas).
+   */
+  private assertSubscriptionActive(student: ResolvedStudent, plan: ApoyoAIPlan): void {
+    if (!ACCEPTED_STATUSES.has(student.subscription.status)) {
+      throw new SubscriptionInactiveError(student.familyId, student.subscription.status);
+    }
+
+    if (plan !== "free") {
+      const raw = student.subscription.currentPeriodEnd;
+      const end = raw instanceof Date ? raw.getTime() : new Date(raw).getTime();
+      if (Number.isFinite(end) && end <= Date.now()) {
+        throw new SubscriptionInactiveError(student.familyId, "EXPIRED");
+      }
+    }
   }
 
   private startOfDayArgentina(reference: Date = new Date()): Date {

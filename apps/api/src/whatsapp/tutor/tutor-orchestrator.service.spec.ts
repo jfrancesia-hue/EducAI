@@ -17,7 +17,7 @@ const STUDENT: ResolvedStudent = {
     id: "sub_1",
     plan: "PREMIUM",
     status: "ACTIVE",
-    currentPeriodEnd: new Date(),
+    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   },
 };
 

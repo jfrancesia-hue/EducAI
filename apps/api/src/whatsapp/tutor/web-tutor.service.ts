@@ -4,7 +4,10 @@ import { getApoyoAIModelForPlan, TutorAgent, type LlmClient } from "@educai/ai";
 import { WHATSAPP_AGENT_LLM } from "../agent/agent-llm.token.js";
 import { CrisisAlertService } from "../agent/crisis-alert.service.js";
 import { HumanHandoffService } from "../agent/human-handoff.service.js";
-import { RateLimitExceededError } from "../webhooks/errors/webhook.errors.js";
+import {
+  RateLimitExceededError,
+  SubscriptionInactiveError,
+} from "../webhooks/errors/webhook.errors.js";
 import { ConversationStoreService } from "./conversation-store.service.js";
 import { RateLimiterService } from "./rate-limiter.service.js";
 import { StudentResolverService } from "./student-resolver.service.js";
@@ -65,6 +68,22 @@ export class WebTutorService {
     try {
       await this.rateLimiter.assertCanUseApp(student);
     } catch (error) {
+      // Suscripción vencida/inactiva detectada por el límite (ej. período pago vencido).
+      if (error instanceof SubscriptionInactiveError) {
+        return {
+          data: {
+            reply:
+              "La suscripción familiar no está activa. Cuando el pago quede confirmado, ApoyoAI va a responder desde este panel.",
+            conversationId: "",
+            studentId: student.studentId,
+            modelUsed: "subscription-policy",
+            tokensUsed: 0,
+            safetyStatus: "blocked",
+            channel: "web",
+          },
+        };
+      }
+
       if (!(error instanceof RateLimitExceededError)) {
         throw error;
       }
