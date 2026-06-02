@@ -313,9 +313,59 @@ describe("TutorOrchestratorService", () => {
     expect(m.llm.generate).not.toHaveBeenCalled();
     expect(m.sender.send).toHaveBeenCalled();
     expect(m.humanHandoff.create).toHaveBeenCalledTimes(1);
+    // La alerta al EQUIPO de crisis debe dispararse (no solo el handoff).
+    const crisisAlertMock = crisisAlertStub as unknown as {
+      notifyCrisis: ReturnType<typeof vi.fn>;
+    };
+    expect(crisisAlertMock.notifyCrisis).toHaveBeenCalledTimes(1);
     const sendArg = m.sender.send.mock.calls[0]?.[0] as { body: string };
     expect(sendArg.body).toContain("102");
     expect(sendArg.body).toContain("Mateo");
+  });
+
+  it("crisis durante el diagnóstico igual escala (no la traga el flujo de diagnóstico)", async () => {
+    const m = buildMocks();
+    // Alumno a mitad de un diagnóstico activo.
+    m.resolver.resolveByWhatsapp.mockResolvedValue({ ...STUDENT, diagnosticCompleted: false });
+    m.prisma.studentProfile.findUnique.mockResolvedValue({ diagnosticState: { step: 3 } });
+    m.diagnosticHandler.isInProgress.mockReturnValue(true);
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_crisis_diag",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "mi papá me pega y no aguanto más",
+    });
+
+    expect(outcome.safetyStatus).toBe("escalate");
+    expect(m.diagnosticHandler.handleAnswer).not.toHaveBeenCalled();
+    expect(m.llm.generate).not.toHaveBeenCalled();
+    const crisisAlertMock = crisisAlertStub as unknown as {
+      notifyCrisis: ReturnType<typeof vi.fn>;
+    };
+    expect(crisisAlertMock.notifyCrisis).toHaveBeenCalledTimes(1);
+    expect(m.humanHandoff.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("crisis sin cuota: igual escala aunque el rate limit rechace", async () => {
+    const m = buildMocks();
+    const orchestrator = buildOrchestrator(m);
+
+    const outcome = await orchestrator.enqueueInboundMessage({
+      messageSid: "SM_crisis_noquota",
+      fromWhatsappPhone: "whatsapp:+5493815550202",
+      toWhatsappPhone: "whatsapp:+1415555",
+      body: "me quiero matar",
+    });
+
+    expect(outcome.safetyStatus).toBe("escalate");
+    // La detección de crisis corre ANTES del gate de cuota/suscripción.
+    expect(m.rateLimiter.assertCanReceive).not.toHaveBeenCalled();
+    const crisisAlertMock = crisisAlertStub as unknown as {
+      notifyCrisis: ReturnType<typeof vi.fn>;
+    };
+    expect(crisisAlertMock.notifyCrisis).toHaveBeenCalledTimes(1);
   });
 
   it("consulta institucional sensible crea handoff humano", async () => {

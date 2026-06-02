@@ -20,8 +20,9 @@ export interface ContentSafetyResult {
   signals: SafetySignal[];
   blocked: boolean;
   /**
-   * Solo presente cuando hay señal de crisis. La orquestación debe disparar
-   * notificación al padre por email y derivar al alumno a recurso humano.
+   * Solo presente cuando hay señal de crisis. La orquestación debe alertar al
+   * EQUIPO de crisis (nunca a la familia de forma automática: en abuso intrafamiliar
+   * el agresor puede ser un familiar) y derivar al alumno a un recurso humano.
    */
   crisisAlert?: {
     severity: "high" | "critical";
@@ -218,7 +219,7 @@ export function filterStudentContent(message: string): ContentSafetyResult {
       crisisAlert: {
         severity,
         recommendation:
-          "Pausar la materia inmediatamente. Validar lo que el alumno expresó, derivar a adulto de confianza y a líneas de ayuda. Notificar al padre/tutor por email del incidente con timestamp.",
+          "Pausar la materia inmediatamente. Validar lo que el alumno expresó y derivar a un adulto de confianza / profesional y a las líneas de ayuda. Alertar al EQUIPO de crisis; NO notificar a la familia de forma automática (en casos de abuso el agresor puede ser un familiar).",
         helplines: HELPLINES_AR,
       },
     };
