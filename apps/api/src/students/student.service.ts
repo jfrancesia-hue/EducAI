@@ -1,5 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { DiagnosticService, type DiagnosticState } from "@educai/ai";
+import { ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  APOYOAI_LIMITS,
+  DiagnosticService,
+  type DiagnosticState,
+  normalizeApoyoAIPlan,
+} from "@educai/ai";
 import { Prisma } from "@educai/database";
 import { AppLogger } from "../common/logger/app-logger.service.js";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -22,6 +27,11 @@ export class StudentService {
   }
 
   async create(dto: CreateStudentDto, context: { tenantId: string; familyId: string }) {
+    // El límite de hijos por plan se aplica acá (server-side). Antes solo lo
+    // validaba el front, así que pegándole a POST /students con el token se podían
+    // crear hijos ilimitados en cualquier plan.
+    await this.assertChildrenQuota(context.familyId);
+
     const studentContacts = this.buildWhatsappContacts({
       tenantId: context.tenantId,
       studentPhone: dto.whatsappPhone,
@@ -67,6 +77,27 @@ export class StudentService {
     );
 
     return { data: student };
+  }
+
+  /** Aplica el tope de hijos del plan de ApoyoAI de la familia (free → 1). */
+  private async assertChildrenQuota(familyId: string): Promise<void> {
+    const subscription = await this.prisma.subscription.findFirst({
+      where: { familyId },
+      select: { planCode: true, plan: true },
+    });
+    const plan = normalizeApoyoAIPlan(subscription?.planCode ?? subscription?.plan ?? "free");
+    const planLimits = APOYOAI_LIMITS[plan] as Record<string, unknown>;
+    const maxChildren = typeof planLimits.hijos === "number" ? planLimits.hijos : 1;
+
+    const current = await this.prisma.student.count({
+      where: { familyId, deletedAt: null },
+    });
+
+    if (current >= maxChildren) {
+      throw new ForbiddenException(
+        `Tu plan (${plan}) permite hasta ${maxChildren} ${maxChildren === 1 ? "hijo" : "hijos"}. Subí de plan para agregar más.`,
+      );
+    }
   }
 
   async findByFamily(context: { tenantId: string; familyId: string }) {

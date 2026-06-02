@@ -22,7 +22,7 @@ function buildStudent(overrides: Partial<ResolvedStudent["subscription"]> = {}):
       id: "sub_1",
       plan: "FREE",
       status: "ACTIVE",
-      currentPeriodEnd: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       ...overrides,
     },
   };
@@ -93,6 +93,29 @@ describe("RateLimiterService", () => {
     await expect(
       service.assertCanReceive(buildStudent({ status: "CANCELED" })),
     ).rejects.toBeInstanceOf(SubscriptionInactiveError);
+  });
+
+  it("rechaza plan pago con período vencido (no hay acceso vitalicio)", async () => {
+    const prisma = buildPrisma(0);
+    const service = new RateLimiterService(prisma as never);
+
+    await expect(
+      service.assertCanReceive(
+        buildStudent({ plan: "BASIC", currentPeriodEnd: new Date(Date.now() - 1000) }),
+      ),
+    ).rejects.toBeInstanceOf(SubscriptionInactiveError);
+    expect(prisma.message.count).not.toHaveBeenCalled();
+  });
+
+  it("FREE no tiene vencimiento (período pasado no lo bloquea)", async () => {
+    const prisma = buildPrisma(3);
+    const service = new RateLimiterService(prisma as never);
+
+    const decision = await service.assertCanUseApp(
+      buildStudent({ plan: "free", currentPeriodEnd: new Date(Date.now() - 99 * 86_400_000) }),
+    );
+
+    expect(decision.allowed).toBe(true);
   });
 
   it("permite IN_GRACE_PERIOD en plan pago", async () => {

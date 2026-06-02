@@ -7,6 +7,10 @@ type PrismaMock = {
     create: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    count: ReturnType<typeof vi.fn>;
+  };
+  subscription: {
+    findFirst: ReturnType<typeof vi.fn>;
   };
   studentProfile: {
     findUnique: ReturnType<typeof vi.fn>;
@@ -27,6 +31,10 @@ function buildPrismaMock(): PrismaMock {
       create: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    subscription: {
+      findFirst: vi.fn().mockResolvedValue(null),
     },
     studentProfile: {
       findUnique: vi.fn(),

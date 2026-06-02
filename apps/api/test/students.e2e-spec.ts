@@ -18,6 +18,10 @@ const prismaMock = {
     create: vi.fn(),
     findFirst: vi.fn(),
     update: vi.fn(),
+    count: vi.fn().mockResolvedValue(0),
+  },
+  subscription: {
+    findFirst: vi.fn().mockResolvedValue(null),
   },
   studentProfile: {
     findUnique: vi.fn(),
@@ -322,6 +326,23 @@ describe("Students API (e2e)", () => {
     );
     expect(response.status).toBe(201);
     expect(response.body.data.id).toBe("stu_new");
+  });
+
+  it("POST /students rechaza al superar el límite de hijos del plan (free → 1)", async () => {
+    // Plan free (sin subscription) → tope 1 hijo; ya hay 1 → 403.
+    prismaMock.subscription.findFirst.mockResolvedValueOnce(null);
+    prismaMock.student.count.mockResolvedValueOnce(1);
+
+    const response = await request(app.getHttpServer())
+      .post("/students")
+      .set("Authorization", "Bearer token:family-1")
+      .send({
+        firstName: "Segundo",
+        lastName: "Hijo",
+        grade: 4,
+      });
+
+    expect(response.status).toBe(403);
   });
 
   it("POST /students sin tenantId en claims devuelve 403", async () => {
