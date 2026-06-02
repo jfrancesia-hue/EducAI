@@ -18,3 +18,8 @@ export function useRole(): EducAiRole | null {
 export function isSecurityAdmin(role: EducAiRole | null): boolean {
   return role === "SUPER_ADMIN" || role === "SCHOOL_ADMIN";
 }
+
+/** Dueño de la plataforma: ve métricas de negocio (ingresos, MRR). */
+export function isOwner(role: EducAiRole | null): boolean {
+  return role === "SUPER_ADMIN";
+}

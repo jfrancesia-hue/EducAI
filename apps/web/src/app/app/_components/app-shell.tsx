@@ -5,6 +5,7 @@ import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
+  BarChart3,
   ClipboardList,
   GraduationCap,
   Home,
@@ -19,7 +20,7 @@ import {
 
 import { Button } from "@educai/ui";
 
-import { isSecurityAdmin, useRole } from "./role-context";
+import { isOwner, isSecurityAdmin, useRole } from "./role-context";
 
 const navItems = [
   {
@@ -59,6 +60,14 @@ const navItems = [
     adminOnly: true,
   },
   {
+    label: "Métricas",
+    icon: BarChart3,
+    href: "/app/metricas",
+    tone: "bg-[#e7efff] text-[#1d4ed8]",
+    activeTone: "bg-[#2563eb] text-white",
+    ownerOnly: true,
+  },
+  {
     label: "Mi perfil",
     icon: UserRound,
     href: "/app/perfil",
@@ -72,6 +81,7 @@ const navItems = [
   tone: string;
   activeTone: string;
   adminOnly?: boolean;
+  ownerOnly?: boolean;
 }>;
 
 type AppShellProps = {
@@ -92,8 +102,17 @@ export function AppShell({
   const pathname = usePathname();
   const role = useRole();
   const isPlanningPage = pathname === "/app/planificar";
-  // 'Seguridad' (crisis/handoffs) solo para admins; los docentes no lo ven.
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isSecurityAdmin(role));
+  // 'Seguridad' (crisis/handoffs) solo para admins; 'Métricas' (ingresos) solo para
+  // el dueño. Los docentes no los ven.
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.adminOnly && !isSecurityAdmin(role)) {
+      return false;
+    }
+    if (item.ownerOnly && !isOwner(role)) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(98,220,202,0.72),transparent_34%),linear-gradient(135deg,#f7f8f3_0%,#e7fbf7_46%,#fff8d7_100%)] p-3 text-[15px] text-[#14120f] [text-rendering:optimizeLegibility] sm:p-5">
