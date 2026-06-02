@@ -3,6 +3,31 @@ import { EDUCAI_LIMITS, normalizeEducAIPlan } from "@educai/ai";
 import { Prisma } from "@educai/database";
 
 import { PrismaService } from "../prisma/prisma.service.js";
+import { getExpectedPriceArs } from "../payments/plan-catalog.js";
+
+const MONTH_LABELS = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+];
+
+const PLAN_LABELS: Record<string, string> = {
+  "docente-individual": "EducAI · Docente",
+  "docente-pro": "EducAI · Docente Pro",
+  basico: "ApoyoAI · Básico",
+  plus: "ApoyoAI · Plus",
+  familiar: "ApoyoAI · Familiar",
+  intensivo: "ApoyoAI · Intensivo",
+};
 
 const HANDOFF_ACTION = "human_handoff.requested";
 
@@ -920,6 +945,204 @@ export class DashboardService {
         })),
       },
     };
+  }
+
+  /**
+   * Métricas de negocio (solo dueño/SUPER_ADMIN): usuarios, crecimiento, MRR
+   * proyectado (suscripciones/planes activos × precio de lista de plan-catalog),
+   * conversión, distribución por plan, altas por mes y cobros recientes.
+   *
+   * El MRR es PROYECTADO (no suma de cobros reales): ApoyoAI sale de Subscription
+   * activas; EducAI del plan vigente en tenant.metadata.plan.
+   */
+  async getMetricsOverview() {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 86_400_000);
+    const twelveMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+
+    const [
+      userCount,
+      newUsers30d,
+      prevUsers30d,
+      tenantCount,
+      schoolCount,
+      teacherCount,
+      studentCount,
+      lessonPlanCount,
+      activeSubs,
+      educaiTenants,
+      recentBilling,
+      recentUsers,
+      usersForChart,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where: { deletedAt: null, createdAt: { gte: thirtyDaysAgo } } }),
+      this.prisma.user.count({
+        where: { deletedAt: null, createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } },
+      }),
+      this.prisma.tenant.count({ where: { deletedAt: null } }),
+      this.prisma.school.count({ where: { deletedAt: null } }),
+      this.prisma.teacher.count({ where: { deletedAt: null } }),
+      this.prisma.student.count({ where: { deletedAt: null } }),
+      this.prisma.lessonPlan.count({ where: { deletedAt: null } }),
+      this.prisma.subscription.findMany({
+        where: { status: "ACTIVE" },
+        select: { product: true, planCode: true },
+      }),
+      this.prisma.tenant.findMany({
+        where: { deletedAt: null },
+        select: { metadata: true },
+        take: 2000,
+      }),
+      this.prisma.billingEvent.findMany({
+        orderBy: { receivedAt: "desc" },
+        take: 12,
+        select: {
+          id: true,
+          provider: true,
+          eventType: true,
+          status: true,
+          outcome: true,
+          receivedAt: true,
+          processedAt: true,
+          tenantId: true,
+        },
+      }),
+      this.prisma.user.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: { id: true, email: true, fullName: true, role: true, createdAt: true },
+      }),
+      this.prisma.user.findMany({
+        where: { deletedAt: null, createdAt: { gte: twelveMonthsAgo } },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    // Distribución por plan pago (count). ApoyoAI desde Subscription; EducAI desde
+    // el plan vigente del tenant. Solo planes con precio (los free se ignoran).
+    const planCounts = new Map<string, { product: string; planCode: string; count: number }>();
+    const tally = (product: string, planCode: string | null | undefined) => {
+      if (!planCode) {
+        return;
+      }
+      const normalizedProduct = product.toLowerCase();
+      if (getExpectedPriceArs(normalizedProduct, planCode) === null) {
+        return;
+      }
+      const key = `${normalizedProduct}:${planCode}`;
+      const entry = planCounts.get(key) ?? { product: normalizedProduct, planCode, count: 0 };
+      entry.count += 1;
+      planCounts.set(key, entry);
+    };
+
+    for (const sub of activeSubs) {
+      tally(String(sub.product), sub.planCode);
+    }
+    for (const tenant of educaiTenants) {
+      const meta = this.asRecord(tenant.metadata);
+      const plan = typeof meta?.plan === "string" ? meta.plan : null;
+      const product = typeof meta?.product === "string" ? meta.product : "educai";
+      tally(product, plan);
+    }
+
+    const planBreakdown = [...planCounts.values()]
+      .map((entry) => {
+        const priceArs = getExpectedPriceArs(entry.product, entry.planCode) ?? 0;
+        return {
+          product: entry.product,
+          planCode: entry.planCode,
+          label: PLAN_LABELS[entry.planCode] ?? `${entry.product} · ${entry.planCode}`,
+          count: entry.count,
+          priceArs,
+          revenueArs: priceArs * entry.count,
+        };
+      })
+      .sort((a, b) => b.revenueArs - a.revenueArs);
+
+    const mrrArs = planBreakdown.reduce((acc, plan) => acc + plan.revenueArs, 0);
+    const paidCount = planBreakdown.reduce((acc, plan) => acc + plan.count, 0);
+    const conversionPct = tenantCount > 0 ? (paidCount / tenantCount) * 100 : 0;
+    const growth30dPct =
+      prevUsers30d > 0
+        ? ((newUsers30d - prevUsers30d) / prevUsers30d) * 100
+        : newUsers30d > 0
+          ? 100
+          : 0;
+
+    // Serie de altas de usuarios por mes (12 meses).
+    const byMonth = new Map<string, number>();
+    for (let i = 11; i >= 0; i -= 1) {
+      const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      byMonth.set(this.monthKey(date), 0);
+    }
+    for (const user of usersForChart) {
+      const key = this.monthKey(new Date(user.createdAt));
+      if (byMonth.has(key)) {
+        byMonth.set(key, (byMonth.get(key) ?? 0) + 1);
+      }
+    }
+    const newUsersByMonth = [...byMonth.entries()].map(([month, count]) => ({
+      month,
+      label: this.monthLabel(month),
+      count,
+    }));
+
+    return {
+      data: {
+        metrics: {
+          userCount,
+          newUsers30d,
+          growth30dPct: Math.round(growth30dPct * 10) / 10,
+          mrrArs,
+          arrArs: mrrArs * 12,
+          paidCount,
+          conversionPct: Math.round(conversionPct * 10) / 10,
+          tenantCount,
+          schoolCount,
+          teacherCount,
+          studentCount,
+          lessonPlanCount,
+        },
+        planBreakdown,
+        newUsersByMonth,
+        recentBilling: recentBilling.map((event) => ({
+          id: event.id,
+          provider: event.provider,
+          eventType: event.eventType,
+          status: event.status,
+          outcome: event.outcome,
+          tenantId: event.tenantId,
+          receivedAt: event.receivedAt.toISOString(),
+          processedAt: event.processedAt?.toISOString() ?? null,
+        })),
+        recentUsers: recentUsers.map((user) => ({
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          createdAt: user.createdAt.toISOString(),
+        })),
+      },
+    };
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private monthKey(date: Date): string {
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+
+  private monthLabel(key: string): string {
+    const month = Number(key.split("-")[1]);
+    return MONTH_LABELS[month - 1] ?? key;
   }
 
   private startOfWeek(reference: Date = new Date()): Date {

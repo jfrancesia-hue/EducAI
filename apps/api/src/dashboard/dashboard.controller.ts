@@ -87,4 +87,10 @@ export class DashboardController {
   getAdminConfig() {
     return this.dashboard.getAdminConfigOverview();
   }
+
+  @Get("metrics")
+  @Roles("SUPER_ADMIN")
+  getMetrics() {
+    return this.dashboard.getMetricsOverview();
+  }
 }
