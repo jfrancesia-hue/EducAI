@@ -111,17 +111,16 @@ export class SupabaseAuthService {
 
   private mapUser(user: User): AuthenticatedUser {
     const appMetadata = this.asRecord(user.app_metadata);
-    const userMetadata = this.asRecord(user.user_metadata);
 
     return {
       id: user.id,
       email: user.email ?? null,
-      role: this.extractRole(appMetadata, userMetadata),
-      tenantId: this.extractString(appMetadata, userMetadata, "tenantId", "tenant_id"),
-      familyId: this.extractString(appMetadata, userMetadata, "familyId", "family_id"),
-      schoolId: this.extractString(appMetadata, userMetadata, "schoolId", "school_id"),
-      teacherId: this.extractString(appMetadata, userMetadata, "teacherId", "teacher_id"),
-      plan: this.extractString(appMetadata, userMetadata, "plan", "planCode", "plan_code"),
+      role: this.extractRole(appMetadata),
+      tenantId: this.extractString(appMetadata, "tenantId", "tenant_id"),
+      familyId: this.extractString(appMetadata, "familyId", "family_id"),
+      schoolId: this.extractString(appMetadata, "schoolId", "school_id"),
+      teacherId: this.extractString(appMetadata, "teacherId", "teacher_id"),
+      plan: this.extractString(appMetadata, "plan", "planCode", "plan_code"),
     };
   }
 
@@ -151,17 +150,16 @@ export class SupabaseAuthService {
     }
 
     const appMetadata = this.asRecord(payload.app_metadata);
-    const userMetadata = this.asRecord(payload.user_metadata);
 
     return {
       id: payload.sub,
       email: payload.email ?? null,
-      role: this.extractRole(appMetadata, userMetadata),
-      tenantId: this.extractString(appMetadata, userMetadata, "tenantId", "tenant_id"),
-      familyId: this.extractString(appMetadata, userMetadata, "familyId", "family_id"),
-      schoolId: this.extractString(appMetadata, userMetadata, "schoolId", "school_id"),
-      teacherId: this.extractString(appMetadata, userMetadata, "teacherId", "teacher_id"),
-      plan: this.extractString(appMetadata, userMetadata, "plan", "planCode", "plan_code"),
+      role: this.extractRole(appMetadata),
+      tenantId: this.extractString(appMetadata, "tenantId", "tenant_id"),
+      familyId: this.extractString(appMetadata, "familyId", "family_id"),
+      schoolId: this.extractString(appMetadata, "schoolId", "school_id"),
+      teacherId: this.extractString(appMetadata, "teacherId", "teacher_id"),
+      plan: this.extractString(appMetadata, "plan", "planCode", "plan_code"),
     };
   }
 
@@ -280,11 +278,8 @@ export class SupabaseAuthService {
     return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   }
 
-  private extractRole(
-    appMetadata: Record<string, unknown>,
-    userMetadata: Record<string, unknown>,
-  ): EducAiRole | undefined {
-    const role = this.extractString(appMetadata, userMetadata, "role");
+  private extractRole(appMetadata: Record<string, unknown>): EducAiRole | undefined {
+    const role = this.extractString(appMetadata, "role");
 
     switch (role) {
       case "SUPER_ADMIN":
@@ -298,20 +293,18 @@ export class SupabaseAuthService {
     }
   }
 
+  // SEGURIDAD: los claims de autorización (role, tenantId, familyId, schoolId,
+  // teacherId, plan) se leen SOLO de app_metadata. user_metadata es editable por el
+  // propio usuario (supabase.auth.updateUser), así que NUNCA debe ser fuente de
+  // verdad de autorización ni de scoping de tenant/familia.
   private extractString(
     appMetadata: Record<string, unknown>,
-    userMetadata: Record<string, unknown>,
     ...keys: string[]
   ): string | undefined {
     for (const key of keys) {
       const appValue = appMetadata[key];
       if (typeof appValue === "string" && appValue.trim()) {
         return appValue.trim();
-      }
-
-      const userValue = userMetadata[key];
-      if (typeof userValue === "string" && userValue.trim()) {
-        return userValue.trim();
       }
     }
 

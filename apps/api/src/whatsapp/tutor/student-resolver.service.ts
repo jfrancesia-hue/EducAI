@@ -247,14 +247,22 @@ export class StudentResolverService {
       return null;
     }
 
+    // Match por palabra completa, no por substring: así "Ana" no matchea "Mariana"
+    // ni "Luis" matchea "Luisina", evitando dirigir el mensaje a la ficha del
+    // hermano equivocado.
+    const matchesWholeName = (name: string): boolean => {
+      if (!name) {
+        return false;
+      }
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      return new RegExp(`(^|\\s)${escaped}(\\s|$)`, "u").test(normalized);
+    };
+
     return (
       contacts.find((contact) => {
         const firstName = this.normalizeText(contact.studentProfile.student.firstName);
         const lastName = this.normalizeText(contact.studentProfile.student.lastName ?? "");
-        return (
-          Boolean(firstName && normalized.includes(firstName)) ||
-          Boolean(lastName && normalized.includes(lastName))
-        );
+        return matchesWholeName(firstName) || matchesWholeName(lastName);
       }) ?? null
     );
   }
