@@ -9,6 +9,8 @@ import { Prisma } from "@educai/database";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
+import { APOYOAI_PRICES_ARS } from "../payments/plan-catalog.js";
 import type {
   RegisterApoyoAiFamilyDto,
   RegisterApoyoAiFamilyWithGoogleDto,
@@ -26,13 +28,6 @@ const PLAN_TO_LEGACY_ENUM: Record<ApoyoAiPlanCode, "FREE" | "BASIC" | "PREMIUM" 
   intensivo: "FAMILY",
 };
 
-const MERCADOPAGO_PLAN_PRICES: Record<Exclude<ApoyoAiPlanCode, "free">, number> = {
-  basico: 14900,
-  plus: 34900,
-  familiar: 69900,
-  intensivo: 119900,
-};
-
 interface MercadoPagoPreferenceResponse {
   id?: string;
   init_point?: string;
@@ -43,12 +38,20 @@ interface MercadoPagoPreferenceResponse {
 export class ApoyoAiOnboardingService {
   private supabase?: SupabaseClient;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
+  ) {}
 
   async registerFamily(dto: RegisterApoyoAiFamilyDto) {
-    const email = dto.parentEmail.trim().toLowerCase();
-    const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.parentFullName);
-    return this.createFamilyWorkspace(dto, email, authUserId);
+    // Onboarding: el usuario todavía no tiene tenant, así que toda la creación
+    // (Tenant/Family/User/Parent/Subscription/Student) corre como operación de
+    // sistema. El tenantId se setea explícitamente en cada `create`.
+    return this.tenantContext.runAsSystem(async () => {
+      const email = dto.parentEmail.trim().toLowerCase();
+      const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.parentFullName);
+      return this.createFamilyWorkspace(dto, email, authUserId);
+    });
   }
 
   async registerFamilyWithGoogle(
@@ -59,7 +62,9 @@ export class ApoyoAiOnboardingService {
       throw new ForbiddenException("La cuenta Google no tiene email confirmado");
     }
 
-    return this.createFamilyWorkspace(dto, authUser.email.trim().toLowerCase(), authUser.id);
+    return this.tenantContext.runAsSystem(() =>
+      this.createFamilyWorkspace(dto, authUser.email!.trim().toLowerCase(), authUser.id),
+    );
   }
 
   private async createFamilyWorkspace(
@@ -352,7 +357,7 @@ export class ApoyoAiOnboardingService {
           title: `ApoyoAI ${input.plan}`,
           quantity: 1,
           currency_id: "ARS",
-          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+          unit_price: APOYOAI_PRICES_ARS[input.plan],
         },
       ],
       payer: {

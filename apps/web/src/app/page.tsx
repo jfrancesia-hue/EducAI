@@ -142,6 +142,9 @@ const heroTagStyles = [
 ];
 
 const educatorRegisterUrl = "/registro?producto=educai&plan=free";
+const familyRegisterUrl = "/registro?producto=apoyoai&plan=free";
+const educatorLoginUrl = "/login?contexto=educai";
+const familyLoginUrl = "/login?contexto=apoyoai";
 
 export default function HomePage() {
   return (
@@ -192,7 +195,7 @@ export default function HomePage() {
               size="sm"
               className="hidden bg-[#ff7a1a] text-white shadow-[0_12px_28px_rgba(255,122,26,0.28)] hover:bg-[#ea6508] sm:inline-flex"
             >
-              <Link href={educatorRegisterUrl}>Registrarse</Link>
+              <Link href="#empezar">Registrarse</Link>
             </Button>
             <Button
               asChild
@@ -200,7 +203,7 @@ export default function HomePage() {
               pill
               className="bg-white text-slate-950 shadow-none hover:bg-white/90"
             >
-              <Link href="/login">
+              <Link href="#empezar">
                 Ingresar <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
@@ -235,17 +238,78 @@ export default function HomePage() {
                 </span>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                asChild
-                size="lg"
-                pill
-                className="bg-[#f8d95c] text-slate-950 shadow-float hover:bg-[#f3ce36]"
-              >
-                <Link href={educatorRegisterUrl}>
-                  Sumarme al piloto docente <Sparkles className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              </Button>
+            <div id="empezar" className="mt-8 grid scroll-mt-28 gap-4 sm:grid-cols-2">
+              {/* EducAI — docentes */}
+              <div className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-float backdrop-blur-md">
+                <div className="flex items-center gap-2 text-white">
+                  <GraduationCap className="h-5 w-5 text-[#f8d95c]" aria-hidden="true" />
+                  <p className="font-display text-lg font-bold tracking-tight">EducAI · Docentes</p>
+                </div>
+                <p className="mt-1 text-sm leading-6 text-white/82">
+                  Para preparar clases, recursos y seguimiento.
+                </p>
+                <div className="mt-4 grid gap-2">
+                  <Button
+                    asChild
+                    size="lg"
+                    pill
+                    className="bg-[#f8d95c] text-slate-950 shadow-float hover:bg-[#f3ce36]"
+                  >
+                    <Link href={educatorRegisterUrl}>
+                      Registrarse a EducAI <Sparkles className="h-5 w-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    pill
+                    variant="outline"
+                    className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
+                  >
+                    <Link href={educatorLoginUrl}>
+                      Ingresar a EducAI <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* ApoyoAI — familias */}
+              <div className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-float backdrop-blur-md">
+                <div className="flex items-center gap-2 text-white">
+                  <UsersRound className="h-5 w-5 text-[#72e4d2]" aria-hidden="true" />
+                  <p className="font-display text-lg font-bold tracking-tight">
+                    ApoyoAI · Familias
+                  </p>
+                </div>
+                <p className="mt-1 text-sm leading-6 text-white/82">
+                  Para acompañar el aprendizaje desde casa.
+                </p>
+                <div className="mt-4 grid gap-2">
+                  <Button
+                    asChild
+                    size="lg"
+                    pill
+                    className="bg-[#62dcca] text-slate-950 shadow-float hover:bg-[#3fcdb8]"
+                  >
+                    <Link href={familyRegisterUrl}>
+                      Registrarse a ApoyoAI <Sparkles className="h-5 w-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    pill
+                    variant="outline"
+                    className="border-white/25 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 hover:text-white"
+                  >
+                    <Link href={familyLoginUrl}>
+                      Ingresar a ApoyoAI <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
               <Button
                 asChild
                 size="lg"

@@ -21,6 +21,7 @@ function productionEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
     TWILIO_DRY_RUN: "false",
     MERCADOPAGO_ACCESS_TOKEN: "APP_USR-test",
     MERCADOPAGO_WEBHOOK_SECRET: "mp-webhook-secret",
+    CRISIS_ALERT_WHATSAPP_TO: "whatsapp:+5493810000000",
     ...overrides,
   };
 }
@@ -110,5 +111,17 @@ describe("requireApiProductionEnv", () => {
     expect(() =>
       requireApiProductionEnv(productionEnv({ MERCADOPAGO_WEBHOOK_SECRET: "" })),
     ).toThrow(/MERCADOPAGO_WEBHOOK_SECRET/);
+  });
+
+  it("rechaza produccion sin CRISIS_ALERT_WHATSAPP_TO (alerta de crisis bloqueante)", () => {
+    expect(() => requireApiProductionEnv(productionEnv({ CRISIS_ALERT_WHATSAPP_TO: "" }))).toThrow(
+      /CRISIS_ALERT_WHATSAPP_TO/,
+    );
+  });
+
+  it("rechaza auto-activacion de pagos en produccion (acceso pago sin pagar)", () => {
+    expect(() =>
+      requireApiProductionEnv(productionEnv({ APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS: "true" })),
+    ).toThrow(/APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS/);
   });
 });

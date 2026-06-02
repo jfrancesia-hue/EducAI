@@ -42,17 +42,38 @@ async function bootstrap() {
     }),
   );
 
-  const swaggerEnabled =
-    process.env.NODE_ENV !== "production" || process.env.ENABLE_SWAGGER_DOCS?.trim() === "true";
+  const isProduction = process.env.NODE_ENV === "production";
+  const swaggerEnabled = !isProduction || process.env.ENABLE_SWAGGER_DOCS?.trim() === "true";
   if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setTitle("EducAI API")
-      .setDescription("API multi-tenant para EducAI LATAM y ApoyoAI.")
-      .setVersion("0.1.0")
-      .addBearerAuth()
-      .build();
+    // En producción, /docs nunca se expone sin protección: exige basic-auth
+    // (SWAGGER_BASIC_AUTH="usuario:clave"). Sin credenciales, no se monta (fail-closed).
+    const basicAuth = process.env.SWAGGER_BASIC_AUTH?.trim();
+    if (isProduction && !basicAuth) {
+      console.warn(
+        "[api] ENABLE_SWAGGER_DOCS=true pero falta SWAGGER_BASIC_AUTH: no se expone /docs en produccion",
+      );
+    } else {
+      if (isProduction && basicAuth) {
+        const expected = `Basic ${Buffer.from(basicAuth).toString("base64")}`;
+        app.use("/docs", (req: Request, res: Response, next: NextFunction) => {
+          if (req.headers.authorization === expected) {
+            next();
+            return;
+          }
+          res.setHeader("WWW-Authenticate", 'Basic realm="EducAI API docs"');
+          res.status(401).send("Autenticacion requerida");
+        });
+      }
 
-    SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, config));
+      const config = new DocumentBuilder()
+        .setTitle("EducAI API")
+        .setDescription("API multi-tenant para EducAI LATAM y ApoyoAI.")
+        .setVersion("0.1.0")
+        .addBearerAuth()
+        .build();
+
+      SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, config));
+    }
   }
 
   const port = Number(process.env.PORT ?? 4000);

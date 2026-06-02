@@ -67,6 +67,15 @@ export default function LoginPage({
       : Array.isArray(searchParams?.password)
         ? searchParams.password[0]
         : undefined;
+  // `contexto` es solo cosmético: ajusta el título para que coincida con el botón
+  // que tocó el usuario (EducAI o ApoyoAI). El acceso es el mismo y se rutea por rol.
+  const contexto =
+    typeof searchParams?.contexto === "string"
+      ? searchParams.contexto
+      : Array.isArray(searchParams?.contexto)
+        ? searchParams.contexto[0]
+        : undefined;
+  const productLabel = contexto === "apoyoai" ? "ApoyoAI" : contexto === "educai" ? "EducAI" : null;
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? null) : null;
   const registeredMessage = registered
     ? payment === "success"
@@ -138,9 +147,11 @@ export default function LoginPage({
           <div className="w-full max-w-md">
             <div className="rounded-lg border border-[#ded6c7] bg-white p-6 shadow-whisper">
               <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#4f5f58]">
-                Cuenta EducAI o ApoyoAI
+                {productLabel ? `Cuenta ${productLabel}` : "Cuenta EducAI o ApoyoAI"}
               </p>
-              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">Ingresar</h2>
+              <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">
+                {productLabel ? `Ingresar a ${productLabel}` : "Ingresar"}
+              </h2>
               {registeredMessage || passwordMessage ? (
                 <p className="mt-4 rounded-lg border border-[#18b6a4]/35 bg-[#e7fbf7] px-3 py-2 text-sm font-medium text-[#075c50]">
                   {registeredMessage ?? passwordMessage}

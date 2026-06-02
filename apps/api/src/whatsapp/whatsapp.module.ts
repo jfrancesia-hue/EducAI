@@ -8,6 +8,7 @@ import {
   OcrService,
 } from "@educai/ai";
 import { WHATSAPP_AGENT_LLM } from "./agent/agent-llm.token.js";
+import { CrisisAlertService } from "./agent/crisis-alert.service.js";
 import { HumanHandoffService } from "./agent/human-handoff.service.js";
 import { InstitutionalAgentService } from "./agent/institutional-agent.service.js";
 import { InstitutionalAgentAuditService } from "./agent/institutional-agent-audit.service.js";
@@ -49,6 +50,7 @@ import { TwilioWebhookController } from "./webhooks/twilio-webhook.controller.js
     InstitutionalAgentService,
     InstitutionalAgentAuditService,
     HumanHandoffService,
+    CrisisAlertService,
     {
       provide: OcrService,
       useFactory: () => new OcrService({ apiKey: process.env.ANTHROPIC_API_KEY }),

@@ -9,6 +9,8 @@ import { Prisma } from "@educai/database";
 
 import type { AuthenticatedUser } from "../auth/authenticated-user.js";
 import { PrismaService } from "../prisma/prisma.service.js";
+import { TenantContextService } from "../prisma/tenant-context.service.js";
+import { EDUCAI_PRICES_ARS } from "../payments/plan-catalog.js";
 import type {
   RegisterEducAiTeacherDto,
   RegisterEducAiTeacherWithGoogleDto,
@@ -17,11 +19,6 @@ import type {
 type EducAiTeacherSignupInput = Omit<RegisterEducAiTeacherDto, "email" | "password">;
 type EducAiPlanCode = RegisterEducAiTeacherDto["plan"];
 type PrismaTx = Prisma.TransactionClient;
-
-const MERCADOPAGO_PLAN_PRICES: Record<Exclude<EducAiPlanCode, "free">, number> = {
-  "docente-individual": 9900,
-  "docente-pro": 24900,
-};
 
 interface MercadoPagoPreferenceResponse {
   id?: string;
@@ -33,12 +30,19 @@ interface MercadoPagoPreferenceResponse {
 export class EducAiOnboardingService {
   private supabase?: SupabaseClient;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
+  ) {}
 
   async registerTeacher(dto: RegisterEducAiTeacherDto) {
-    const email = dto.email.trim().toLowerCase();
-    const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.fullName);
-    return this.createTeacherWorkspace(dto, email, authUserId);
+    // Onboarding: el docente todavía no tiene tenant; la creación de
+    // Tenant/School/User/Teacher corre como operación de sistema con tenantId explícito.
+    return this.tenantContext.runAsSystem(async () => {
+      const email = dto.email.trim().toLowerCase();
+      const authUserId = await this.ensureSupabaseUser(email, dto.password, dto.fullName);
+      return this.createTeacherWorkspace(dto, email, authUserId);
+    });
   }
 
   async registerTeacherWithGoogle(
@@ -49,7 +53,9 @@ export class EducAiOnboardingService {
       throw new ForbiddenException("La cuenta Google no tiene email confirmado");
     }
 
-    return this.createTeacherWorkspace(dto, authUser.email.trim().toLowerCase(), authUser.id);
+    return this.tenantContext.runAsSystem(() =>
+      this.createTeacherWorkspace(dto, authUser.email!.trim().toLowerCase(), authUser.id),
+    );
   }
 
   private async createTeacherWorkspace(
@@ -298,7 +304,7 @@ export class EducAiOnboardingService {
           title: `EducAI ${input.plan}`,
           quantity: 1,
           currency_id: "ARS",
-          unit_price: MERCADOPAGO_PLAN_PRICES[input.plan],
+          unit_price: EDUCAI_PRICES_ARS[input.plan],
         },
       ],
       payer: {

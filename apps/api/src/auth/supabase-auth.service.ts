@@ -136,6 +136,11 @@ export class SupabaseAuthService {
       return null;
     }
 
+    if (!this.isAudienceValid(payload)) {
+      this.logger.warn({ event: "supabase_auth_invalid_audience" });
+      return null;
+    }
+
     if (!this.isTokenTimeValid(payload)) {
       return null;
     }
@@ -183,6 +188,32 @@ export class SupabaseAuthService {
     } catch {
       return null;
     }
+  }
+
+  private isAudienceValid(payload: JwtPayload): boolean {
+    const allowed = this.getAllowedAudiences();
+    const tokenAudiences = Array.isArray(payload.aud)
+      ? payload.aud
+      : payload.aud
+        ? [payload.aud]
+        : [];
+
+    // Fail-closed: un token sin `aud` no se acepta por la via de verificacion local.
+    if (tokenAudiences.length === 0) {
+      return false;
+    }
+
+    return tokenAudiences.some((aud) => allowed.has(aud.trim()));
+  }
+
+  private getAllowedAudiences(): Set<string> {
+    const configured = (process.env.SUPABASE_JWT_AUDIENCE ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    // `authenticated` es la audiencia por defecto de los access tokens de Supabase.
+    return new Set([...configured, "authenticated"]);
   }
 
   private isTokenTimeValid(payload: JwtPayload): boolean {

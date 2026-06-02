@@ -12,6 +12,9 @@ const REQUIRED_PRODUCTION_ENV = [
   "TWILIO_FORCE_PROTOCOL",
   "MERCADOPAGO_ACCESS_TOKEN",
   "MERCADOPAGO_WEBHOOK_SECRET",
+  // Destino de las alertas de crisis del tutor. El manejo de crisis es bloqueante
+  // de release (RELEASE_CHECKLIST), así que sin destinatario no se arranca en prod.
+  "CRISIS_ALERT_WHATSAPP_TO",
 ] as const;
 
 export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
@@ -28,6 +31,11 @@ export function requireApiProductionEnv(env: NodeJS.ProcessEnv): void {
   assertDatabaseUrlUsesEducaiSchema(env.DATABASE_URL);
   assertProductionFlag("TWILIO_SKIP_SIGNATURE_VALIDATION", env.TWILIO_SKIP_SIGNATURE_VALIDATION);
   assertProductionFlag("TWILIO_DRY_RUN", env.TWILIO_DRY_RUN);
+  // Activar suscripciones pagas sin pago real no puede quedar habilitado en produccion.
+  assertProductionFlag(
+    "APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS",
+    env.APOYOAI_AUTO_ACTIVATE_PAID_SIGNUPS,
+  );
 
   if (env.SUPABASE_SECRET_KEY?.trim() || env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     return;
